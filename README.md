@@ -1,0 +1,2 @@
+# exploringwatamu-platform
+AItourisim
