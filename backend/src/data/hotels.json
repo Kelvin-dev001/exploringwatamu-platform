@@ -1,0 +1,11 @@
+[
+  {
+    "id": "hotel1",
+    "name": "Watamu Beach Resort",
+    "description": "Luxury beachfront property with ocean views.",
+    "images": ["/images/hotel1_1.jpg", "/images/hotel1_2.jpg"],
+    "amenities": ["Pool", "WiFi", "Bar", "Spa"],
+    "pricePerNight": 120,
+    "availability": ["2025-09-01", "2025-09-02", "2025-09-03"]
+  }
+]

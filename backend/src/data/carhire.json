@@ -1,0 +1,8 @@
+[
+  {
+    "id": "car1",
+    "vehicleType": "SUV",
+    "description": "Spacious SUV for group travel.",
+    "pricePerDay": 60
+  }
+]
