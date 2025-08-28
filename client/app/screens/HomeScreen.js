@@ -1,11 +1,17 @@
-import { View, Text, Image } from 'react-native';
-export default function HomeScreen() {
+import React from 'react';
+import { View, Text, Button, Image } from 'react-native';
+
+export default function HomeScreen({ navigation }) {
   return (
-    <View className="flex-1 justify-center items-center bg-brand-teal">
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#24b3b3' }}>
       <Image source={require('../assets/logo.png')} style={{ width: 120, height: 120 }} />
-      <Text className="text-3xl text-brand-cream mt-4">Exploring Watamu</Text>
-      <Text className="text-lg text-brand-orange mb-8">Your gateway to sweetness</Text>
-      {/* Add animated navigation buttons here */}
+      <Text style={{ fontSize: 24, color: '#fbeec1', marginTop: 16 }}>Explore Watamu</Text>
+      <Text style={{ fontSize: 18, color: '#ffb347', marginBottom: 24 }}>Your gateway to paradise</Text>
+      <Button title="Hotels" onPress={() => navigation.navigate('Hotels')} />
+      <Button title="Transfers" onPress={() => navigation.navigate('Transfers')} />
+      <Button title="Tours" onPress={() => navigation.navigate('Tours')} />
+      <Button title="Services" onPress={() => navigation.navigate('Services')} />
+      <Button title="Car Hire" onPress={() => navigation.navigate('Car Hire')} />
     </View>
   );
 }
