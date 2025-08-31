@@ -34,6 +34,11 @@ export const accommodations = [
       { question: 'Is parking available?', answer: 'Yes, free parking.' },
     ],
     houseRules: ['No smoking', 'Check-in after 2pm', 'No pets'],
+    // Inside each accommodation object:
+reviews: [
+  { user: "Alice", rating: 5, text: "Amazing place! Highly recommended.", date: "2025-08-30" },
+  { user: "Bob", rating: 4, text: "Great location, friendly staff.", date: "2025-08-29" },
+],
     contact: {
       whatsapp: 'https://wa.me/254700000000',
       email: 'book@severin.com',
@@ -64,6 +69,10 @@ export const accommodations = [
       { question: 'Is WiFi available?', answer: 'Yes, free WiFi.' },
     ],
     houseRules: ['No parties', 'Check-in after 1pm'],
+    reviews: [
+      { user: "JRomerio", rating: 5, text: "very clean and friendly room service.", date: "2025-08-30" },
+      { user: "Valentino", rating: 4, text: "I love the breeze.", date: "2025-08-29" },
+    ],
     contact: {
       whatsapp: 'https://wa.me/254711111111',
       email: 'host@watamuairbnb.com',
@@ -93,6 +102,10 @@ export const accommodations = [
       { question: 'Is chef service included?', answer: 'Yes, chef service is included.' },
     ],
     houseRules: ['No pets', 'No smoking'],
+    reviews: [
+      { user: "JRomerio", rating: 5, text: "very clean and friendly room service.", date: "2025-08-30" },
+      { user: "Valentino", rating: 4, text: "I love the breeze.", date: "2025-08-29" },
+    ],
     contact: {
       whatsapp: 'https://wa.me/254722222222',
       email: 'book@watamuvilla.com',

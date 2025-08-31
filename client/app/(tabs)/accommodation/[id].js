@@ -4,6 +4,8 @@ import { useLocalSearchParams } from 'expo-router';
 
 // MOCK DATA: Replace with API or context in production!
 import { accommodations } from '../hotels';
+import ReviewList from '../../components/ReviewList';
+import ReviewForm from '../../components/ReviewForm';
 
 // ---- Gallery Component ----
 function ImageGallery({ images }) {
@@ -69,6 +71,10 @@ const hrStyles = StyleSheet.create({
   wrap: { marginVertical: 6 },
   rule: { color: '#555', fontSize: 14, marginBottom: 3 },
 });
+const handleAddReview = (review) => {
+  setReviews([review, ...reviews]);
+  // In production, also POST to backend and update accommodation.reviews
+};
 
 // ---- Booking Buttons Component ----
 function BookingButtons({ whatsapp, email }) {
@@ -140,6 +146,9 @@ export default function AccommodationDetail() {
       <FAQList faqs={accommodation.faqs} />
       <Text style={styles.sectionTitle}>House Rules</Text>
       <HouseRulesList rules={accommodation.houseRules} />
+      <Text style={styles.sectionTitle}>Reviews</Text>
+      <ReviewForm onSubmit={handleAddReview} />
+      <ReviewList reviews={reviews} />
       <BookingButtons whatsapp={accommodation.contact.whatsapp} email={accommodation.contact.email} />
     </ScrollView>
   );
