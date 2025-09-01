@@ -18,6 +18,10 @@ app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/carhire', require('./routes/carHireRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/carhirebookings', require('./routes/carHireBookingRoutes'));
+app.use('/api/tourbookings', require('./routes/tourBookingRoutes'));
+app.use('/api/servicebookings', require('./routes/serviceBookingRoutes'));
+app.use('/api/properties', require('./routes/propertyForSaleRoutes')); // <-- Added
+app.use('/api/propertyviewings', require('./routes/propertyViewingBookingRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
