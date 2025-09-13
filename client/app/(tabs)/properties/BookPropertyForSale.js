@@ -9,6 +9,8 @@ export default function BookPropertyForSale() {
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [userName, setUserName] = useState("");
   const [userContact, setUserContact] = useState("");
+  const [available, setAvailable] = useState(true);
+  const [bookingMessage, setBookingMessage] = useState("");
 
   useEffect(() => {
     fetch(process.env.EXPO_PUBLIC_API_URL + "/properties")
@@ -22,6 +24,32 @@ export default function BookPropertyForSale() {
     : properties;
 
   const selectedProperty = filteredProperties.find(p => p._id === selectedPropertyId);
+
+  // Check slot availability
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!selectedPropertyId || !selectedDate || !selectedTime) {
+        setAvailable(true);
+        return;
+      }
+      try {
+        const res = await fetch(process.env.EXPO_PUBLIC_API_URL + "/propertyviewings/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            propertyId: selectedPropertyId,
+            date: selectedDate,
+            time: selectedTime
+          })
+        });
+        const data = await res.json();
+        setAvailable(data.available !== false);
+      } catch (e) {
+        setAvailable(true);
+      }
+    };
+    checkAvailability();
+  }, [selectedPropertyId, selectedDate, selectedTime]);
 
   const handleBookWhatsApp = () => {
     if (!selectedProperty) return;
@@ -38,6 +66,32 @@ export default function BookPropertyForSale() {
       `Hi, I'd like to book a viewing for ${selectedProperty.name} (${selectedProperty.type}) located at ${selectedProperty.location}.\n` +
       `Date: ${selectedDate}\nTime: ${selectedTime}\nName: ${userName}\nContact: ${userContact}\nPrice: $${selectedProperty.price}`;
     window.location.href = `mailto:bookings@yourdomain.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  // API booking (optional: can be used for direct booking)
+  const handleDirectBooking = async () => {
+    if (!selectedPropertyId || !selectedDate || !selectedTime || !userName || !userContact || !available) return;
+    try {
+      const res = await fetch(process.env.EXPO_PUBLIC_API_URL + "/propertyviewings/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: selectedPropertyId,
+          date: selectedDate,
+          time: selectedTime,
+          userName,
+          userContact
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBookingMessage("Your viewing has been booked successfully!");
+      } else {
+        setBookingMessage(data.error || "Booking failed.");
+      }
+    } catch (err) {
+      setBookingMessage("Booking failed. Please try again.");
+    }
   };
 
   return (
@@ -89,19 +143,37 @@ export default function BookPropertyForSale() {
           <input type="time" value={selectedTime} onChange={e => setSelectedTime(e.target.value)} required style={{ width: "100%", marginBottom: 12 }} />
           <input type="text" value={userName} onChange={e => setUserName(e.target.value)} style={{ width: "100%", marginBottom: 12 }} placeholder="Your Name" required />
           <input type="text" value={userContact} onChange={e => setUserContact(e.target.value)} style={{ width: "100%", marginBottom: 12 }} placeholder="Your Contact (Phone/Email)" required />
+          {!available && (
+            <div style={{ color: "red", marginBottom: 12 }}>
+              This slot is not available. Please select a different time/date.
+            </div>
+          )}
           <button
-            disabled={!selectedPropertyId || !selectedDate || !selectedTime || !userName || !userContact}
+            disabled={!selectedPropertyId || !selectedDate || !selectedTime || !userName || !userContact || !available}
             onClick={handleBookWhatsApp}
             style={{ marginRight: 8 }}
           >
             Book via WhatsApp
           </button>
           <button
-            disabled={!selectedPropertyId || !selectedDate || !selectedTime || !userName || !userContact}
+            disabled={!selectedPropertyId || !selectedDate || !selectedTime || !userName || !userContact || !available}
             onClick={handleBookEmail}
+            style={{ marginRight: 8 }}
           >
             Book via Email
           </button>
+          <button
+            type="button"
+            disabled={!selectedPropertyId || !selectedDate || !selectedTime || !userName || !userContact || !available}
+            onClick={handleDirectBooking}
+          >
+            Book Directly
+          </button>
+          {bookingMessage && (
+            <div style={{ color: bookingMessage.startsWith("Your") ? "green" : "red", marginTop: 12 }}>
+              {bookingMessage}
+            </div>
+          )}
         </>
       )}
     </div>
