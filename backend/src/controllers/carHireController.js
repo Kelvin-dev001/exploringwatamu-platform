@@ -74,3 +74,47 @@ exports.bookCarHire = async (req, res) => {
     res.status(400).json({ error: "Booking failed", details: err.message });
   }
 };
+
+// GET /api/carhires/:id
+exports.getCarHire = async (req, res) => {
+  try {
+    const carHire = await CarHire.findById(req.params.id).populate('vehicle');
+    if (!carHire) return res.status(404).json({ error: 'Car hire not found' });
+    res.json(carHire);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch car hire' });
+  }
+};
+
+// POST /api/carhires (Admin)
+exports.createCarHire = async (req, res) => {
+  try {
+    const carHire = new CarHire(req.body);
+    await carHire.save();
+    res.status(201).json(carHire);
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to create car hire', details: err.message });
+  }
+};
+
+// PUT /api/carhires/:id (Admin)
+exports.updateCarHire = async (req, res) => {
+  try {
+    const carHire = await CarHire.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!carHire) return res.status(404).json({ error: 'Car hire not found' });
+    res.json(carHire);
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to update car hire', details: err.message });
+  }
+};
+
+// DELETE /api/carhires/:id (Admin)
+exports.deleteCarHire = async (req, res) => {
+  try {
+    const carHire = await CarHire.findByIdAndDelete(req.params.id);
+    if (!carHire) return res.status(404).json({ error: 'Car hire not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete car hire' });
+  }
+};

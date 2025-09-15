@@ -12,4 +12,4 @@ const TourBookingSchema = new mongoose.Schema({
   status: { type: String, enum: ["booked", "cancelled"], default: "booked" }
 }, { timestamps: true });
 
-module.exports = mongoose.model('TourBooking', TourBookingSchema);
+module.exports = mongoose.models.TourBooking || mongoose.model('TourBooking', TourBookingSchema);

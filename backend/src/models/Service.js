@@ -11,4 +11,4 @@ const ServiceSchema = new mongoose.Schema({
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Service', ServiceSchema);v
+module.exports = mongoose.model('Service', ServiceSchema);

@@ -9,22 +9,32 @@ export default function CarHireBookingList() {
   const [filters, setFilters] = useState({ vehicleId: "", status: "", startDate: "", endDate: "" });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles").then(res => setVehicles(res.data));
+    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+      .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setVehicles([]));
   }, []);
 
   const fetchBookings = async () => {
-    const params = new URLSearchParams({
-      ...filters,
-      page,
-      limit: 10
-    });
-    const res = await axios.get(process.env.REACT_APP_API_URL + `/carhirebookings?${params}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setBookings(res.data.data);
-    setTotalPages(res.data.totalPages);
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        ...filters,
+        page,
+        limit: 10
+      });
+      const res = await axios.get(process.env.REACT_APP_API_URL + `/carhirebookings?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBookings(Array.isArray(res.data.data) ? res.data.data : []);
+      setTotalPages(res.data.totalPages || 1);
+    } catch {
+      setBookings([]);
+      setTotalPages(1);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -32,67 +42,91 @@ export default function CarHireBookingList() {
     // eslint-disable-next-line
   }, [filters, page]);
 
-  const handleFilterChange = (field, value) => setFilters({ ...filters, [field]: value });
+  const handleFilterChange = (field, value) => setFilters(prev => ({ ...prev, [field]: value }));
 
   const handleCancel = async id => {
     if (!window.confirm("Cancel this booking?")) return;
-    await axios.put(process.env.REACT_APP_API_URL + `/carhirebookings/${id}/cancel`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    fetchBookings();
+    try {
+      await axios.put(process.env.REACT_APP_API_URL + `/carhirebookings/${id}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchBookings();
+    } catch {
+      window.alert("Failed to cancel booking.");
+    }
   };
 
   return (
-    <div style={{ padding: 32 }}>
-      <h2>Car Hire Bookings</h2>
-      <div style={{ marginBottom: 16 }}>
-        <label>Vehicle: </label>
-        <select value={filters.vehicleId} onChange={e => handleFilterChange("vehicleId", e.target.value)}>
-          <option value="">All</option>
-          {vehicles.map(v => <option key={v._id} value={v._id}>{v.name}</option>)}
-        </select>
-        <label style={{ marginLeft: 8 }}>Status:</label>
-        <select value={filters.status} onChange={e => handleFilterChange("status", e.target.value)}>
-          <option value="">All</option>
-          <option value="booked">Booked</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <label style={{ marginLeft: 8 }}>Start:</label>
-        <input type="date" value={filters.startDate} onChange={e => handleFilterChange("startDate", e.target.value)} />
-        <label style={{ marginLeft: 8 }}>End:</label>
-        <input type="date" value={filters.endDate} onChange={e => handleFilterChange("endDate", e.target.value)} />
-        <button style={{ marginLeft: 8 }} onClick={fetchBookings}>Filter</button>
+    <div className="p-8">
+      <h2 className="text-2xl font-bold mb-4">Car Hire Bookings</h2>
+      <div className="flex flex-wrap gap-4 mb-4 items-end">
+        <div>
+          <label className="block text-sm">Vehicle:</label>
+          <select className="select select-bordered w-32" value={filters.vehicleId} onChange={e => handleFilterChange("vehicleId", e.target.value)}>
+            <option value="">All</option>
+            {vehicles.map(v => <option key={v._id} value={v._id}>{v.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm">Status:</label>
+          <select className="select select-bordered w-28" value={filters.status} onChange={e => handleFilterChange("status", e.target.value)}>
+            <option value="">All</option>
+            <option value="booked">Booked</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm">Start:</label>
+          <input type="date" className="input input-bordered w-32" value={filters.startDate} onChange={e => handleFilterChange("startDate", e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-sm">End:</label>
+          <input type="date" className="input input-bordered w-32" value={filters.endDate} onChange={e => handleFilterChange("endDate", e.target.value)} />
+        </div>
+        <button className="btn btn-outline" onClick={fetchBookings}>Filter</button>
       </div>
-      <table style={{ width: "100%", marginBottom: 16 }}>
-        <thead>
-          <tr>
-            <th>Vehicle</th>
-            <th>User</th>
-            <th>Dates</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookings.map(b => (
-            <tr key={b._id}>
-              <td>{b.carHire?.vehicle?.name}</td>
-              <td>{b.userName || "-"}<br />{b.userContact || "-"}</td>
-              <td>{b.startDate?.substring(0, 10)} to {b.endDate?.substring(0, 10)}</td>
-              <td>{b.status}</td>
-              <td>
-                {b.status === "booked" &&
-                  <button style={{ color: "red" }} onClick={() => handleCancel(b._id)}>Cancel</button>
-                }
-              </td>
+      <div className="overflow-x-auto">
+        <table className="table table-zebra w-full mb-4">
+          <thead>
+            <tr>
+              <th>Vehicle</th>
+              <th>User</th>
+              <th>Dates</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div>
-        <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Prev</button>
-        <span style={{ margin: "0 12px" }}>Page {page} of {totalPages}</span>
-        <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="5" className="text-center">Loading...</td>
+              </tr>
+            ) : (
+              bookings.map(b => (
+                <tr key={b._id}>
+                  <td>{b.carHire?.vehicle?.name}</td>
+                  <td>
+                    {b.userName || "-"}
+                    <br />
+                    {b.userContact || "-"}
+                  </td>
+                  <td>{b.startDate?.substring(0, 10)} to {b.endDate?.substring(0, 10)}</td>
+                  <td>{b.status}</td>
+                  <td>
+                    {b.status === "booked" &&
+                      <button className="btn btn-xs btn-error" onClick={() => handleCancel(b._id)}>Cancel</button>
+                    }
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex items-center justify-center gap-4">
+        <button className="btn btn-outline btn-xs" disabled={page <= 1} onClick={() => setPage(prev => prev - 1)}>Prev</button>
+        <span>Page {page} of {totalPages}</span>
+        <button className="btn btn-outline btn-xs" disabled={page >= totalPages} onClick={() => setPage(prev => prev + 1)}>Next</button>
       </div>
     </div>
   );
