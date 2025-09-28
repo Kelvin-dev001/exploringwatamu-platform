@@ -6,6 +6,8 @@ const upload = require('../middleware/upload');
 
 // List hotels
 router.get('/', hotelController.getHotels);
+// Get single hotel
+router.get('/:id', hotelController.getHotel);
 
 // Create hotel (with image upload)
 router.post('/', authAdmin, upload.array('images', 10), hotelController.createHotel);

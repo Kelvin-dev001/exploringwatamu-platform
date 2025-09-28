@@ -20,8 +20,11 @@ app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/carhirebookings', require('./routes/carHireBookingRoutes'));
 app.use('/api/tourbookings', require('./routes/tourBookingRoutes'));
 app.use('/api/servicebookings', require('./routes/serviceBookingRoutes'));
-app.use('/api/properties', require('./routes/propertyForSaleRoutes')); // <-- Added
+app.use('/api/properties', require('./routes/propertyForSaleRoutes'));
 app.use('/api/propertyviewings', require('./routes/propertyViewingBookingRoutes'));
+
+// **Add this line for admin authentication**
+app.use('/api/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

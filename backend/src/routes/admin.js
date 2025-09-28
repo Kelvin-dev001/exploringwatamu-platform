@@ -1,23 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
-const authAdmin = require('../middleware/authAdmin'); // Protect admin-only actions
 
-// Admin login (no protection)
-router.post('/login', async (req, res) => {
+// Default admin credentials
+const ADMIN_EMAIL = "admin@exploringwatamu.com";
+const ADMIN_PASSWORD = "123456";
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret"; // Set in .env for production
+
+// Admin login (no database, just default credentials)
+router.post('/login', (req, res) => {
   const { email, password } = req.body;
-  const admin = await Admin.findOne({ email });
-  if (!admin || !(await admin.validatePassword(password))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    // Issue JWT token
+    const token = jwt.sign({ email, admin: true }, JWT_SECRET, { expiresIn: "2d" });
+    return res.json({ token, admin: { email } });
   }
-  // Add 'admin: true' to payload for fine-grained protection
-  const token = jwt.sign({ id: admin._id, email: admin.email, admin: true }, process.env.JWT_SECRET, { expiresIn: '2d' });
-  res.json({ token, admin: { _id: admin._id, email: admin.email } });
+  return res.status(401).json({ error: "Invalid credentials" });
 });
 
 // Example: protect admin-only actions
-router.get('/profile', authAdmin, async (req, res) => {
+const authAdmin = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Missing authorization header" });
+  const token = authHeader.split(" ")[1];
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (!payload.admin) throw new Error("Not admin");
+    req.admin = payload;
+    next();
+  } catch (e) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+};
+
+router.get('/profile', authAdmin, (req, res) => {
   res.json({ admin: req.admin });
 });
 
