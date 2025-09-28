@@ -1,18 +1,18 @@
-import React from 'react';
-import { View, ScrollView, Text, Image, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, Text, Image, StyleSheet, Linking, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import axios from 'axios';
+import { API_URL } from '../../utils/api';
 
-// MOCK DATA: Replace with API or context in production!
-import { accommodations } from '../hotels';
 import ReviewList from '../../components/ReviewList';
 import ReviewForm from '../../components/ReviewForm';
 
-// ---- Gallery Component ----
 function ImageGallery({ images }) {
+  if (!images || images.length === 0) return null;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={galleryStyles.scroll}>
       {images.map((img, idx) => (
-        <Image key={idx} source={img} style={galleryStyles.img} />
+        <Image key={idx} source={{ uri: img }} style={galleryStyles.img} />
       ))}
     </ScrollView>
   );
@@ -22,8 +22,8 @@ const galleryStyles = StyleSheet.create({
   img: { width: 170, height: 130, borderRadius: 12, marginRight: 12, backgroundColor: '#eee' },
 });
 
-// ---- Facilities Component ----
 function FacilitiesList({ facilities }) {
+  if (!facilities || facilities.length === 0) return null;
   return (
     <View style={facStyles.wrap}>
       {facilities.map((fac, i) => (
@@ -37,8 +37,8 @@ const facStyles = StyleSheet.create({
   fac: { fontSize: 13, backgroundColor: '#e3f6f5', color: '#24b3b3', borderRadius: 7, paddingHorizontal: 8, marginHorizontal: 2, marginBottom: 4 },
 });
 
-// ---- FAQ Component ----
 function FAQList({ faqs }) {
+  if (!faqs || faqs.length === 0) return null;
   return (
     <View style={faqStyles.wrap}>
       {faqs.map((item, idx) => (
@@ -57,8 +57,8 @@ const faqStyles = StyleSheet.create({
   a: { color: '#555', marginLeft: 12 },
 });
 
-// ---- House Rules Component ----
 function HouseRulesList({ rules }) {
+  if (!rules || rules.length === 0) return null;
   return (
     <View style={hrStyles.wrap}>
       {rules.map((rule, idx) => (
@@ -71,21 +71,20 @@ const hrStyles = StyleSheet.create({
   wrap: { marginVertical: 6 },
   rule: { color: '#555', fontSize: 14, marginBottom: 3 },
 });
-const handleAddReview = (review) => {
-  setReviews([review, ...reviews]);
-  // In production, also POST to backend and update accommodation.reviews
-};
 
-// ---- Booking Buttons Component ----
 function BookingButtons({ whatsapp, email }) {
   return (
     <View style={bbStyles.row}>
-      <TouchableOpacity style={[bbStyles.btn, bbStyles.whatsapp]} onPress={() => Linking.openURL(whatsapp)}>
-        <Text style={bbStyles.btnText}>Book via WhatsApp</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[bbStyles.btn, bbStyles.email]} onPress={() => Linking.openURL(`mailto:${email}`)}>
-        <Text style={bbStyles.btnText}>Book via Email</Text>
-      </TouchableOpacity>
+      {whatsapp && (
+        <TouchableOpacity style={[bbStyles.btn, bbStyles.whatsapp]} onPress={() => Linking.openURL(whatsapp.startsWith('http') ? whatsapp : `https://wa.me/${whatsapp.replace(/\D/g, '')}`)}>
+          <Text style={bbStyles.btnText}>Book via WhatsApp</Text>
+        </TouchableOpacity>
+      )}
+      {email && (
+        <TouchableOpacity style={[bbStyles.btn, bbStyles.email]} onPress={() => Linking.openURL(`mailto:${email}`)}>
+          <Text style={bbStyles.btnText}>Book via Email</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -97,12 +96,37 @@ const bbStyles = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });
 
-// ---- Main Page ----
 export default function AccommodationDetail() {
-  // If using navigation, get id from route.params; else, just demo with the first accommodation
   const { id } = useLocalSearchParams();
-  const accommodation = accommodations.find(acc => acc.id === id)
+  const [accommodation, setAccommodation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
 
+  useEffect(() => {
+    if (id) {
+      axios.get(`${API_URL}/hotels/${id}`)
+        .then(res => {
+          setAccommodation(res.data);
+          setReviews(res.data.reviews || []);
+        })
+        .catch(err => {
+          console.error(err);
+          setAccommodation(null);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
+
+  const handleAddReview = (review) => {
+    setReviews([review, ...reviews]);
+    // In production, also POST to backend and update accommodation.reviews
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.center}><ActivityIndicator size="large" color="#24b3b3" /></View>
+    );
+  }
 
   if (!accommodation) {
     return (
@@ -115,17 +139,17 @@ export default function AccommodationDetail() {
       <Text style={styles.name}>{accommodation.name}</Text>
       <Text style={styles.typeStars}>
         {accommodation.type.charAt(0).toUpperCase() + accommodation.type.slice(1)}
-        {accommodation.starRating ? ` • ${'★'.repeat(accommodation.starRating)}` : ''}
+        {accommodation.stars ? ` • ${'★'.repeat(accommodation.stars)}` : ''}
       </Text>
       <ImageGallery images={accommodation.images} />
       <Text style={styles.sectionTitle}>Description</Text>
       <Text style={styles.desc}>{accommodation.description}</Text>
       <Text style={styles.sectionTitle}>Room Types</Text>
-      {accommodation.roomTypes.map((room, idx) => (
+      {accommodation.roomTypes && accommodation.roomTypes.map((room, idx) => (
         <View key={idx} style={styles.roomCard}>
           <Text style={styles.roomName}>{room.name} <Text style={styles.roomPrice}>${room.price}/night</Text></Text>
           <Text style={styles.roomDesc}>{room.description}</Text>
-          <View style={styles.roomAm}>{room.amenities.map((am, i) => (
+          <View style={styles.roomAm}>{room.amenities && room.amenities.map((am, i) => (
             <Text key={i} style={styles.roomAmItem}>{am}</Text>
           ))}</View>
           <Text style={room.availability ? styles.avail : styles.notAvail}>
@@ -134,10 +158,12 @@ export default function AccommodationDetail() {
         </View>
       ))}
       <Text style={styles.sectionTitle}>Location</Text>
-      <Text style={styles.address}>{accommodation.location.address}</Text>
-      <TouchableOpacity onPress={() => Linking.openURL(accommodation.location.mapUrl)}>
-        <Text style={styles.mapLink}>View on Map</Text>
-      </TouchableOpacity>
+      <Text style={styles.address}>{accommodation.location?.address}</Text>
+      {accommodation.location?.mapUrl && (
+        <TouchableOpacity onPress={() => Linking.openURL(accommodation.location.mapUrl)}>
+          <Text style={styles.mapLink}>View on Map</Text>
+        </TouchableOpacity>
+      )}
       <Text style={styles.sectionTitle}>Most Popular Facilities</Text>
       <FacilitiesList facilities={accommodation.popularFacilities} />
       <Text style={styles.sectionTitle}>All Facilities</Text>
@@ -149,7 +175,7 @@ export default function AccommodationDetail() {
       <Text style={styles.sectionTitle}>Reviews</Text>
       <ReviewForm onSubmit={handleAddReview} />
       <ReviewList reviews={reviews} />
-      <BookingButtons whatsapp={accommodation.contact.whatsapp} email={accommodation.contact.email} />
+      <BookingButtons whatsapp={accommodation.contact?.whatsapp} email={accommodation.contact?.email} />
     </ScrollView>
   );
 }
