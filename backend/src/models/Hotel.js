@@ -27,7 +27,7 @@ const ContactSchema = new mongoose.Schema({
 
 const HotelSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  type: { type: String, required: true },
+  type: { type: String, required: true, enum: ['hotel', 'villa', 'airbnb'] }, // <--- enum added
   stars: { type: Number, min: 1, max: 5 },
   location: {
     address: String,

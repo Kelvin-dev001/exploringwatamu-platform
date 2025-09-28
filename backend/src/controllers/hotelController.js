@@ -27,14 +27,36 @@ exports.createHotel = async (req, res) => {
     const imageUrls = req.files ? req.files.map(file => file.path) : [];
     const hotelData = { ...req.body, images: imageUrls };
 
+    // Only parse fields that are actually arrays/objects (JSON.stringify used on frontend)
+    [
+      'roomTypes', 'faqs', 'houseRules', 'location', 'contact',
+      'facilities', 'popularFacilities'
+    ].forEach(key => {
+      if (
+        typeof hotelData[key] === "string" &&
+        (hotelData[key].startsWith('[') || hotelData[key].startsWith('{'))
+      ) {
+        try {
+          hotelData[key] = JSON.parse(hotelData[key]);
+        } catch (jsonErr) {
+          return res.status(400).json({ error: `Invalid JSON in field "${key}"`, details: jsonErr.message });
+        }
+      }
+    });
+
     // Cast stars to number if present
     if (hotelData.stars) hotelData.stars = Number(hotelData.stars);
 
-    // Convert facilities and roomTypes from comma-separated string to array
-    if (typeof hotelData.facilities === "string")
-      hotelData.facilities = hotelData.facilities.split(',').map(f => f.trim());
-    if (typeof hotelData.roomTypes === "string")
-      hotelData.roomTypes = hotelData.roomTypes.split(',').map(r => r.trim());
+    // Debug log for troubleshooting
+    console.log('hotelData:', hotelData);
+
+    // Validate required fields manually (for debugging)
+    if (!hotelData.type) {
+      return res.status(400).json({ error: 'Missing required field "type"' });
+    }
+    if (!hotelData.name) {
+      return res.status(400).json({ error: 'Missing required field "name"' });
+    }
 
     const hotel = new Hotel(hotelData);
     await hotel.save();
@@ -58,14 +80,24 @@ exports.updateHotel = async (req, res) => {
 
     const hotelData = { ...req.body, images: imageUrls };
 
+    [
+      'roomTypes', 'faqs', 'houseRules', 'location', 'contact',
+      'facilities', 'popularFacilities'
+    ].forEach(key => {
+      if (
+        typeof hotelData[key] === "string" &&
+        (hotelData[key].startsWith('[') || hotelData[key].startsWith('{'))
+      ) {
+        try {
+          hotelData[key] = JSON.parse(hotelData[key]);
+        } catch (jsonErr) {
+          return res.status(400).json({ error: `Invalid JSON in field "${key}"`, details: jsonErr.message });
+        }
+      }
+    });
+
     // Cast stars to number if present
     if (hotelData.stars) hotelData.stars = Number(hotelData.stars);
-
-    // Convert facilities and roomTypes from comma-separated string to array
-    if (typeof hotelData.facilities === "string")
-      hotelData.facilities = hotelData.facilities.split(',').map(f => f.trim());
-    if (typeof hotelData.roomTypes === "string")
-      hotelData.roomTypes = hotelData.roomTypes.split(',').map(r => r.trim());
 
     const hotel = await Hotel.findByIdAndUpdate(req.params.id, hotelData, { new: true });
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
