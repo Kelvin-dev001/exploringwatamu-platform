@@ -48,11 +48,11 @@ export default function NewHotel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const data = new FormData();
       data.append("name", form.name);
       data.append("type", form.type);
-      
       data.append("stars", form.stars);
       data.append("description", form.description);
       data.append("location", JSON.stringify(form.location));
@@ -63,6 +63,16 @@ export default function NewHotel() {
       data.append("houseRules", JSON.stringify(form.houseRules));
       data.append("contact", JSON.stringify(form.contact));
       form.images.forEach(img => data.append("images", img));
+
+      // --- Console logs for debugging ---
+      console.log("Hotel create payload (FormData):");
+      for (let pair of data.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+      console.log("Auth token sent:", token);
+
+      // --- End console logs ---
+
       await axios.post(import.meta.env.VITE_API_URL + "/hotels", data, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -73,7 +83,12 @@ export default function NewHotel() {
         err?.response?.data?.message ||
         "Failed to create hotel. Please check your network and form fields."
       );
+      // --- Console log error details ---
       console.error("Hotel create error:", err);
+      if (err.response) {
+        console.error("Backend error response:", err.response.data);
+      }
+      // --- End console log error details ---
     } finally {
       setLoading(false);
     }
@@ -93,10 +108,42 @@ export default function NewHotel() {
       </div>
       {activeTab === "basic" && (
         <>
-          <input className="input input-bordered w-full mb-3" placeholder="Name" value={form.name} onChange={e => handleChange("name", e.target.value)} required />
-          <input className="input input-bordered w-full mb-3" placeholder="Type" value={form.type} onChange={e => handleChange("type", e.target.value)} required />
-          <input className="input input-bordered w-full mb-3" placeholder="Stars" type="number" min="1" max="5" value={form.stars} onChange={e => handleChange("stars", e.target.value)} required />
-          <textarea className="textarea textarea-bordered w-full mb-3" placeholder="Description" value={form.description} onChange={e => handleChange("description", e.target.value)} required />
+          <input
+            className="input input-bordered w-full mb-3"
+            placeholder="Name"
+            value={form.name}
+            onChange={e => handleChange("name", e.target.value)}
+            required
+          />
+          {/* Updated: Type dropdown */}
+          <select
+            className="input input-bordered w-full mb-3"
+            value={form.type}
+            onChange={e => handleChange("type", e.target.value)}
+            required
+          >
+            <option value="">Select Type</option>
+            <option value="hotel">Hotel</option>
+            <option value="villa">Villa</option>
+            <option value="airbnb">Airbnb</option>
+          </select>
+          <input
+            className="input input-bordered w-full mb-3"
+            placeholder="Stars"
+            type="number"
+            min="1"
+            max="5"
+            value={form.stars}
+            onChange={e => handleChange("stars", e.target.value)}
+            required
+          />
+          <textarea
+            className="textarea textarea-bordered w-full mb-3"
+            placeholder="Description"
+            value={form.description}
+            onChange={e => handleChange("description", e.target.value)}
+            required
+          />
           <div className="mb-3">
             <div className="font-bold mb-1">Location</div>
             <input className="input input-bordered w-full mb-2" placeholder="Address" value={form.location.address} onChange={e => handleNestedChange("location", "address", e.target.value)} />
