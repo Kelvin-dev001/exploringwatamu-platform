@@ -1,9 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import { useAdminAuth } from './context/AdminAuthContext';
 
 // Page imports
 import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './pages/login'; // Import your login page
 // Hotels
 import HotelList from './pages/hotels/HotelList';
 import NewHotel from './pages/hotels/NewHotel';
@@ -38,56 +40,261 @@ import NewTour from './pages/tours/NewTour';
 import EditTour from './pages/tours/EditTour';
 import TourBookingList from './pages/tours/TourBookingList';
 
+// PrivateRoute component to protect authenticated routes
+function PrivateRoute({ children }) {
+  const { isAuthenticated } = useAdminAuth();
+  return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+}
+
 function App() {
   return (
     <Router>
       <Layout>
         <Routes>
-          {/* Admin Dashboard */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          {/* Admin Login Route */}
+          <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Hotels */}
-          <Route path="/hotels" element={<HotelList />} />
-          <Route path="/hotels/new" element={<NewHotel />} />
-          <Route path="/hotels/:id" element={<EditHotel />} />
+          {/* Admin Dashboard (Protected) */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <PrivateRoute>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Transfers */}
-          <Route path="/transfers" element={<TransferList />} />
-          <Route path="/transfers/new" element={<NewTransfer />} />
-          <Route path="/transfers/:id" element={<EditTransfer />} />
-          <Route path="/transferbookings" element={<TransferBookingList />} />
+          {/* Hotels (Protected) */}
+          <Route
+            path="/hotels"
+            element={
+              <PrivateRoute>
+                <HotelList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/hotels/new"
+            element={
+              <PrivateRoute>
+                <NewHotel />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/hotels/:id"
+            element={
+              <PrivateRoute>
+                <EditHotel />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Services */}
-          <Route path="/services" element={<ServiceList />} />
-          <Route path="/services/new" element={<NewService />} />
-          <Route path="/services/:id" element={<EditService />} />
-          <Route path="/servicebookings" element={<ServiceBookingList />} />
+          {/* Transfers (Protected) */}
+          <Route
+            path="/transfers"
+            element={
+              <PrivateRoute>
+                <TransferList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/transfers/new"
+            element={
+              <PrivateRoute>
+                <NewTransfer />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/transfers/:id"
+            element={
+              <PrivateRoute>
+                <EditTransfer />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/transferbookings"
+            element={
+              <PrivateRoute>
+                <TransferBookingList />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Vehicles */}
-          <Route path="/vehicles" element={<VehicleList />} />
-          <Route path="/vehicles/new" element={<NewVehicle />} />
-          <Route path="/vehicles/:id" element={<EditVehicle />} />
+          {/* Services (Protected) */}
+          <Route
+            path="/services"
+            element={
+              <PrivateRoute>
+                <ServiceList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/services/new"
+            element={
+              <PrivateRoute>
+                <NewService />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/services/:id"
+            element={
+              <PrivateRoute>
+                <EditService />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/servicebookings"
+            element={
+              <PrivateRoute>
+                <ServiceBookingList />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Properties */}
-          <Route path="/properties" element={<PropertyList />} />
-          <Route path="/properties/new" element={<NewProperty />} />
-          <Route path="/properties/:id" element={<EditProperty />} />
-          <Route path="/propertyviewingbookings" element={<PropertyViewingBookingList />} />
+          {/* Vehicles (Protected) */}
+          <Route
+            path="/vehicles"
+            element={
+              <PrivateRoute>
+                <VehicleList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/vehicles/new"
+            element={
+              <PrivateRoute>
+                <NewVehicle />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/vehicles/:id"
+            element={
+              <PrivateRoute>
+                <EditVehicle />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Car Hire */}
-          <Route path="/carhire" element={<CarHireList />} />
-          <Route path="/carhire/new" element={<NewCarHire />} />
-          <Route path="/carhire/:id" element={<EditCarHire />} />
-          <Route path="/carhirebookings" element={<CarHireBookingList />} />
+          {/* Properties (Protected) */}
+          <Route
+            path="/properties"
+            element={
+              <PrivateRoute>
+                <PropertyList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/properties/new"
+            element={
+              <PrivateRoute>
+                <NewProperty />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/properties/:id"
+            element={
+              <PrivateRoute>
+                <EditProperty />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/propertyviewingbookings"
+            element={
+              <PrivateRoute>
+                <PropertyViewingBookingList />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Tours */}
-          <Route path="/tours" element={<TourList />} />
-          <Route path="/tours/new" element={<NewTour />} />
-          <Route path="/tours/:id" element={<EditTour />} />
-          <Route path="/tourbookings" element={<TourBookingList />} />
+          {/* Car Hire (Protected) */}
+          <Route
+            path="/carhire"
+            element={
+              <PrivateRoute>
+                <CarHireList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/carhire/new"
+            element={
+              <PrivateRoute>
+                <NewCarHire />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/carhire/:id"
+            element={
+              <PrivateRoute>
+                <EditCarHire />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/carhirebookings"
+            element={
+              <PrivateRoute>
+                <CarHireBookingList />
+              </PrivateRoute>
+            }
+          />
 
-          {/* Default route/fallback */}
-          <Route path="/" element={<AdminDashboard />} />
+          {/* Tours (Protected) */}
+          <Route
+            path="/tours"
+            element={
+              <PrivateRoute>
+                <TourList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tours/new"
+            element={
+              <PrivateRoute>
+                <NewTour />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tours/:id"
+            element={
+              <PrivateRoute>
+                <EditTour />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tourbookings"
+            element={
+              <PrivateRoute>
+                <TourBookingList />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Default route/fallback (Protected) */}
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </Layout>
     </Router>

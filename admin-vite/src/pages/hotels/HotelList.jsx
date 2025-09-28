@@ -51,6 +51,8 @@ export default function HotelsList() {
               <th>Type</th>
               <th>Stars</th>
               <th>Location</th>
+              <th>Popular Facilities</th>
+              <th>Room Types</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -67,9 +69,27 @@ export default function HotelsList() {
                 <td>{hotel.name}</td>
                 <td>{hotel.type}</td>
                 <td>{hotel.stars}</td>
-                <td>{hotel.location}</td>
+                <td>{hotel.location?.address || hotel.location || <span className="text-gray-400">-</span>}</td>
                 <td>
-                  <button className="btn btn-xs btn-info" onClick={() => navigate(`/hotels/${hotel._id}`)}>Edit</button>
+                  {hotel.popularFacilities && hotel.popularFacilities.length > 0
+                    ? hotel.popularFacilities.map((fac, idx) => (
+                        <span key={idx} className="badge badge-info mr-1">{fac}</span>
+                      ))
+                    : <span className="text-gray-400">-</span>
+                  }
+                </td>
+                <td>
+                  {hotel.roomTypes && hotel.roomTypes.length > 0
+                    ? hotel.roomTypes.map((room, idx) =>
+                      <span key={idx} className="badge badge-ghost mr-1">
+                        {room.name || room}
+                      </span>
+                    )
+                    : <span className="text-gray-400">-</span>
+                  }
+                </td>
+                <td>
+                  <button className="btn btn-xs btn-info" onClick={() => navigate(`/hotels/edit/${hotel._id}`)}>Edit</button>
                   <button className="btn btn-xs btn-error ml-2" onClick={() => handleDelete(hotel._id)}>
                     Delete
                   </button>

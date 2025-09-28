@@ -1,52 +1,74 @@
 import React, { useState } from 'react';
-import { useAdminAuth } from '../../context/AdminAuthContext'; // create this context!
+import { useNavigate } from 'react-router-dom';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAdminAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
-      await login(email, password);
-      // TODO: redirect to admin dashboard using your routing logic
+      const success = await login(email, password);
+      setLoading(false);
+      if (success) {
+        navigate('/admin/dashboard');
+      } else {
+        setError('Invalid credentials');
+      }
     } catch (err) {
+      setLoading(false);
       setError(err.message || 'Login failed');
     }
   };
 
   return (
-    <div style={styles.form}>
-      <h2 style={styles.title}>Admin Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="text"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          style={styles.input}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          style={styles.input}
-        />
-        {error && <div style={styles.error}>{error}</div>}
-        <button type="submit" style={styles.button}>Log In</button>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <form
+        onSubmit={handleLogin}
+        className="w-full max-w-sm bg-white rounded-lg shadow p-8"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+        <div className="mb-4">
+          <input
+            type="email"
+            className="input input-bordered w-full"
+            placeholder="Email"
+            autoFocus
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <input
+            type="password"
+            className="input input-bordered w-full"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && (
+          <div className="mb-4 text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
+        <button
+          type="submit"
+          className={`btn btn-primary w-full ${loading ? "loading" : ""}`}
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Log In"}
+        </button>
       </form>
     </div>
   );
 }
-
-const styles = {
-  form: { padding: 30, marginTop: 80, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 18 },
-  input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 7, padding: 10, marginBottom: 12 },
-  button: { width: '100%', backgroundColor: '#24b3b3', borderRadius: 7, padding: 14, color: '#fff', fontWeight: 'bold', fontSize: 16, border: 'none', cursor: 'pointer' },
-  error: { color: '#ff5e5e', marginBottom: 8 },
-};
