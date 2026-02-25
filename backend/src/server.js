@@ -12,6 +12,7 @@ const app = express();
 const defaultAllowedOrigins = [
   'http://localhost:3000',
   'http://localhost:8081',
+  'https://exploringwatamuadmin.vercel.app',
   'https://exploringwatamu.vercel.app' // your Vercel frontend
 ];
 

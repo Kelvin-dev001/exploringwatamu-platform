@@ -4,7 +4,7 @@ import NavigationGrid from '../components/NavigationGrid.jsx';
 import AnnouncementBanner from '../components/AnnouncementBanner.jsx';
 
 export default function Home() {
-  const announcement = "Welcome! Explore new properties for sale and enjoy exclusive offers.";
+  const announcement = "🌴 Welcome! Explore new properties for sale and enjoy exclusive offers.";
 
   return (
     <div
@@ -13,7 +13,7 @@ export default function Home() {
         background: 'linear-gradient(135deg, #24b3b3 0%, #46c3d6 40%, #fbeec1 100%)',
       }}
     >
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <AnnouncementBanner message={announcement} />
         <HeroSection />
         <NavigationGrid />
