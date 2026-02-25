@@ -10,3 +10,21 @@ pnpm-debug.log*
 # Build output
 dist/
 build/
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.production
+.env.development
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Expo
+.expo/

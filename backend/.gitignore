@@ -10,3 +10,8 @@ pnpm-debug.log*
 # Build output
 dist/
 build/
+
+# Environment files — CRITICAL
+.env
+.env.local
+.env.production
