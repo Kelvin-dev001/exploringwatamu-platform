@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../api.js';
 import BookingButtons from '../components/BookingButtons.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 
 export default function Transfers() {
   const [transfers, setTransfers] = useState([]);
@@ -23,14 +24,16 @@ export default function Transfers() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-primary text-center mb-2">Transfers</h1>
-      <p className="text-primary-dark text-center mb-6">Airport & hotel transfers in Watamu.</p>
+    <div className="max-w-4xl mx-auto px-4 py-8" style={{ backgroundColor: '#fbeec1', minHeight: '100vh' }}>
+      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>
+        Transfers
+      </h1>
+      <p className="text-center mb-6" style={{ color: '#1e7575' }}>
+        Airport & hotel transfers in Watamu.
+      </p>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
+        <LoadingSpinner loading={true} />
       ) : error ? (
         <p className="text-center text-gray-500 py-16">{error}</p>
       ) : transfers.length > 0 ? (
@@ -41,9 +44,14 @@ export default function Transfers() {
                 <img src={t.images[0]} alt={t.name} className="w-full h-48 object-cover" />
               )}
               <div className="p-5">
-                <h3 className="text-xl font-bold text-primary">{t.name}</h3>
-                <p className="text-gray-600 text-sm mt-1">{t.description}</p>
-                {t.price && <p className="text-secondary font-semibold mt-2">From ${t.price}</p>}
+                <h3 className="text-xl font-bold" style={{ color: '#24b3b3' }}>{t.name}</h3>
+                <p className="text-gray-600 text-sm mt-1 line-clamp-3">{t.description}</p>
+                {t.price && (
+                  <p className="font-semibold mt-2" style={{ color: '#ffb347' }}>From ${t.price}</p>
+                )}
+                {t.location && (
+                  <p className="text-gray-500 text-xs mt-1">📍 {t.location}</p>
+                )}
                 {(t.whatsapp || t.email) && (
                   <BookingButtons whatsapp={t.whatsapp} email={t.email} />
                 )}

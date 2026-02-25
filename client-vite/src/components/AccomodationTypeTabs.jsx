@@ -8,16 +8,17 @@ const TYPES = [
 
 export default function AccommodationTypeTabs({ selectedType, onSelect }) {
   return (
-    <div className="flex justify-center gap-2 mb-4">
+    <div className="flex justify-center gap-2 mb-4 flex-wrap">
       {TYPES.map((type) => (
         <button
           key={type.key}
           onClick={() => onSelect(type.key)}
-          className={`px-5 py-2 rounded-full border font-medium text-sm transition-colors ${
-            selectedType === type.key
-              ? 'bg-primary text-white border-primary'
-              : 'bg-primary/10 text-primary border-primary hover:bg-primary/20'
-          }`}
+          className="px-5 py-2 rounded-full border font-medium text-sm transition-colors"
+          style={{
+            backgroundColor: selectedType === type.key ? '#24b3b3' : 'rgba(36,179,179,0.1)',
+            color: selectedType === type.key ? '#fff' : '#24b3b3',
+            borderColor: '#24b3b3',
+          }}
         >
           {type.label}
         </button>

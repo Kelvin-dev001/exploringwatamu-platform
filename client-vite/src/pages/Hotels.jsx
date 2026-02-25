@@ -4,6 +4,7 @@ import { API_URL } from '../api.js';
 import AccommodationTypeTabs from '../components/AccommodationTypeTabs.jsx';
 import StarRatingTabs from '../components/StarRatingTabs.jsx';
 import BookingButtons from '../components/BookingButtons.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 
 export default function Hotels() {
   const [accommodations, setAccommodations] = useState([]);
@@ -20,7 +21,7 @@ export default function Hotels() {
         const res = await axios.get(`${API_URL}/hotels`);
         setAccommodations(res.data);
       } catch (err) {
-        setError('Failed to load hotels.');
+        setError('Failed to load accommodations.');
         setAccommodations([]);
       }
       setLoading(false);
@@ -35,9 +36,11 @@ export default function Hotels() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-primary text-center mb-2">Accommodations</h1>
-      <p className="text-primary-dark text-center mb-6">
+    <div className="max-w-4xl mx-auto px-4 py-8" style={{ backgroundColor: '#fbeec1', minHeight: '100vh' }}>
+      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>
+        Accommodations
+      </h1>
+      <p className="text-center mb-6" style={{ color: '#1e7575' }}>
         Find the perfect place to stay in Watamu.
       </p>
 
@@ -45,9 +48,7 @@ export default function Hotels() {
       <StarRatingTabs selectedStar={star} onSelect={setStar} />
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
+        <LoadingSpinner loading={true} />
       ) : error ? (
         <p className="text-center text-gray-500 py-16">{error}</p>
       ) : filtered.length > 0 ? (
@@ -58,11 +59,14 @@ export default function Hotels() {
                 <img src={acc.images[0]} alt={acc.name} className="w-full h-48 object-cover" />
               )}
               <div className="p-5">
-                <h3 className="text-xl font-bold text-primary">{acc.name}</h3>
-                <p className="text-gray-600 text-sm mt-1">{acc.description}</p>
-                <p className="text-secondary font-semibold mt-2">
+                <h3 className="text-xl font-bold" style={{ color: '#24b3b3' }}>{acc.name}</h3>
+                <p className="text-gray-600 text-sm mt-1 line-clamp-3">{acc.description}</p>
+                <p className="font-semibold mt-2" style={{ color: '#ffb347' }}>
                   {'★'.repeat(acc.stars || 0)} · {acc.type}
                 </p>
+                {acc.location && (
+                  <p className="text-gray-500 text-xs mt-1">📍 {acc.location}</p>
+                )}
                 {(acc.whatsapp || acc.email) && (
                   <BookingButtons whatsapp={acc.whatsapp} email={acc.email} />
                 )}

@@ -9,16 +9,17 @@ const STARS = [
 
 export default function StarRatingTabs({ selectedStar, onSelect }) {
   return (
-    <div className="flex justify-center gap-2 mb-6">
+    <div className="flex justify-center gap-2 mb-6 flex-wrap">
       {STARS.map((star) => (
         <button
           key={star.key === null ? 'all' : star.key}
           onClick={() => onSelect(star.key)}
-          className={`px-4 py-2 rounded-full border font-medium text-sm transition-colors ${
-            selectedStar === star.key
-              ? 'bg-primary text-white border-primary'
-              : 'bg-cream text-primary border-primary hover:bg-primary/10'
-          }`}
+          className="px-4 py-2 rounded-full border font-medium text-sm transition-colors"
+          style={{
+            backgroundColor: selectedStar === star.key ? '#24b3b3' : '#fbeec1',
+            color: selectedStar === star.key ? '#fff' : '#24b3b3',
+            borderColor: '#24b3b3',
+          }}
         >
           {star.label}
         </button>

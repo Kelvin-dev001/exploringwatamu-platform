@@ -17,9 +17,9 @@ export default function Layout({ children }) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fbeec1' }}>
       {/* Navbar */}
-      <nav className="bg-primary shadow-lg sticky top-0 z-50">
+      <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: '#24b3b3' }}>
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full" />
@@ -34,11 +34,11 @@ export default function Layout({ children }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === link.to
-                    ? 'bg-white/20 text-white'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: location.pathname === link.to ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  color: location.pathname === link.to ? '#ffffff' : 'rgba(255,255,255,0.8)',
+                }}
               >
                 {link.label}
               </Link>
@@ -56,17 +56,17 @@ export default function Layout({ children }) {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden bg-primary-dark border-t border-white/10">
+          <div className="md:hidden border-t border-white/10" style={{ backgroundColor: '#1e7575' }}>
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setMenuOpen(false)}
-                className={`block px-6 py-3 text-sm font-medium transition-colors ${
-                  location.pathname === link.to
-                    ? 'bg-white/20 text-white'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+                className="block px-6 py-3 text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: location.pathname === link.to ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  color: location.pathname === link.to ? '#ffffff' : 'rgba(255,255,255,0.8)',
+                }}
               >
                 {link.label}
               </Link>
@@ -79,7 +79,7 @@ export default function Layout({ children }) {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="bg-primary-dark text-white/70 text-center py-6 text-sm">
+      <footer className="text-center py-6 text-sm" style={{ backgroundColor: '#1e7575', color: 'rgba(255,255,255,0.7)' }}>
         © {new Date().getFullYear()} Exploring Watamu. All rights reserved.
       </footer>
     </div>
