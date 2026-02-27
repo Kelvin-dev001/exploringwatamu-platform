@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import DynamicFieldArray from "./DynamicFieldArray";
+import { API_URL } from "../../api.js";
 
 export default function EditHotel() {
   const { id } = useParams();
@@ -16,7 +17,7 @@ export default function EditHotel() {
   useEffect(() => {
     const fetchHotel = async () => {
       try {
-        const res = await axios.get(process.env.REACT_APP_API_URL + `/hotels/${id}`);
+        const res = await axios.get(API_URL + `/hotels/${id}`);
         const hotel = res.data;
         setForm({
           name: hotel.name || "",
@@ -72,7 +73,7 @@ export default function EditHotel() {
     data.append("contact", JSON.stringify(form.contact));
     existingImages.forEach(url => data.append("images", url));
     form.images.forEach(img => data.append("images", img));
-    await axios.put(process.env.REACT_APP_API_URL + `/hotels/${id}`, data, {
+    await axios.put(API_URL + `/hotels/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setLoading(false);

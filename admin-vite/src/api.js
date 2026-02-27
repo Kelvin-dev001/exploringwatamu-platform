@@ -1,1 +1,1 @@
-export const API_URL = import.meta.env.VITE_API_URL || "https://exploringwatamu-platform.onrender.com";
+export const API_URL = import.meta.env.VITE_API_URL || "https://snaap-connections.onrender.com/api";

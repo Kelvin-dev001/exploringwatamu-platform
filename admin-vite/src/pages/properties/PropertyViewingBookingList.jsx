@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function PropertyViewingBookingList() {
   const { token } = useAdminAuth();
@@ -12,7 +13,7 @@ export default function PropertyViewingBookingList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/properties")
+    axios.get(API_URL + "/properties")
       .then(res => setProperties(Array.isArray(res.data.data) ? res.data.data : Array.isArray(res.data) ? res.data : []))
       .catch(() => setProperties([]));
   }, []);
@@ -25,7 +26,7 @@ export default function PropertyViewingBookingList() {
         page,
         limit: 10
       });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/propertyviewingbookings?${params}`, {
+      const res = await axios.get(API_URL + `/propertyviewingbookings?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(Array.isArray(res.data.data) ? res.data.data : []);
@@ -47,7 +48,7 @@ export default function PropertyViewingBookingList() {
   const handleCancel = async id => {
     if (!window.confirm("Cancel this booking?")) return;
     try {
-      await axios.put(process.env.REACT_APP_API_URL + `/propertyviewingbookings/${id}/cancel`, {}, {
+      await axios.put(API_URL + `/propertyviewingbookings/${id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookings();

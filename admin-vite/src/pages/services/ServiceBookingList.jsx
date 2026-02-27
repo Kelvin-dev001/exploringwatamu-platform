@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function ServiceBookingList() {
   const { token } = useAdminAuth();
@@ -12,7 +13,7 @@ export default function ServiceBookingList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/services")
+    axios.get(API_URL + "/services")
       .then(res => setServices(Array.isArray(res.data.data) ? res.data.data : Array.isArray(res.data) ? res.data : []))
       .catch(() => setServices([]));
   }, []);
@@ -21,7 +22,7 @@ export default function ServiceBookingList() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ ...filters, page, limit: 10 });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/servicebookings?${params}`, {
+      const res = await axios.get(API_URL + `/servicebookings?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(Array.isArray(res.data.data) ? res.data.data : []);
@@ -38,7 +39,7 @@ export default function ServiceBookingList() {
   const handleCancel = async id => {
     if (!window.confirm("Cancel this booking?")) return;
     try {
-      await axios.put(process.env.REACT_APP_API_URL + `/servicebookings/${id}/cancel`, {}, {
+      await axios.put(API_URL + `/servicebookings/${id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookings();

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function CarHireList() {
   const { token } = useAdminAuth();
@@ -14,7 +15,7 @@ export default function CarHireList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
   }, []);
@@ -27,7 +28,7 @@ export default function CarHireList() {
         page,
         limit: 10
       });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/carhires?${params}`);
+      const res = await axios.get(API_URL + `/carhires?${params}`);
       setCarHires(Array.isArray(res.data.data) ? res.data.data : []);
       setTotalPages(res.data.totalPages || 1);
     } catch {
@@ -47,7 +48,7 @@ export default function CarHireList() {
   const handleDelete = async id => {
     if (!window.confirm("Delete car hire?")) return;
     try {
-      await axios.delete(process.env.REACT_APP_API_URL + `/carhires/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(API_URL + `/carhires/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchCarHires();
     } catch {
       window.alert("Failed to delete car hire.");

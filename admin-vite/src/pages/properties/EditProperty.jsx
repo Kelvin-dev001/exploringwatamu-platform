@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 const TYPES = ["villa", "apartment", "land"];
 
@@ -27,7 +28,7 @@ export default function EditProperty() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + `/properties/${id}`)
+    axios.get(API_URL + `/properties/${id}`)
       .then(res => {
         const p = res.data;
         setForm({
@@ -97,7 +98,7 @@ export default function EditProperty() {
         const uploaded = await uploadToCloudinary(documentFiles, "auto");
         documentUrls = [...form.documents, ...uploaded];
       }
-      await axios.put(process.env.REACT_APP_API_URL + `/properties/${id}`, { ...form, pictures: pictureUrls, documents: documentUrls }, {
+      await axios.put(API_URL + `/properties/${id}`, { ...form, pictures: pictureUrls, documents: documentUrls }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       window.alert("Property updated!");

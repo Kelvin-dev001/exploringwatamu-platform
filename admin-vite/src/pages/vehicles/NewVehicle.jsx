@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function NewVehicle() {
   const [form, setForm] = useState({ name: "", capacity: "", description: "", image: "" });
@@ -35,7 +36,7 @@ export default function NewVehicle() {
     try {
       if (imageFile) imageUrl = await uploadImageToCloudinary(imageFile);
       await axios.post(
-        process.env.REACT_APP_API_URL + "/vehicles",
+        API_URL + "/vehicles",
         { ...form, image: imageUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );

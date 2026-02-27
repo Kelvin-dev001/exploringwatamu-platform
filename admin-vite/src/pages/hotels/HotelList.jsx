@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function HotelsList() {
   const [loading, setLoading] = useState(true);
@@ -12,7 +13,7 @@ export default function HotelsList() {
   const fetchHotels = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(process.env.REACT_APP_API_URL + "/hotels");
+      const res = await axios.get(API_URL + "/hotels");
       setHotels(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       window.alert("Failed to load hotels");
@@ -28,7 +29,7 @@ export default function HotelsList() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete hotel?")) return;
     try {
-      await axios.delete(process.env.REACT_APP_API_URL + `/hotels/${id}`, {
+      await axios.delete(API_URL + `/hotels/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchHotels();

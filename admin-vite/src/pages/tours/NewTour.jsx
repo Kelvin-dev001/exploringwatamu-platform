@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../api.js";
 
 export default function NewTour() {
   const [vehicles, setVehicles] = useState([]);
@@ -28,7 +29,7 @@ export default function NewTour() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles").then(res => setVehicles(res.data));
+    axios.get(API_URL + "/vehicles").then(res => setVehicles(res.data));
   }, []);
 
   // Image upload to cloudinary (multiple images)
@@ -71,7 +72,7 @@ export default function NewTour() {
     if (galleryFiles.length > 0) {
       galleryUrls = await uploadGalleryToCloudinary(galleryFiles);
     }
-    await axios.post(process.env.REACT_APP_API_URL + "/tours", { ...form, gallery: galleryUrls }, {
+    await axios.post(API_URL + "/tours", { ...form, gallery: galleryUrls }, {
       headers: { Authorization: `Bearer ${token}` }
     });
     window.alert("Tour created!");

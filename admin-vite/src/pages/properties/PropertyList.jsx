@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function PropertyList() {
   const [properties, setProperties] = useState([]);
@@ -16,7 +17,7 @@ export default function PropertyList() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ ...filters, page, limit: 10 });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/properties?${params}`);
+      const res = await axios.get(API_URL + `/properties?${params}`);
       setProperties(Array.isArray(res.data.data) ? res.data.data : []);
       setTotalPages(res.data.totalPages || 1);
     } catch {
@@ -31,7 +32,7 @@ export default function PropertyList() {
   const handleDelete = async id => {
     if (!window.confirm("Delete property?")) return;
     try {
-      await axios.delete(process.env.REACT_APP_API_URL + `/properties/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(API_URL + `/properties/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchProperties();
     } catch {
       window.alert("Failed to delete property.");

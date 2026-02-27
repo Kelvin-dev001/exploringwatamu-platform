@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
 import Card from "../components/Card";
 import Button from "../components/Button";
+import { API_URL } from "../api.js";
 
 const CARD_ICONS = {
   Users: "👤",
@@ -40,7 +41,7 @@ export default function AdminDashboard() {
       setLoadingStats(true);
       try {
         const res = await axios.get(
-          process.env.REACT_APP_API_URL + "/admin/stats",
+          API_URL + "/admin/stats",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setStats({
@@ -62,7 +63,7 @@ export default function AdminDashboard() {
       setLoadingBookings(true);
       try {
         const res = await axios.get(
-          process.env.REACT_APP_API_URL + "/admin/recent-bookings",
+          API_URL + "/admin/recent-bookings",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setRecentBookings(Array.isArray(res.data) ? res.data : []);

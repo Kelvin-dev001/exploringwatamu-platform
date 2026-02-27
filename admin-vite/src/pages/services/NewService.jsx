@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../api.js";
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
@@ -56,7 +57,7 @@ export default function NewService() {
     if (galleryFiles.length > 0) {
       galleryUrls = await uploadGalleryToCloudinary(galleryFiles);
     }
-    await axios.post(process.env.REACT_APP_API_URL + "/services", { ...form, gallery: galleryUrls }, {
+    await axios.post(API_URL + "/services", { ...form, gallery: galleryUrls }, {
       headers: { Authorization: `Bearer ${token}` }
     });
     window.alert("Service created!");

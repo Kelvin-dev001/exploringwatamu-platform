@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 const ROUTES = [
   "SGR-Watamu",
@@ -26,10 +27,10 @@ export default function EditTransfer() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
-    axios.get(process.env.REACT_APP_API_URL + `/transfers/${id}`)
+    axios.get(API_URL + `/transfers/${id}`)
       .then(res => {
         const t = res.data;
         setForm({
@@ -50,7 +51,7 @@ export default function EditTransfer() {
     setLoading(true);
     try {
       await axios.put(
-        process.env.REACT_APP_API_URL + `/transfers/${id}`,
+        API_URL + `/transfers/${id}`,
         form,
         { headers: { Authorization: `Bearer ${token}` } }
       );

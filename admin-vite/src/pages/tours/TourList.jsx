@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function TourList() {
   const [tours, setTours] = useState([]);
@@ -14,7 +15,7 @@ export default function TourList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
   }, []);
@@ -27,7 +28,7 @@ export default function TourList() {
         page,
         limit: 10
       });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/tours?${params}`);
+      const res = await axios.get(API_URL + `/tours?${params}`);
       // Defensive: always treat as array
       setTours(Array.isArray(res.data.data) ? res.data.data : []);
       setTotalPages(res.data.totalPages || 1);
@@ -48,7 +49,7 @@ export default function TourList() {
   const handleDelete = async id => {
     if (!window.confirm("Delete tour?")) return;
     try {
-      await axios.delete(process.env.REACT_APP_API_URL + `/tours/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(API_URL + `/tours/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchTours();
     } catch (err) {
       window.alert("Failed to delete tour.");

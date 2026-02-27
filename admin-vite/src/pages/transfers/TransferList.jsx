@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function TransferList() {
   const [transfers, setTransfers] = useState([]);
@@ -16,7 +17,7 @@ export default function TransferList() {
     setLoading(true);
     try {
       const res = await axios.get(
-        process.env.REACT_APP_API_URL + `/transfers?search=${srch}&page=${pg}&limit=10`
+        API_URL + `/transfers?search=${srch}&page=${pg}&limit=10`
       );
       setTransfers(Array.isArray(res.data.data) ? res.data.data : []);
       setPage(res.data.page || 1);
@@ -42,7 +43,7 @@ export default function TransferList() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete transfer?")) return;
     try {
-      await axios.delete(process.env.REACT_APP_API_URL + `/transfers/${id}`, {
+      await axios.delete(API_URL + `/transfers/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchTransfers(page, search);

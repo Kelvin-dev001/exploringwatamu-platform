@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function CarHireBookingList() {
   const { token } = useAdminAuth();
@@ -12,7 +13,7 @@ export default function CarHireBookingList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
   }, []);
@@ -25,7 +26,7 @@ export default function CarHireBookingList() {
         page,
         limit: 10
       });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/carhirebookings?${params}`, {
+      const res = await axios.get(API_URL + `/carhirebookings?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(Array.isArray(res.data.data) ? res.data.data : []);
@@ -47,7 +48,7 @@ export default function CarHireBookingList() {
   const handleCancel = async id => {
     if (!window.confirm("Cancel this booking?")) return;
     try {
-      await axios.put(process.env.REACT_APP_API_URL + `/carhirebookings/${id}/cancel`, {}, {
+      await axios.put(API_URL + `/carhirebookings/${id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookings();
