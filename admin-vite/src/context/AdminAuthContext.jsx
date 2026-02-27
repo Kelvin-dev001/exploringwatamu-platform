@@ -14,7 +14,6 @@ export const AdminAuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      // Use API_URL which already includes /api
       const res = await axios.post(`${API_URL}/admin/login`, { email, password });
       setAdmin(res.data.admin);
       setToken(res.data.token);
