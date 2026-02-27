@@ -1,8 +1,12 @@
 const Tour = require('../models/Tour');
-const Vehicle = require('../models/Vehicle');
 
-// List tours with pagination, advanced search & filters
-// GET /api/tours?name=dolphin&active=true&vehicleId=...&page=1&limit=10
+// Helper to parse JSON strings from FormData
+const parseJSON = (val, fallback = []) => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') { try { return JSON.parse(val); } catch { return fallback; } }
+  return fallback;
+};
+
 exports.getTours = async (req, res) => {
   try {
     const { name, active, vehicleId, page = 1, limit = 10 } = req.query;
@@ -11,66 +15,87 @@ exports.getTours = async (req, res) => {
     if (active !== undefined) query.active = active === "true" || active === true;
     if (vehicleId) query.vehicles = vehicleId;
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const tours = await Tour.find(query)
-      .populate('vehicles')
-      .skip(skip)
-      .limit(parseInt(limit));
+    const tours = await Tour.find(query).populate('vehicles').skip(skip).limit(parseInt(limit));
     const total = await Tour.countDocuments(query);
-    res.json({
-      data: tours,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      total
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch tours' });
-  }
+    res.json({ data: tours, page: parseInt(page), totalPages: Math.ceil(total / limit), total });
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch tours' }); }
 };
 
-// Single tour
 exports.getTour = async (req, res) => {
   try {
     const tour = await Tour.findById(req.params.id).populate('vehicles');
     if (!tour) return res.status(404).json({ error: 'Not found' });
     res.json(tour);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch tour' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch tour' }); }
 };
 
-// Admin: Create tour
 exports.createTour = async (req, res) => {
   try {
-    const tour = new Tour(req.body);
+    const galleryUrls = req.files ? req.files.map(f => f.path) : [];
+
+    // FIX: Filter out empty strings so Mongoose doesn't try to cast "" to ObjectId
+    const vehicleIds = parseJSON(req.body.vehicles).filter(id => id && id.trim() !== '');
+
+    const tourData = {
+      name: req.body.name,
+      description: req.body.description,
+      recommendedTimes: req.body.recommendedTimes || '',
+      duration: req.body.duration || '',
+      highlights: parseJSON(req.body.highlights),
+      whatToCarry: parseJSON(req.body.whatToCarry),
+      vehicles: vehicleIds,
+      gallery: galleryUrls,
+      priceResidentAdult: Number(req.body.priceResidentAdult),
+      priceResidentChild: Number(req.body.priceResidentChild),
+      priceForeignerAdult: Number(req.body.priceForeignerAdult),
+      priceForeignerChild: Number(req.body.priceForeignerChild),
+      active: req.body.active === 'true' || req.body.active === true,
+    };
+    const tour = new Tour(tourData);
     await tour.save();
     res.status(201).json(await tour.populate('vehicles'));
   } catch (err) {
+    console.error("Tour create error:", err);
     res.status(400).json({ error: 'Failed to create tour', details: err.message });
   }
 };
 
-// Admin: Update tour
 exports.updateTour = async (req, res) => {
   try {
-    const tour = await Tour.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('vehicles');
+    const newGalleryUrls = req.files ? req.files.map(f => f.path) : [];
+    const existingGallery = parseJSON(req.body.existingGallery);
+
+    // FIX: Same filter for update
+    const vehicleIds = parseJSON(req.body.vehicles).filter(id => id && id.trim() !== '');
+
+    const tourData = {
+      name: req.body.name,
+      description: req.body.description,
+      recommendedTimes: req.body.recommendedTimes || '',
+      duration: req.body.duration || '',
+      highlights: parseJSON(req.body.highlights),
+      whatToCarry: parseJSON(req.body.whatToCarry),
+      vehicles: vehicleIds,
+      gallery: [...existingGallery, ...newGalleryUrls],
+      priceResidentAdult: Number(req.body.priceResidentAdult),
+      priceResidentChild: Number(req.body.priceResidentChild),
+      priceForeignerAdult: Number(req.body.priceForeignerAdult),
+      priceForeignerChild: Number(req.body.priceForeignerChild),
+      active: req.body.active === 'true' || req.body.active === true,
+    };
+    const tour = await Tour.findByIdAndUpdate(req.params.id, tourData, { new: true, runValidators: true }).populate('vehicles');
     if (!tour) return res.status(404).json({ error: 'Not found' });
     res.json(tour);
   } catch (err) {
+    console.error("Tour update error:", err);
     res.status(400).json({ error: 'Failed to update tour', details: err.message });
   }
 };
 
-// Admin: Delete tour
 exports.deleteTour = async (req, res) => {
   try {
     const tour = await Tour.findByIdAndDelete(req.params.id);
     if (!tour) return res.status(404).json({ error: 'Not found' });
     res.json({ message: "Tour deleted" });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete tour' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Failed to delete tour' }); }
 };

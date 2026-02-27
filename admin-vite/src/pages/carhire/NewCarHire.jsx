@@ -23,11 +23,13 @@ export default function NewCarHire() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(API_URL + "/carhires", form, { headers: { Authorization: `Bearer ${token}` } });
+      // FIX: /carhire (not /carhires) — must match backend route
+      await axios.post(API_URL + "/carhire", form, { headers: { Authorization: `Bearer ${token}` } });
       window.alert("Car hire option created!");
-      navigate("/carhires");
-    } catch {
-      window.alert("Failed to create car hire option.");
+      navigate("/carhire");
+    } catch (err) {
+      console.error("Car hire create error:", err?.response?.data || err);
+      window.alert(err?.response?.data?.error || "Failed to create car hire option.");
     }
     setLoading(false);
   };
@@ -56,7 +58,7 @@ export default function NewCarHire() {
           <span>Active</span>
         </label>
       </div>
-      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`}>Save</button>
+      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`} disabled={loading}>Save</button>
     </form>
   );
 }

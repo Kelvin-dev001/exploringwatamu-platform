@@ -16,7 +16,8 @@ export default function EditCarHire() {
     axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
-    axios.get(API_URL + `/carhires/${id}`)
+    // FIX: /carhire not /carhires
+    axios.get(API_URL + `/carhire/${id}`)
       .then(res => {
         const c = res.data;
         setForm({
@@ -35,11 +36,14 @@ export default function EditCarHire() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.put(API_URL + `/carhires/${id}`, form, { headers: { Authorization: `Bearer ${token}` } });
+      // FIX: /carhire not /carhires
+      await axios.put(API_URL + `/carhire/${id}`, form, { headers: { Authorization: `Bearer ${token}` } });
       window.alert("Car hire option updated!");
-      navigate("/carhires");
-    } catch {
-      window.alert("Failed to update car hire option.");
+      // FIX: /carhire not /carhires
+      navigate("/carhire");
+    } catch (err) {
+      console.error("Car hire update error:", err?.response?.data || err);
+      window.alert(err?.response?.data?.error || "Failed to update car hire option.");
     }
     setLoading(false);
   };
@@ -73,7 +77,7 @@ export default function EditCarHire() {
           <span>Active</span>
         </label>
       </div>
-      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`}>Save</button>
+      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`} disabled={loading}>Save</button>
     </form>
   );
 }
