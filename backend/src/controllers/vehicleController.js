@@ -21,7 +21,14 @@ exports.getVehicle = async (req, res) => {
 
 exports.createVehicle = async (req, res) => {
   try {
-    const vehicle = new Vehicle(req.body);
+    // If multer processed a file, use its Cloudinary URL
+    const imageUrl = req.file ? req.file.path : (req.body.image || '');
+    const vehicle = new Vehicle({
+      name: req.body.name,
+      capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
+      description: req.body.description || '',
+      image: imageUrl,
+    });
     await vehicle.save();
     res.status(201).json(vehicle);
   } catch (err) {
@@ -31,7 +38,19 @@ exports.createVehicle = async (req, res) => {
 
 exports.updateVehicle = async (req, res) => {
   try {
-    const vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const updateData = {
+      name: req.body.name,
+      capacity: req.body.capacity ? Number(req.body.capacity) : undefined,
+      description: req.body.description || '',
+    };
+    // If a new image was uploaded via multer, use it
+    if (req.file) {
+      updateData.image = req.file.path;
+    } else if (req.body.existingImage) {
+      updateData.image = req.body.existingImage;
+    }
+
+    const vehicle = await Vehicle.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
     if (!vehicle) return res.status(404).json({ error: 'Not found' });
     res.json(vehicle);
   } catch (err) {

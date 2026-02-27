@@ -1,15 +1,12 @@
 const mongoose = require('mongoose');
 
-const TourBookingSchema = new mongoose.Schema({
-  tour: { type: mongoose.Schema.Types.ObjectId, ref: 'Tour', required: true },
-  vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle' }, // if applicable
+const ServiceBookingSchema = new mongoose.Schema({
+  service: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
   date: { type: Date, required: true },
-  adults: { type: Number, required: true },
-  children: { type: Number, required: true },
-  isResident: { type: Boolean, required: true },
+  hours: { type: Number }, // for hourly services
   userName: String,
   userContact: String,
   status: { type: String, enum: ["booked", "cancelled"], default: "booked" }
 }, { timestamps: true });
 
-module.exports = mongoose.models.TourBooking || mongoose.model('TourBooking', TourBookingSchema);
+module.exports = mongoose.model('ServiceBooking', ServiceBookingSchema);

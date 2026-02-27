@@ -1,77 +1,90 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { API_URL } from "../../api.js";
 
-export default function EditVehicle() {
-  const { id } = useParams();
-  const [form, setForm] = useState({ name: "", capacity: "", description: "", image: "" });
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function VehicleList() {
+  const [loading, setLoading] = useState(true);
+  const [vehicles, setVehicles] = useState([]);
   const { token } = useAdminAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    axios.get(API_URL + `/vehicles/${id}`)
-      .then(res => {
-        setForm({
-          name: res.data.name || "",
-          capacity: res.data.capacity || "",
-          description: res.data.description || "",
-          image: res.data.image || ""
-        });
-        setPreview(res.data.image || "");
-      })
-      .catch(() => {});
-  }, [id]);
-
-  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    setImageFile(file);
-    setPreview(file ? URL.createObjectURL(file) : (form.image || ""));
-  };
-
-  const uploadImageToCloudinary = async (file) => {
-    if (!file) return form.image;
-    const data = new FormData();
-    data.append("file", file);
-    data.append("upload_preset", "your_upload_preset");
-    const res = await axios.post("https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", data);
-    return res.data.secure_url;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const fetchVehicles = async () => {
     setLoading(true);
-    let imageUrl = form.image;
     try {
-      if (imageFile) imageUrl = await uploadImageToCloudinary(imageFile);
-      await axios.put(
-        API_URL + `/vehicles/${id}`,
-        { ...form, image: imageUrl },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      window.alert("Vehicle updated!");
-      navigate("/vehicles");
-    } catch {
-      window.alert("Failed to update vehicle.");
+      const res = await axios.get(API_URL + "/vehicles");
+      setVehicles(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      window.alert("Failed to load vehicles");
+      setVehicles([]);
     }
     setLoading(false);
   };
 
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete vehicle?")) return;
+    try {
+      await axios.delete(API_URL + `/vehicles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchVehicles();
+    } catch (err) {
+      window.alert("Failed to delete vehicle");
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-lg">Loading...</div>;
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-base-100 p-8 shadow rounded">
-      <h2 className="text-2xl mb-4 font-bold">Edit Vehicle</h2>
-      <input className="input input-bordered w-full mb-3" placeholder="Name" value={form.name} onChange={e => handleChange("name", e.target.value)} required />
-      <input type="number" className="input input-bordered w-full mb-3" placeholder="Capacity" value={form.capacity} onChange={e => handleChange("capacity", e.target.value)} required />
-      <textarea className="textarea textarea-bordered w-full mb-3" placeholder="Description" value={form.description} onChange={e => handleChange("description", e.target.value)} />
-      <input type="file" accept="image/*" onChange={handleImageUpload} className="file-input file-input-bordered w-full mb-3" />
-      {preview && <img src={preview} alt="preview" className="w-32 h-20 object-cover rounded mb-3" />}
-      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`} disabled={loading}>Save</button>
-    </form>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Vehicles</h1>
+        <button className="btn btn-primary" onClick={() => navigate("/vehicles/new")}>Add Vehicle</button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Capacity</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {vehicles.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center text-gray-400">No vehicles found.</td>
+              </tr>
+            ) : (
+              vehicles.map((v) => (
+                <tr key={v._id}>
+                  <td>
+                    {v.image ? (
+                      <img src={v.image} alt={v.name} className="w-16 h-12 object-cover rounded" />
+                    ) : (
+                      <span className="text-gray-400">No image</span>
+                    )}
+                  </td>
+                  <td>{v.name}</td>
+                  <td>{v.capacity || "-"}</td>
+                  <td className="max-w-xs truncate">{v.description || "-"}</td>
+                  <td>
+                    <button className="btn btn-xs btn-info" onClick={() => navigate(`/vehicles/${v._id}`)}>Edit</button>
+                    <button className="btn btn-xs btn-error ml-2" onClick={() => handleDelete(v._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
