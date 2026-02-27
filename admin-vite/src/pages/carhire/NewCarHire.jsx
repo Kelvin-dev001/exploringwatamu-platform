@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../api.js";
 
 export default function NewCarHire() {
   const [vehicles, setVehicles] = useState([]);
@@ -11,7 +12,7 @@ export default function NewCarHire() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
   }, []);
@@ -22,7 +23,7 @@ export default function NewCarHire() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(process.env.REACT_APP_API_URL + "/carhires", form, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(API_URL + "/carhires", form, { headers: { Authorization: `Bearer ${token}` } });
       window.alert("Car hire option created!");
       navigate("/carhires");
     } catch {

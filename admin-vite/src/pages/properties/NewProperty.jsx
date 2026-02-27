@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../api.js";
 
 export default function NewProperty() {
   const [form, setForm] = useState({
@@ -61,7 +62,7 @@ export default function NewProperty() {
       if (documentFiles.length > 0) {
         documentUrls = await uploadToCloudinary(documentFiles, "auto");
       }
-      await axios.post(process.env.REACT_APP_API_URL + "/properties", { ...form, pictures: pictureUrls, documents: documentUrls }, {
+      await axios.post(API_URL + "/properties", { ...form, pictures: pictureUrls, documents: documentUrls }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       window.alert("Property created!");

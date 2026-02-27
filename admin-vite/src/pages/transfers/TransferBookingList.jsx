@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function TransferBookingList() {
   const { token } = useAdminAuth();
@@ -12,7 +13,7 @@ export default function TransferBookingList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/transfers")
+    axios.get(API_URL + "/transfers")
       .then(res => setTransfers(Array.isArray(res.data.data) ? res.data.data : Array.isArray(res.data) ? res.data : []))
       .catch(() => setTransfers([]));
   }, []);
@@ -25,7 +26,7 @@ export default function TransferBookingList() {
         page,
         limit: 10
       });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/transferbookings?${params}`, {
+      const res = await axios.get(API_URL + `/transferbookings?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(Array.isArray(res.data.data) ? res.data.data : []);
@@ -47,7 +48,7 @@ export default function TransferBookingList() {
   const handleCancel = async id => {
     if (!window.confirm("Cancel this booking?")) return;
     try {
-      await axios.put(process.env.REACT_APP_API_URL + `/transferbookings/${id}/cancel`, {}, {
+      await axios.put(API_URL + `/transferbookings/${id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookings();

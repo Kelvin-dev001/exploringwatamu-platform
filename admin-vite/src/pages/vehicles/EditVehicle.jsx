@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function EditVehicle() {
   const { id } = useParams();
@@ -12,7 +13,7 @@ export default function EditVehicle() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + `/vehicles/${id}`).then(res => {
+    axios.get(API_URL + `/vehicles/${id}`).then(res => {
       setForm(res.data);
       setPreview(res.data.image || "");
     });
@@ -40,7 +41,7 @@ export default function EditVehicle() {
     let imageUrl = form.image;
     if (imageFile) imageUrl = await uploadImageToCloudinary(imageFile);
     await axios.put(
-      process.env.REACT_APP_API_URL + `/vehicles/${id}`,
+      API_URL + `/vehicles/${id}`,
       { ...form, image: imageUrl },
       { headers: { Authorization: `Bearer ${token}` } }
     );

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
@@ -24,7 +25,7 @@ export default function EditService() {
   const [galleryPreview, setGalleryPreview] = useState([]);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + `/services/${id}`).then(res => {
+    axios.get(API_URL + `/services/${id}`).then(res => {
       const s = res.data;
       setForm({
         name: s.name,
@@ -84,7 +85,7 @@ export default function EditService() {
       const uploaded = await uploadGalleryToCloudinary(galleryFiles);
       galleryUrls = [...form.gallery, ...uploaded];
     }
-    await axios.put(process.env.REACT_APP_API_URL + `/services/${id}`, { ...form, gallery: galleryUrls }, {
+    await axios.put(API_URL + `/services/${id}`, { ...form, gallery: galleryUrls }, {
       headers: { Authorization: `Bearer ${token}` }
     });
     window.alert("Service updated!");

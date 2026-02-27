@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import '../../index.css';
+import { API_URL } from "../../api.js";
 
 const ROUTES = [
   "SGR-Watamu",
@@ -26,7 +27,7 @@ export default function NewTransfer() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
   }, []);
@@ -38,7 +39,7 @@ export default function NewTransfer() {
     setLoading(true);
     try {
       await axios.post(
-        process.env.REACT_APP_API_URL + "/transfers",
+        API_URL + "/transfers",
         form,
         { headers: { Authorization: `Bearer ${token}` } }
       );

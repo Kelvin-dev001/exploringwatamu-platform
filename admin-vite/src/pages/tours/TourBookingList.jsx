@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function TourBookingList() {
   const { token } = useAdminAuth();
@@ -13,10 +14,10 @@ export default function TourBookingList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/tours")
+    axios.get(API_URL + "/tours")
       .then(res => setTours(Array.isArray(res.data.data) ? res.data.data : []))
       .catch(() => setTours([]));
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
   }, []);
@@ -29,7 +30,7 @@ export default function TourBookingList() {
         page,
         limit: 10
       });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/tourbookings?${params}`, {
+      const res = await axios.get(API_URL + `/tourbookings?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(Array.isArray(res.data.data) ? res.data.data : []);
@@ -51,7 +52,7 @@ export default function TourBookingList() {
   const handleCancel = async id => {
     if (!window.confirm("Cancel this booking?")) return;
     try {
-      await axios.put(process.env.REACT_APP_API_URL + `/tourbookings/${id}/cancel`, {}, {
+      await axios.put(API_URL + `/tourbookings/${id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookings();

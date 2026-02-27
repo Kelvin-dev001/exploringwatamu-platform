@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 import DynamicFieldArray from "./DynamicFieldArray";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -73,7 +74,7 @@ export default function NewHotel() {
 
       // --- End console logs ---
 
-      await axios.post(import.meta.env.VITE_API_URL + "/hotels", data, {
+      await axios.post(API_URL + "/hotels", data, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Hotel created!");

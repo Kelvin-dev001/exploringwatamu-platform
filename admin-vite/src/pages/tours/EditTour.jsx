@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function EditTour() {
   const { id } = useParams();
@@ -31,10 +32,10 @@ export default function EditTour() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(process.env.REACT_APP_API_URL + "/vehicles")
+    axios.get(API_URL + "/vehicles")
       .then(res => setVehicles(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVehicles([]));
-    axios.get(process.env.REACT_APP_API_URL + `/tours/${id}`)
+    axios.get(API_URL + `/tours/${id}`)
       .then(res => {
         const t = res.data;
         setForm({
@@ -116,7 +117,7 @@ export default function EditTour() {
       galleryUrls = [...form.gallery, ...uploaded];
     }
     try {
-      await axios.put(process.env.REACT_APP_API_URL + `/tours/${id}`,
+      await axios.put(API_URL + `/tours/${id}`,
         { ...form, gallery: galleryUrls },
         { headers: { Authorization: `Bearer ${token}` } }
       );

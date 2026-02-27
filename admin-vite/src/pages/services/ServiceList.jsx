@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { API_URL } from "../../api.js";
 
 export default function ServiceList() {
   const [services, setServices] = useState([]);
@@ -16,7 +17,7 @@ export default function ServiceList() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ ...filters, page, limit: 10 });
-      const res = await axios.get(process.env.REACT_APP_API_URL + `/services?${params}`);
+      const res = await axios.get(API_URL + `/services?${params}`);
       setServices(Array.isArray(res.data.data) ? res.data.data : Array.isArray(res.data) ? res.data : []);
       setTotalPages(res.data.totalPages || 1);
     } catch {
@@ -31,7 +32,7 @@ export default function ServiceList() {
   const handleDelete = async id => {
     if (!window.confirm("Delete service?")) return;
     try {
-      await axios.delete(process.env.REACT_APP_API_URL + `/services/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(API_URL + `/services/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchServices();
     } catch {
       window.alert("Failed to delete service.");
