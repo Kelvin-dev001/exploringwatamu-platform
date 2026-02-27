@@ -5,7 +5,7 @@ import { useAdminAuth } from "../../context/AdminAuthContext";
 import { API_URL } from "../../api.js";
 
 export default function NewVehicle() {
-  const [form, setForm] = useState({ name: "", capacity: "", description: "", image: "" });
+  const [form, setForm] = useState({ name: "", capacity: "", description: "" });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,30 +20,24 @@ export default function NewVehicle() {
     setPreview(file ? URL.createObjectURL(file) : "");
   };
 
-  const uploadImageToCloudinary = async (file) => {
-    if (!file) return "";
-    const data = new FormData();
-    data.append("file", file);
-    data.append("upload_preset", "your_upload_preset");
-    const res = await axios.post("https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", data);
-    return res.data.secure_url;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    let imageUrl = form.image;
     try {
-      if (imageFile) imageUrl = await uploadImageToCloudinary(imageFile);
-      await axios.post(
-        API_URL + "/vehicles",
-        { ...form, image: imageUrl },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const data = new FormData();
+      data.append("name", form.name);
+      data.append("capacity", form.capacity);
+      data.append("description", form.description);
+      if (imageFile) data.append("image", imageFile);
+
+      await axios.post(API_URL + "/vehicles", data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       window.alert("Vehicle created!");
       navigate("/vehicles");
-    } catch {
-      window.alert("Failed to create vehicle.");
+    } catch (err) {
+      console.error("Vehicle create error:", err?.response?.data || err);
+      window.alert(err?.response?.data?.error || "Failed to create vehicle.");
     }
     setLoading(false);
   };

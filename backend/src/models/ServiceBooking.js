@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const ServiceBookingSchema = new mongoose.Schema({
   service: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
   date: { type: Date, required: true },
-  hours: { type: Number }, // for hourly services
+  time: { type: String },
+  duration: { type: Number },
   userName: String,
   userContact: String,
   status: { type: String, enum: ["booked", "cancelled"], default: "booked" }

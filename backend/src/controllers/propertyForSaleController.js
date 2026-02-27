@@ -1,5 +1,12 @@
 const PropertyForSale = require('../models/PropertyForSale');
 
+// Helper to parse JSON strings from FormData
+const parseJSON = (val, fallback = []) => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') { try { return JSON.parse(val); } catch { return fallback; } }
+  return fallback;
+};
+
 // List properties with filter, pagination, and type
 exports.getProperties = async (req, res) => {
   try {
@@ -39,7 +46,25 @@ exports.getProperty = async (req, res) => {
 // Admin: Create property
 exports.createProperty = async (req, res) => {
   try {
-    const property = new PropertyForSale(req.body);
+    // req.files comes from upload.fields([{name:'pictures'},{name:'documents'}])
+    const pictureUrls = req.files && req.files.pictures
+      ? req.files.pictures.map(f => f.path)
+      : [];
+    const documentUrls = req.files && req.files.documents
+      ? req.files.documents.map(f => f.path)
+      : [];
+
+    const propertyData = {
+      type: req.body.type,
+      name: req.body.name,
+      description: req.body.description,
+      location: req.body.location,
+      price: Number(req.body.price),
+      pictures: pictureUrls,
+      documents: documentUrls,
+      active: req.body.active === 'true' || req.body.active === true,
+    };
+    const property = new PropertyForSale(propertyData);
     await property.save();
     res.status(201).json(property);
   } catch (err) {
@@ -50,9 +75,28 @@ exports.createProperty = async (req, res) => {
 // Admin: Update property
 exports.updateProperty = async (req, res) => {
   try {
+    const newPictureUrls = req.files && req.files.pictures
+      ? req.files.pictures.map(f => f.path)
+      : [];
+    const newDocumentUrls = req.files && req.files.documents
+      ? req.files.documents.map(f => f.path)
+      : [];
+    const existingPictures = parseJSON(req.body.existingPictures);
+    const existingDocuments = parseJSON(req.body.existingDocuments);
+
+    const propertyData = {
+      type: req.body.type,
+      name: req.body.name,
+      description: req.body.description,
+      location: req.body.location,
+      price: Number(req.body.price),
+      pictures: [...existingPictures, ...newPictureUrls],
+      documents: [...existingDocuments, ...newDocumentUrls],
+      active: req.body.active === 'true' || req.body.active === true,
+    };
     const property = await PropertyForSale.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      propertyData,
       { new: true, runValidators: true }
     );
     if (!property) return res.status(404).json({ error: 'Not found' });

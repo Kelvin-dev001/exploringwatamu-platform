@@ -1,5 +1,12 @@
 const Service = require('../models/Service');
 
+// Helper to parse JSON strings from FormData
+const parseJSON = (val, fallback = []) => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') { try { return JSON.parse(val); } catch { return fallback; } }
+  return fallback;
+};
+
 // List services with pagination, search, and filter
 exports.getServices = async (req, res) => {
   try {
@@ -39,7 +46,18 @@ exports.getService = async (req, res) => {
 // Admin: Create service
 exports.createService = async (req, res) => {
   try {
-    const service = new Service(req.body);
+    const galleryUrls = req.files ? req.files.map(f => f.path) : [];
+    const serviceData = {
+      name: req.body.name,
+      description: req.body.description,
+      pricingType: req.body.pricingType,
+      price: Number(req.body.price),
+      availableDays: parseJSON(req.body.availableDays),
+      availableHours: parseJSON(req.body.availableHours, { start: '', end: '' }),
+      gallery: galleryUrls,
+      active: req.body.active === 'true' || req.body.active === true,
+    };
+    const service = new Service(serviceData);
     await service.save();
     res.status(201).json(service);
   } catch (err) {
@@ -50,9 +68,21 @@ exports.createService = async (req, res) => {
 // Admin: Update service
 exports.updateService = async (req, res) => {
   try {
+    const newGalleryUrls = req.files ? req.files.map(f => f.path) : [];
+    const existingGallery = parseJSON(req.body.existingGallery);
+    const serviceData = {
+      name: req.body.name,
+      description: req.body.description,
+      pricingType: req.body.pricingType,
+      price: Number(req.body.price),
+      availableDays: parseJSON(req.body.availableDays),
+      availableHours: parseJSON(req.body.availableHours, { start: '', end: '' }),
+      gallery: [...existingGallery, ...newGalleryUrls],
+      active: req.body.active === 'true' || req.body.active === true,
+    };
     const service = await Service.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      serviceData,
       { new: true, runValidators: true }
     );
     if (!service) return res.status(404).json({ error: 'Not found' });

@@ -9,14 +9,20 @@ export default function EditVehicle() {
   const [form, setForm] = useState({ name: "", capacity: "", description: "", image: "" });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState("");
+  const [loading, setLoading] = useState(false);
   const { token } = useAdminAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     axios.get(API_URL + `/vehicles/${id}`).then(res => {
-      setForm(res.data);
+      setForm({
+        name: res.data.name || "",
+        capacity: res.data.capacity || "",
+        description: res.data.description || "",
+        image: res.data.image || ""
+      });
       setPreview(res.data.image || "");
-    });
+    }).catch(() => {});
   }, [id]);
 
   const handleChange = (field, value) => setForm({ ...form, [field]: value });
@@ -27,37 +33,41 @@ export default function EditVehicle() {
     setPreview(file ? URL.createObjectURL(file) : (form.image || ""));
   };
 
-  const uploadImageToCloudinary = async (file) => {
-    if (!file) return form.image;
-    const data = new FormData();
-    data.append("file", file);
-    data.append("upload_preset", "your_upload_preset");
-    const res = await axios.post("https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", data);
-    return res.data.secure_url;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let imageUrl = form.image;
-    if (imageFile) imageUrl = await uploadImageToCloudinary(imageFile);
-    await axios.put(
-      API_URL + `/vehicles/${id}`,
-      { ...form, image: imageUrl },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    window.alert("Vehicle updated!");
-    navigate("/vehicles");
+    setLoading(true);
+    try {
+      const data = new FormData();
+      data.append("name", form.name);
+      data.append("capacity", form.capacity);
+      data.append("description", form.description);
+      if (imageFile) {
+        data.append("image", imageFile);
+      } else {
+        data.append("existingImage", form.image);
+      }
+
+      await axios.put(API_URL + `/vehicles/${id}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      window.alert("Vehicle updated!");
+      navigate("/vehicles");
+    } catch (err) {
+      console.error("Vehicle update error:", err?.response?.data || err);
+      window.alert(err?.response?.data?.error || "Failed to update vehicle.");
+    }
+    setLoading(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: 32, maxWidth: 600 }}>
-      <h2>Edit Vehicle</h2>
-      <input placeholder="Name" value={form.name} onChange={e => handleChange("name", e.target.value)} required style={{ width: "100%", marginBottom: 12 }} />
-      <input type="number" placeholder="Capacity" value={form.capacity} onChange={e => handleChange("capacity", e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
-      <textarea placeholder="Description" value={form.description} onChange={e => handleChange("description", e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
-      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: 12 }} />
-      {preview && <img src={preview} alt="preview" style={{ width: 120, height: 80, objectFit: "cover", marginBottom: 12 }} />}
-      <button type="submit">Save</button>
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto bg-base-100 p-8 shadow rounded">
+      <h2 className="text-2xl mb-4 font-bold">Edit Vehicle</h2>
+      <input className="input input-bordered w-full mb-3" placeholder="Name" value={form.name} onChange={e => handleChange("name", e.target.value)} required />
+      <input type="number" className="input input-bordered w-full mb-3" placeholder="Capacity" value={form.capacity} onChange={e => handleChange("capacity", e.target.value)} />
+      <textarea className="textarea textarea-bordered w-full mb-3" placeholder="Description" value={form.description} onChange={e => handleChange("description", e.target.value)} />
+      <input type="file" accept="image/*" onChange={handleImageUpload} className="file-input file-input-bordered w-full mb-3" />
+      {preview && <img src={preview} alt="preview" className="w-32 h-20 object-cover rounded mb-3" />}
+      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`} disabled={loading}>Save</button>
     </form>
   );
 }
