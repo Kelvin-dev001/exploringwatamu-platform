@@ -8,12 +8,16 @@ connectDB();
 
 const app = express();
 
-// Default allowed origins (add more as needed)
+// Default allowed origins — ADD ALL YOUR ACTUAL VERCEL DOMAINS
 const defaultAllowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:5173',
   'http://localhost:8081',
+  // Admin portal domains
   'https://exploringwatamuadmin.vercel.app',
-  'https://exploringwatamu.vercel.app' // your Vercel frontend
+  // Client portal domains — add ALL variations
+  'https://exploringwatamu.vercel.app',
+  'https://exploringwatamu-platform.vercel.app',
 ];
 
 // Optional: allow adding extra origins via env var FRONTEND_URLS (comma separated)
@@ -27,11 +31,11 @@ console.log('[server] CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests like curl/postman or server-to-server without origin
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
+    console.log('[CORS] Blocked origin:', origin);
     const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
     return callback(new Error(msg), false);
   },
@@ -52,8 +56,6 @@ app.use('/api/tourbookings', require('./routes/tourBookingRoutes'));
 app.use('/api/servicebookings', require('./routes/serviceBookingRoutes'));
 app.use('/api/properties', require('./routes/propertyForSaleRoutes'));
 app.use('/api/propertyviewings', require('./routes/propertyViewingBookingRoutes'));
-
-// **Add this line for admin authentication**
 app.use('/api/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 5000;

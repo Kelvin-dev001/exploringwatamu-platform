@@ -70,7 +70,13 @@ export default function HotelsList() {
                 <td>{hotel.name}</td>
                 <td>{hotel.type}</td>
                 <td>{hotel.stars}</td>
-                <td>{hotel.location?.address || hotel.location || <span className="text-gray-400">-</span>}</td>
+                {/* FIX: Never render hotel.location directly — it's an object! */}
+                <td>
+                  {typeof hotel.location === 'string'
+                    ? hotel.location
+                    : hotel.location?.address || <span className="text-gray-400">-</span>
+                  }
+                </td>
                 <td>
                   {hotel.popularFacilities && hotel.popularFacilities.length > 0
                     ? hotel.popularFacilities.map((fac, idx) => (
@@ -83,14 +89,14 @@ export default function HotelsList() {
                   {hotel.roomTypes && hotel.roomTypes.length > 0
                     ? hotel.roomTypes.map((room, idx) =>
                       <span key={idx} className="badge badge-ghost mr-1">
-                        {room.name || room}
+                        {typeof room === 'string' ? room : room.name || '-'}
                       </span>
                     )
                     : <span className="text-gray-400">-</span>
                   }
                 </td>
                 <td>
-                  <button className="btn btn-xs btn-info" onClick={() => navigate(`/hotels/edit/${hotel._id}`)}>Edit</button>
+                  <button className="btn btn-xs btn-info" onClick={() => navigate(`/hotels/${hotel._id}`)}>Edit</button>
                   <button className="btn btn-xs btn-error ml-2" onClick={() => handleDelete(hotel._id)}>
                     Delete
                   </button>

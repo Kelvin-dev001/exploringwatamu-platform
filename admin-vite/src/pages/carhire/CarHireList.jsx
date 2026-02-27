@@ -28,9 +28,16 @@ export default function CarHireList() {
         page,
         limit: 10
       });
-      const res = await axios.get(API_URL + `/carhires?${params}`);
-      setCarHires(Array.isArray(res.data.data) ? res.data.data : []);
-      setTotalPages(res.data.totalPages || 1);
+      // FIX: /carhire not /carhires (must match backend route)
+      const res = await axios.get(API_URL + `/carhire?${params}`);
+      // Handle both array response and paginated response
+      if (Array.isArray(res.data)) {
+        setCarHires(res.data);
+        setTotalPages(1);
+      } else {
+        setCarHires(Array.isArray(res.data.data) ? res.data.data : []);
+        setTotalPages(res.data.totalPages || 1);
+      }
     } catch {
       setCarHires([]);
       setTotalPages(1);
@@ -48,7 +55,8 @@ export default function CarHireList() {
   const handleDelete = async id => {
     if (!window.confirm("Delete car hire?")) return;
     try {
-      await axios.delete(API_URL + `/carhires/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      // FIX: /carhire not /carhires
+      await axios.delete(API_URL + `/carhire/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchCarHires();
     } catch {
       window.alert("Failed to delete car hire.");
@@ -59,7 +67,8 @@ export default function CarHireList() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Car Hire Options</h1>
-        <button className="btn btn-primary" onClick={() => navigate("/carhires/new")}>Add Car Hire Option</button>
+        {/* FIX: /carhire/new not /carhires/new */}
+        <button className="btn btn-primary" onClick={() => navigate("/carhire/new")}>Add Car Hire Option</button>
       </div>
       <div className="card bg-base-100 shadow-md mb-8 p-6">
         <div className="flex flex-wrap gap-4 items-end">
@@ -107,19 +116,22 @@ export default function CarHireList() {
               carHires.map(c => (
                 <tr key={c._id}>
                   <td>
-                    {c.vehicle?.image && <img src={c.vehicle.image} alt={c.vehicle.name} className="w-16 h-10 object-cover rounded" />}
+                    {(c.vehicle?.image || (c.images && c.images[0])) && (
+                      <img src={c.vehicle?.image || c.images[0]} alt={c.vehicle?.name || c.name} className="w-16 h-10 object-cover rounded" />
+                    )}
                   </td>
-                  <td>{c.vehicle?.name}</td>
-                  <td>${c.dailyRate}</td>
-                  <td>{c.vehicle?.capacity || "-"}</td>
+                  <td>{c.vehicle?.name || c.name || "-"}</td>
+                  <td>${c.dailyRate || c.price || "-"}</td>
+                  <td>{c.vehicle?.capacity || c.capacity || "-"}</td>
                   <td>{c.description || "-"}</td>
                   <td>
-                    <span className={`badge ${c.active ? "badge-success" : "badge-error"} badge-sm`}>
-                      {c.active ? "Yes" : "No"}
+                    <span className={`badge ${c.active !== false ? "badge-success" : "badge-error"} badge-sm`}>
+                      {c.active !== false ? "Yes" : "No"}
                     </span>
                   </td>
                   <td>
-                    <button className="btn btn-xs btn-info" onClick={() => navigate(`/carhires/${c._id}`)}>Edit</button>
+                    {/* FIX: /carhire/ not /carhires/ */}
+                    <button className="btn btn-xs btn-info" onClick={() => navigate(`/carhire/${c._id}`)}>Edit</button>
                     <button className="btn btn-xs btn-error ml-2" onClick={() => handleDelete(c._id)}>Delete</button>
                   </td>
                 </tr>
