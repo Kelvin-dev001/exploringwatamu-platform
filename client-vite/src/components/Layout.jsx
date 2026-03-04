@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaBars, FaTimes, FaHome, FaBed, FaCar, FaMap, FaStar, FaCarSide, FaBuilding } from 'react-icons/fa';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaBars, FaTimes, FaHome, FaBed, FaCar, FaMap, FaStar, FaCarSide, FaBuilding, FaUsers, FaRoute } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const navLinks = [
   { to: '/', label: 'Home', icon: <FaHome /> },
@@ -10,11 +11,14 @@ const navLinks = [
   { to: '/services', label: 'Services', icon: <FaStar /> },
   { to: '/carhire', label: 'Car Hire', icon: <FaCarSide /> },
   { to: '/properties-for-sale', label: 'Properties', icon: <FaBuilding /> },
+  { to: '/group-trips', label: 'Group Trips', icon: <FaUsers /> },
 ];
 
 export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   // Close menu on route change
   useEffect(() => {
@@ -58,6 +62,33 @@ export default function Layout({ children }) {
                 {link.label}
               </Link>
             ))}
+            {user ? (
+              <>
+                <Link
+                  to="/my-trips"
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1"
+                  style={{
+                    backgroundColor: location.pathname === '/my-trips' ? 'rgba(255,255,255,0.2)' : 'transparent',
+                    color: location.pathname === '/my-trips' ? '#ffffff' : 'rgba(255,255,255,0.85)',
+                  }}
+                >
+                  <FaRoute /> My Trips
+                </Link>
+                <button
+                  onClick={() => { logout(); navigate('/'); }}
+                  className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="ml-1 px-4 py-2 rounded-lg text-sm font-semibold text-white border border-white/30 hover:bg-white/10 transition-all duration-200"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
 
           {/* Hamburger button */}
@@ -114,6 +145,39 @@ export default function Layout({ children }) {
               {link.label}
             </Link>
           ))}
+          {user ? (
+            <>
+              <Link
+                to="/my-trips"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-5 py-3.5 text-base font-medium transition-all duration-200"
+                style={{
+                  backgroundColor: location.pathname === '/my-trips' ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  color: location.pathname === '/my-trips' ? '#ffffff' : 'rgba(255,255,255,0.8)',
+                  borderLeft: location.pathname === '/my-trips' ? '3px solid #ffb347' : '3px solid transparent',
+                }}
+              >
+                <span className="text-lg"><FaRoute /></span>
+                My Trips
+              </Link>
+              <button
+                onClick={() => { logout(); navigate('/'); setMenuOpen(false); }}
+                className="flex items-center gap-3 px-5 py-3.5 text-base font-medium w-full text-left"
+                style={{ color: 'rgba(255,255,255,0.7)', borderLeft: '3px solid transparent' }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-3 px-5 py-3.5 text-base font-medium"
+              style={{ color: '#ffb347', borderLeft: '3px solid transparent' }}
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
 
