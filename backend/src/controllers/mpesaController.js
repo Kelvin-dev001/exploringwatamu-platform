@@ -117,34 +117,18 @@ exports.mpesaCallback = async (req, res) => {
         await booking.save();
 
         // Atomic slot increment with race condition prevention
-        const tripForSlot = await GroupTrip.findById(booking.trip);
-        if (tripForSlot) {
-          const updatedTrip = await GroupTrip.findOneAndUpdate(
-            { _id: booking.trip, confirmedParticipants: { $lt: tripForSlot.maxParticipants } },
-            { $inc: { confirmedParticipants: 1 } },
-            { new: true }
-          );
+        const updatedTrip = await GroupTrip.findOneAndUpdate(
+          { _id: booking.trip, $expr: { $lt: ['$confirmedParticipants', '$maxParticipants'] } },
+          { $inc: { confirmedParticipants: 1 } },
+          { new: true }
+        );
 
-          if (!updatedTrip) {
-            // Fallback: try a direct increment regardless (trip might already be full)
-            console.warn('[mpesa callback] Atomic slot update returned null — trip may be full. Attempting direct update.');
-            const trip = await GroupTrip.findById(booking.trip);
-            if (trip) {
-              if (trip.confirmedParticipants < trip.maxParticipants) {
-                trip.confirmedParticipants += 1;
-                if (trip.confirmedParticipants >= trip.maxParticipants) {
-                  trip.status = 'full';
-                }
-                await trip.save();
-              } else {
-                console.warn('[mpesa callback] Trip is genuinely full. Booking confirmed but slot not incremented.');
-              }
-            }
-          } else {
-            // Check if trip is now full after increment
-            if (updatedTrip.confirmedParticipants >= updatedTrip.maxParticipants) {
-              await GroupTrip.findByIdAndUpdate(updatedTrip._id, { status: 'full' });
-            }
+        if (!updatedTrip) {
+          console.warn('[mpesa callback] Trip is full or not found. Booking confirmed but slot not incremented.');
+        } else {
+          // Check if trip is now full after increment
+          if (updatedTrip.confirmedParticipants >= updatedTrip.maxParticipants) {
+            await GroupTrip.findByIdAndUpdate(updatedTrip._id, { status: 'full' });
           }
         }
 

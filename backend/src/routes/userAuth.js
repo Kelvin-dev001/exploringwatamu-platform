@@ -1,11 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const authUser = require('../middleware/authUser');
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
     if (!name || !email || !password) {
@@ -27,7 +36,7 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -50,7 +59,7 @@ router.post('/login', async (req, res) => {
 });
 
 // GET /api/auth/me — protected
-router.get('/me', authUser, async (req, res) => {
+router.get('/me', authLimiter, authUser, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('_id name email phone');
     if (!user) return res.status(404).json({ error: 'User not found.' });
