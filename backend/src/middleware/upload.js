@@ -14,6 +14,7 @@ const storage = new CloudinaryStorage({
     else if (req.baseUrl.includes('properties')) folder = 'properties';
     else if (req.baseUrl.includes('carhire')) folder = 'carhire';
     else if (req.baseUrl.includes('transfers')) folder = 'transfers';
+    else if (req.baseUrl.includes('group-trips')) folder = 'group-trips';
 
     return {
       folder: folder,

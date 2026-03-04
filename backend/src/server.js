@@ -57,6 +57,10 @@ app.use('/api/servicebookings', require('./routes/serviceBookingRoutes'));
 app.use('/api/properties', require('./routes/propertyForSaleRoutes'));
 app.use('/api/propertyviewings', require('./routes/propertyViewingBookingRoutes'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/auth', require('./routes/userAuth'));
+app.use('/api/group-trips', require('./routes/groupTripRoutes'));
+app.use('/api/group-bookings', require('./routes/groupBookingRoutes'));
+app.use('/api/mpesa', require('./routes/mpesaRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
