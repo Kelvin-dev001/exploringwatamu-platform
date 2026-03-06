@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '728099992484-opn05vmlv2b4ddfenli3kcfqb1244l5v.apps.googleusercontent.com';
 
 export default function Register() {
   const { login } = useAuth();
@@ -10,6 +12,48 @@ export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const googleBtnRef = useRef(null);
+
+  useEffect(() => {
+    const scriptId = 'google-gsi-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.onload = initGoogle;
+      document.body.appendChild(script);
+    } else if (window.google) {
+      initGoogle();
+    }
+  }, []);
+
+  const initGoogle = () => {
+    if (!window.google || !googleBtnRef.current) return;
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+    });
+    window.google.accounts.id.renderButton(googleBtnRef.current, {
+      theme: 'outline',
+      size: 'large',
+      width: googleBtnRef.current.offsetWidth || 400,
+      text: 'signup_with',
+    });
+  };
+
+  const handleGoogleCredential = async (response) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/auth/google`, { credential: response.credential });
+      login(res.data.token, res.data.user);
+      navigate('/my-trips');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google sign-in failed. Please try again.');
+    }
+    setLoading(false);
+  };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -38,6 +82,14 @@ export default function Register() {
             {error}
           </div>
         )}
+
+        <div ref={googleBtnRef} className="w-full mb-4" style={{ minHeight: '44px' }}></div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-gray-200"></div>
+          <span className="text-sm text-gray-400 font-medium">OR</span>
+          <div className="flex-1 h-px bg-gray-200"></div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
