@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaBed, FaCar, FaMap, FaStar, FaCarSide, FaHome } from 'react-icons/fa';
+import { FaBed, FaCar, FaMap, FaStar, FaCarSide, FaHome, FaUsers } from 'react-icons/fa';
 
 const features = [
   { title: 'Accommodation', icon: <FaBed size={22} />, to: '/hotels', desc: 'Hotels, Airbnbs & Villas' },
   { title: 'Transfers', icon: <FaCar size={22} />, to: '/transfers', desc: 'Airport & hotel transfers' },
   { title: 'Tours & Excursions', icon: <FaMap size={22} />, to: '/tours', desc: 'Discover Watamu' },
+  { title: 'Group Trips', icon: <FaUsers size={22} />, to: '/group-trips', desc: 'Join scheduled group adventures' },
   { title: 'Services', icon: <FaStar size={22} />, to: '/services', desc: 'Local services' },
   { title: 'Car Hire', icon: <FaCarSide size={22} />, to: '/carhire', desc: 'Rent a car' },
   { title: 'Properties For Sale', icon: <FaHome size={22} />, to: '/properties-for-sale', desc: 'Find your dream home' },
