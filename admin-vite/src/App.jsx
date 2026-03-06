@@ -39,6 +39,11 @@ import TourList from './pages/tours/TourList';
 import NewTour from './pages/tours/NewTour';
 import EditTour from './pages/tours/EditTour';
 import TourBookingList from './pages/tours/TourBookingList';
+// Group Trips
+import GroupTripList from './pages/grouptrips/GroupTripList';
+import NewGroupTrip from './pages/grouptrips/NewGroupTrip';
+import EditGroupTrip from './pages/grouptrips/EditGroupTrip';
+import GroupTripBookingList from './pages/grouptrips/GroupTripBookingList';
 
 // PrivateRoute component to protect authenticated routes
 function PrivateRoute({ children }) {
@@ -292,6 +297,40 @@ function App() {
             element={
               <PrivateRoute>
                 <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Group Trips (Protected) */}
+          <Route
+            path="/grouptrips"
+            element={
+              <PrivateRoute>
+                <GroupTripList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/grouptrips/new"
+            element={
+              <PrivateRoute>
+                <NewGroupTrip />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/grouptrips/:id"
+            element={
+              <PrivateRoute>
+                <EditGroupTrip />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/grouptripbookings/:tripId"
+            element={
+              <PrivateRoute>
+                <GroupTripBookingList />
               </PrivateRoute>
             }
           />

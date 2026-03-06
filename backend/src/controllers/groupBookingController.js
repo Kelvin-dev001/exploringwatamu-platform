@@ -53,3 +53,30 @@ exports.getMyBookings = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch bookings.' });
   }
 };
+
+// GET /admin/all — Get all bookings (authAdmin required)
+exports.getAllBookingsAdmin = async (req, res) => {
+  try {
+    const bookings = await GroupBooking.find()
+      .populate('trip', 'title startDate endDate')
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch bookings.' });
+  }
+};
+
+// GET /admin/trip/:tripId — Get bookings for a specific trip (authAdmin required)
+exports.getBookingsByTripAdmin = async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const bookings = await GroupBooking.find({ trip: tripId })
+      .populate('trip', 'title startDate endDate')
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch bookings.' });
+  }
+};
