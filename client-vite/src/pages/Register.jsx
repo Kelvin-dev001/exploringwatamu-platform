@@ -15,17 +15,26 @@ export default function Register() {
   const googleBtnRef = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
     const scriptId = 'google-gsi-script';
+
+    const init = () => {
+      if (cancelled || !window.google || !googleBtnRef.current) return;
+      initGoogle();
+    };
+
     if (!document.getElementById(scriptId)) {
       const script = document.createElement('script');
       script.id = scriptId;
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
-      script.onload = initGoogle;
+      script.onload = init;
       document.body.appendChild(script);
     } else if (window.google) {
-      initGoogle();
+      init();
     }
+
+    return () => { cancelled = true; };
   }, []);
 
   const initGoogle = () => {

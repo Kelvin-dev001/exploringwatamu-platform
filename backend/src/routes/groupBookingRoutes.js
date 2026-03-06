@@ -13,9 +13,17 @@ const bookingLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.post('/join', bookingLimiter, authUser, groupBookingController.joinTrip);
 router.get('/my-bookings', bookingLimiter, authUser, groupBookingController.getMyBookings);
-router.get('/admin/all', authAdmin, groupBookingController.getAllBookingsAdmin);
-router.get('/admin/trip/:tripId', authAdmin, groupBookingController.getBookingsByTripAdmin);
+router.get('/admin/all', adminLimiter, authAdmin, groupBookingController.getAllBookingsAdmin);
+router.get('/admin/trip/:tripId', adminLimiter, authAdmin, groupBookingController.getBookingsByTripAdmin);
 
 module.exports = router;
