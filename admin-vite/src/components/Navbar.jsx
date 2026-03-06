@@ -10,6 +10,7 @@ const navLinks = [
   { name: "Car Hire", to: "/carhire" },
   { name: "Properties", to: "/properties" },
   { name: "Vehicles", to: "/vehicles" },
+  { name: "Group Trips", to: "/grouptrips" },
 ];
 
 export default function Navbar() {

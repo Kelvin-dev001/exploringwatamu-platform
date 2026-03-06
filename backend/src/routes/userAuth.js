@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
+const axios = require('axios');
 const User = require('../models/User');
 const authUser = require('../middleware/authUser');
 
@@ -46,12 +47,15 @@ router.post('/login', authLimiter, async (req, res) => {
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials.' });
     }
+    if (!user.passwordHash) {
+      return res.status(401).json({ error: 'This account uses Google Sign-In. Please sign in with Google.' });
+    }
     const valid = await user.validatePassword(password);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials.' });
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { _id: user._id, name: user.name, email: user.email, phone: user.phone } });
+    res.json({ token, user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, avatar: user.avatar } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed.', details: err.message });
@@ -61,11 +65,62 @@ router.post('/login', authLimiter, async (req, res) => {
 // GET /api/auth/me — protected
 router.get('/me', authLimiter, authUser, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('_id name email phone');
+    const user = await User.findById(req.user._id).select('_id name email phone avatar');
     if (!user) return res.status(404).json({ error: 'User not found.' });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch profile.' });
+  }
+});
+
+// POST /api/auth/google — Google Sign-In
+router.post('/google', authLimiter, async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ error: 'Google credential is required.' });
+    }
+
+    // Verify the Google ID token via tokeninfo endpoint
+    const googleRes = await axios.get(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+    );
+    const payload = googleRes.data;
+
+    // Validate the audience matches our client ID
+    const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '728099992484-opn05vmlv2b4ddfenli3kcfqb1244l5v.apps.googleusercontent.com';
+    if (payload.aud !== GOOGLE_CLIENT_ID) {
+      return res.status(401).json({ error: 'Invalid Google token audience.' });
+    }
+
+    const { sub: googleId, email, name, picture: avatar } = payload;
+
+    if (!email || !googleId) {
+      return res.status(400).json({ error: 'Invalid Google token payload.' });
+    }
+
+    // Check if user exists by googleId
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Check if user exists by email (link Google account)
+      user = await User.findOne({ email });
+      if (user) {
+        user.googleId = googleId;
+        user.avatar = avatar || user.avatar;
+        await user.save();
+      } else {
+        // Create new Google-only user
+        user = new User({ name, email, googleId, avatar });
+        await user.save();
+      }
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, avatar: user.avatar } });
+  } catch (err) {
+    console.error('Google auth error:', err?.response?.data || err.message);
+    res.status(401).json({ error: 'Google authentication failed.' });
   }
 });
 
