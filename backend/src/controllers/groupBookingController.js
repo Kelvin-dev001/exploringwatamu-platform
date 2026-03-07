@@ -2,7 +2,6 @@ const GroupBooking = require('../models/GroupBooking');
 const GroupTrip = require('../models/GroupTrip');
 const User = require('../models/User');
 const Referral = require('../models/Referral');
-const { generateECardUrl } = require('../utils/eCardGenerator');
 
 // POST /join — Create a booking with vibe data (authUser required)
 exports.joinTrip = async (req, res) => {
@@ -58,8 +57,8 @@ exports.joinTrip = async (req, res) => {
 
     await booking.save();
 
-    // Generate e-card URL for sharing (placeholder, will be generated after payment)
-    const eCardUrl = `${process.env.FRONTEND_URL}/ecard/${booking._id}`;
+    // Generate e-card URL for sharing
+    const eCardUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/ecard/${booking._id}`;
     booking.eCardUrl = eCardUrl;
     await booking.save();
 
@@ -70,7 +69,7 @@ exports.joinTrip = async (req, res) => {
   }
 };
 
-// POST /confirm-booking — Called after successful M-Pesa payment to confirm booking
+// POST /confirm — Called after successful M-Pesa payment to confirm booking
 exports.confirmBooking = async (req, res) => {
   try {
     const { bookingId, mpesaReceiptNumber } = req.body;
@@ -95,7 +94,7 @@ exports.confirmBooking = async (req, res) => {
     }
     await trip.save();
 
-    // If this booking has a referrer, create a pending Referral record
+    // If this booking has a referrer, create a referral record and award points
     if (booking.referredBy) {
       const referral = new Referral({
         referrer: booking.referredBy,
@@ -110,7 +109,7 @@ exports.confirmBooking = async (req, res) => {
       // Award points to referrer
       const referrer = await User.findById(booking.referredBy);
       referrer.safariPoints = (referrer.safariPoints || 0) + 100;
-      referrer.save();
+      await referrer.save();
 
       // Update referral status to 'paid'
       referral.status = 'paid';

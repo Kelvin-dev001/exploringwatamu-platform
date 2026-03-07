@@ -28,7 +28,6 @@ router.get('/trip/:tripId/participants', groupBookingController.getTripParticipa
 router.post('/join', bookingLimiter, authUser, groupBookingController.joinTrip);
 router.post('/confirm', bookingLimiter, authUser, groupBookingController.confirmBooking);
 router.get('/my-bookings', bookingLimiter, authUser, groupBookingController.getMyBookings);
-router.get('/:bookingId', bookingLimiter, authUser, groupBookingController.getBookingById);
 
 // Admin routes
 router.get('/admin/all', adminLimiter, authAdmin, groupBookingController.getAllBookingsAdmin);
