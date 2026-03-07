@@ -24,7 +24,7 @@ exports.getMyReferrals = async (req, res) => {
     res.json({
       user: {
         ...user.toObject(),
-        referralLink: `${process.env.FRONTEND_URL}/ref/${user.referralCode}`,
+        referralLink: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/ref/${user.referralCode}`,
         referralsCount: referrals.length,
         pendingCount: pending.length,
       },
@@ -71,7 +71,7 @@ exports.redeemPoints = async (req, res) => {
   }
 };
 
-// POST /apply-referral — Apply referral discount before booking
+// POST /apply-code — Apply referral discount before booking
 exports.applyReferralDiscount = async (req, res) => {
   try {
     const { referralCode } = req.body;
@@ -88,6 +88,7 @@ exports.applyReferralDiscount = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error('Apply referral error:', err);
     res.status(500).json({ error: 'Failed to apply referral code.' });
   }
 };
