@@ -61,6 +61,7 @@ app.use('/api/auth', require('./routes/userAuth'));
 app.use('/api/group-trips', require('./routes/groupTripRoutes'));
 app.use('/api/group-bookings', require('./routes/groupBookingRoutes'));
 app.use('/api/mpesa', require('./routes/mpesaRoutes'));
+app.use('/api/referrals', require('./routes/referralRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
