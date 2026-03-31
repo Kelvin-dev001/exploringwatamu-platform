@@ -133,7 +133,6 @@ exports.mpesaCallback = async (req, res) => {
         }
 
         // TODO: Send confirmation email
-        console.log('Email would be sent to:', booking.email);
       }
     } else {
       payment.status = 'failed';

@@ -1,10 +1,17 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const Review = require('../models/Review');
-const authUser = require('../middleware/authUser'); // Only users can post/edit/delete reviews
+const authUser = require('../middleware/authUser');
+
+const reviewLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many requests. Please try again later.' },
+});
 
 // Get all reviews for an accommodation (public)
-router.get('/:accommodationId', async (req, res) => {
+router.get('/:accommodationId', reviewLimiter, async (req, res) => {
   try {
     const reviews = await Review.find({ accommodationId: req.params.accommodationId }).sort({ createdAt: -1 });
     res.json(reviews);
@@ -14,7 +21,7 @@ router.get('/:accommodationId', async (req, res) => {
 });
 
 // Add a review (Authenticated user)
-router.post('/', authUser, async (req, res) => {
+router.post('/', reviewLimiter, authUser, async (req, res) => {
   const { accommodationId, rating, text } = req.body;
   if (!accommodationId || !rating || !text || rating < 1 || rating > 5 || text.trim().length === 0) {
     return res.status(400).json({ error: 'Accommodation ID, rating (1-5), and non-empty text required.' });
@@ -35,7 +42,7 @@ router.post('/', authUser, async (req, res) => {
 });
 
 // Edit review (Authenticated user, Own Review Only)
-router.put('/:id', authUser, async (req, res) => {
+router.put('/:id', reviewLimiter, authUser, async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Review not found.' });
@@ -59,14 +66,14 @@ router.put('/:id', authUser, async (req, res) => {
 });
 
 // Delete review (Authenticated user, Own Review Only)
-router.delete('/:id', authUser, async (req, res) => {
+router.delete('/:id', reviewLimiter, authUser, async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Review not found.' });
     if (review.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'You do not have permission to delete this review.' });
     }
-    await review.remove();
+    await review.deleteOne();
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete review.' });
