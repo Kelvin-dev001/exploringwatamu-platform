@@ -55,7 +55,6 @@ exports.createTour = async (req, res) => {
     await tour.save();
     res.status(201).json(await tour.populate('vehicles'));
   } catch (err) {
-    console.error("Tour create error:", err);
     res.status(400).json({ error: 'Failed to create tour', details: err.message });
   }
 };
@@ -87,7 +86,6 @@ exports.updateTour = async (req, res) => {
     if (!tour) return res.status(404).json({ error: 'Not found' });
     res.json(tour);
   } catch (err) {
-    console.error("Tour update error:", err);
     res.status(400).json({ error: 'Failed to update tour', details: err.message });
   }
 };

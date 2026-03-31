@@ -34,8 +34,6 @@ router.post('/login', async (req, res) => {
     isValid = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
   } else if (ADMIN_PASSWORD_PLAIN) {
     isValid = password === ADMIN_PASSWORD_PLAIN;
-  } else {
-    isValid = password === "123456";
   }
   if (isValid) {
     const token = jwt.sign({ email, admin: true }, JWT_SECRET, { expiresIn: "2d" });

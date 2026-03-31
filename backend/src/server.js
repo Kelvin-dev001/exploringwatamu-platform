@@ -8,26 +8,20 @@ connectDB();
 
 const app = express();
 
-// Default allowed origins — ADD ALL YOUR ACTUAL VERCEL DOMAINS
 const defaultAllowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:8081',
-  // Admin portal domains
   'https://exploringwatamuadmin.vercel.app',
-  // Client portal domains — add ALL variations
   'https://exploringwatamu.vercel.app',
   'https://exploringwatamu-platform.vercel.app',
 ];
 
-// Optional: allow adding extra origins via env var FRONTEND_URLS (comma separated)
 const envOrigins = process.env.FRONTEND_URLS
   ? process.env.FRONTEND_URLS.split(',').map(s => s.trim()).filter(Boolean)
   : [];
 
 const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...envOrigins]));
-
-console.log('[server] CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -35,7 +29,6 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    console.log('[CORS] Blocked origin:', origin);
     const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
     return callback(new Error(msg), false);
   },
@@ -62,6 +55,13 @@ app.use('/api/group-trips', require('./routes/groupTripRoutes'));
 app.use('/api/group-bookings', require('./routes/groupBookingRoutes'));
 app.use('/api/mpesa', require('./routes/mpesaRoutes'));
 app.use('/api/referrals', require('./routes/referralRoutes'));
+app.use('/api/reviews', require('./routes/reviews'));
+
+// Global error handler
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  res.status(status).json({ error: err.message || 'Internal server error' });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

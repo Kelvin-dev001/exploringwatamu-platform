@@ -47,10 +47,7 @@ exports.createHotel = async (req, res) => {
     // Cast stars to number if present
     if (hotelData.stars) hotelData.stars = Number(hotelData.stars);
 
-    // Debug log for troubleshooting
-    console.log('hotelData:', hotelData);
-
-    // Validate required fields manually (for debugging)
+    // Validate required fields
     if (!hotelData.type) {
       return res.status(400).json({ error: 'Missing required field "type"' });
     }

@@ -66,7 +66,7 @@ router.delete('/:id', authUser, async (req, res) => {
     if (review.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'You do not have permission to delete this review.' });
     }
-    await review.remove();
+    await review.deleteOne();
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete review.' });
