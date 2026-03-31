@@ -35,7 +35,7 @@ export default function Transfers() {
         Transfers
       </h1>
       <p className="text-center mb-6" style={{ color: '#1e7575' }}>
-        Airport &amp; hotel transfers in Watamu.
+        Airport & hotel transfers in Watamu.
       </p>
 
       {loading ? (

@@ -31,7 +31,7 @@ export default function Tours() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8" style={{ backgroundColor: '#fbeec1', minHeight: '100vh' }}>
-      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>Tours &amp; Excursions</h1>
+      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>Tours & Excursions</h1>
       <p className="text-center mb-6" style={{ color: '#1e7575' }}>Discover the best of Watamu.</p>
 
       {loading ? (
