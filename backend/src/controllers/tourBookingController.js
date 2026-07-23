@@ -1,54 +1,42 @@
+'use strict';
+
 const TourBooking = require('../models/TourBooking');
 const Tour = require('../models/Tour');
-const Vehicle = require('../models/Vehicle');
+const { paginate, cancelById } = require('../services/bookingService');
 
-// Admin: List bookings with filters and pagination
-// GET /api/tourbookings?tourId=...&vehicleId=...&status=booked&dateFrom=2025-10-01&dateTo=2025-10-10&name=Safari&page=1&limit=10
-exports.getTourBookings = async (req, res) => {
+// Admin: list bookings with filters + pagination.
+// GET /api/tourbookings?tourId=&vehicleId=&status=&dateFrom=&dateTo=&name=&page=&limit=
+exports.getTourBookings = async (req, res, next) => {
   try {
-    const { tourId, vehicleId, status, dateFrom, dateTo, name, page = 1, limit = 10 } = req.query;
+    const { tourId, vehicleId, status, dateFrom, dateTo, name, page, limit } = req.query;
     const query = {};
     if (tourId) query.tour = tourId;
     if (vehicleId) query.vehicle = vehicleId;
     if (status) query.status = status;
-    if (dateFrom && dateTo) {
-      query.date = { $gte: new Date(dateFrom), $lte: new Date(dateTo) };
-    }
-    // Advanced search by tour name
+    if (dateFrom && dateTo) query.date = { $gte: new Date(dateFrom), $lte: new Date(dateTo) };
     if (name) {
-      const tours = await Tour.find({ name: { $regex: name, $options: "i" } });
-      query.tour = { $in: tours.map(t => t._id) };
+      const tours = await Tour.find({ name: { $regex: name, $options: 'i' } }).select('_id');
+      query.tour = { $in: tours.map((t) => t._id) };
     }
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const bookings = await TourBooking.find(query)
-      .populate({ path: 'tour', populate: { path: 'vehicles' } })
-      .populate('vehicle')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-    const total = await TourBooking.countDocuments(query);
-    res.json({
-      data: bookings,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      total
+
+    const result = await paginate(TourBooking, query, {
+      page,
+      limit,
+      populate: [{ path: 'tour', populate: { path: 'vehicles' } }, 'vehicle'],
     });
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch bookings" });
+    next(err);
   }
 };
 
-// Admin: Cancel booking
-exports.cancelBooking = async (req, res) => {
+// Admin: cancel booking.
+exports.cancelBooking = async (req, res, next) => {
   try {
-    const booking = await TourBooking.findByIdAndUpdate(
-      req.params.id,
-      { status: 'cancelled' },
-      { new: true }
-    );
+    const booking = await cancelById(TourBooking, req.params.id);
     if (!booking) return res.status(404).json({ error: 'Not found' });
     res.json(booking);
   } catch (err) {
-    res.status(500).json({ error: "Failed to cancel booking" });
+    next(err);
   }
 };

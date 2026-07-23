@@ -1,94 +1,78 @@
+'use strict';
+
 const PropertyViewingBooking = require('../models/PropertyViewingBooking');
 const PropertyForSale = require('../models/PropertyForSale');
+const { paginate, cancelById } = require('../services/bookingService');
 
-// Check if a slot is available
+// Check if a slot is available.
 async function isSlotAvailable(propertyId, date, time) {
   const bookings = await PropertyViewingBooking.find({
     property: propertyId,
     date: new Date(date),
     time,
-    status: 'booked'
+    status: 'booked',
   });
   return bookings.length === 0;
 }
 
-// API: Check slot availability
-exports.checkAvailability = async (req, res) => {
+// API: check slot availability.
+exports.checkAvailability = async (req, res, next) => {
   try {
     const { propertyId, date, time } = req.body;
-    if (!propertyId || !date || !time) return res.status(400).json({ error: "Missing required fields" });
+    if (!propertyId || !date || !time) return res.status(400).json({ error: 'Missing required fields' });
     const property = await PropertyForSale.findById(propertyId);
-    if (!property || !property.active) return res.status(404).json({ error: "Property not found or inactive" });
+    if (!property || !property.active) return res.status(404).json({ error: 'Property not found or inactive' });
     const available = await isSlotAvailable(propertyId, date, time);
     res.json({ available });
   } catch (err) {
-    res.status(500).json({ error: "Failed to check availability" });
+    next(err);
   }
 };
 
-// User: Book a property viewing (with availability check)
-exports.bookViewing = async (req, res) => {
+// User: book a property viewing (with availability check).
+exports.bookViewing = async (req, res, next) => {
   try {
     const { propertyId, date, time, userName, userContact } = req.body;
-    if (!propertyId || !date || !time || !userName || !userContact) return res.status(400).json({ error: "Missing required fields" });
+    if (!propertyId || !date || !time || !userName || !userContact) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
     const property = await PropertyForSale.findById(propertyId);
-    if (!property || !property.active) return res.status(404).json({ error: "Property not found or inactive" });
+    if (!property || !property.active) return res.status(404).json({ error: 'Property not found or inactive' });
     const available = await isSlotAvailable(propertyId, date, time);
-    if (!available) return res.status(400).json({ error: "Slot not available" });
-    const booking = new PropertyViewingBooking({
-      property: propertyId,
-      date,
-      time,
-      userName,
-      userContact
-    });
+    if (!available) return res.status(400).json({ error: 'Slot not available' });
+
+    const booking = new PropertyViewingBooking({ property: propertyId, date, time, userName, userContact });
     await booking.save();
     await booking.populate('property');
     res.status(201).json(booking);
   } catch (err) {
-    res.status(400).json({ error: "Booking failed", details: err.message });
+    next(err);
   }
 };
 
-// Admin: List bookings with filters and pagination
-exports.getViewingBookings = async (req, res) => {
+// Admin: list bookings with filters + pagination.
+exports.getViewingBookings = async (req, res, next) => {
   try {
-    const { propertyId, status, dateFrom, dateTo, page = 1, limit = 10 } = req.query;
+    const { propertyId, status, dateFrom, dateTo, page, limit } = req.query;
     const query = {};
     if (propertyId) query.property = propertyId;
     if (status) query.status = status;
-    if (dateFrom && dateTo) {
-      query.date = { $gte: new Date(dateFrom), $lte: new Date(dateTo) };
-    }
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const bookings = await PropertyViewingBooking.find(query)
-      .populate('property')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-    const total = await PropertyViewingBooking.countDocuments(query);
-    res.json({
-      data: bookings,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      total
-    });
+    if (dateFrom && dateTo) query.date = { $gte: new Date(dateFrom), $lte: new Date(dateTo) };
+
+    const result = await paginate(PropertyViewingBooking, query, { page, limit, populate: ['property'] });
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch bookings" });
+    next(err);
   }
 };
 
-// Admin: Cancel booking
-exports.cancelBooking = async (req, res) => {
+// Admin: cancel booking.
+exports.cancelBooking = async (req, res, next) => {
   try {
-    const booking = await PropertyViewingBooking.findByIdAndUpdate(
-      req.params.id,
-      { status: 'cancelled' },
-      { new: true }
-    ).populate('property');
+    const booking = await cancelById(PropertyViewingBooking, req.params.id, { populate: 'property' });
     if (!booking) return res.status(404).json({ error: 'Not found' });
     res.json(booking);
   } catch (err) {
-    res.status(500).json({ error: "Failed to cancel booking" });
+    next(err);
   }
 };
