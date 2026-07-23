@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
@@ -18,37 +18,73 @@ export default function GroupTripBookingList() {
   const [trip, setTrip] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [tripsRes, bookingsRes] = await Promise.all([
+        axios.get(API_URL + "/group-trips/admin/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(API_URL + `/group-bookings/admin/trip/${tripId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      const trips = Array.isArray(tripsRes.data) ? tripsRes.data : [];
+      setTrip(trips.find((t) => t._id === tripId) || null);
+      setBookings(Array.isArray(bookingsRes.data) ? bookingsRes.data : []);
+    } catch (err) {
+      setBookings([]);
+    }
+    setLoading(false);
+  }, [tripId, token]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [tripsRes, bookingsRes] = await Promise.all([
-          axios.get(API_URL + "/group-trips/admin/all", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(API_URL + `/group-bookings/admin/trip/${tripId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-        const trips = Array.isArray(tripsRes.data) ? tripsRes.data : [];
-        setTrip(trips.find((t) => t._id === tripId) || null);
-        setBookings(Array.isArray(bookingsRes.data) ? bookingsRes.data : []);
-      } catch (err) {
-        setBookings([]);
-      }
-      setLoading(false);
-    };
     fetchData();
-    // eslint-disable-next-line
-  }, [tripId]);
+  }, [fetchData]);
+
+  const runAction = async (request, id) => {
+    setActionId(id);
+    try {
+      await request();
+      await fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || "Action failed. Please try again.");
+    }
+    setActionId(null);
+  };
+
+  const handleConfirm = (id) =>
+    runAction(
+      () =>
+        axios.post(
+          API_URL + "/group-bookings/confirm",
+          { bookingId: id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+      id
+    );
+
+  const handleCancel = (id) => {
+    if (!window.confirm("Cancel this booking? The traveller will be emailed.")) return;
+    runAction(
+      () =>
+        axios.put(
+          API_URL + `/group-bookings/admin/${id}/cancel`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+      id
+    );
+  };
 
   // Summary stats
   const total = bookings.length;
   const confirmed = bookings.filter((b) => b.status === "confirmed").length;
   const pending = bookings.filter((b) => b.status === "pending").length;
   const revenue = bookings
-    .filter((b) => b.status !== "cancelled")
+    .filter((b) => b.status === "confirmed")
     .reduce((sum, b) => sum + (b.amountPaid || 0), 0);
 
   return (
@@ -77,7 +113,7 @@ export default function GroupTripBookingList() {
           <div className="stat-value text-2xl text-warning">{pending}</div>
         </div>
         <div className="stat bg-base-100 shadow rounded-lg">
-          <div className="stat-title">Revenue Collected</div>
+          <div className="stat-title">Confirmed Revenue</div>
           <div className="stat-value text-xl">KES {revenue.toLocaleString()}</div>
         </div>
       </div>
@@ -91,11 +127,11 @@ export default function GroupTripBookingList() {
               <th>Email</th>
               <th>Phone</th>
               <th>Payment Type</th>
-              <th>Amount Paid</th>
+              <th>Amount</th>
               <th>Amount Due</th>
               <th>Status</th>
-              <th>M-Pesa Receipt</th>
               <th>Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -123,9 +159,28 @@ export default function GroupTripBookingList() {
                       {b.status}
                     </span>
                   </td>
-                  <td>{b.mpesaReceiptNumber || "-"}</td>
                   <td>
                     {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "-"}
+                  </td>
+                  <td className="whitespace-nowrap">
+                    {b.status === "pending" && (
+                      <button
+                        className="btn btn-xs btn-success mr-1"
+                        disabled={actionId === b._id}
+                        onClick={() => handleConfirm(b._id)}
+                      >
+                        {actionId === b._id ? "…" : "Confirm"}
+                      </button>
+                    )}
+                    {b.status !== "cancelled" && (
+                      <button
+                        className="btn btn-xs btn-error"
+                        disabled={actionId === b._id}
+                        onClick={() => handleCancel(b._id)}
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

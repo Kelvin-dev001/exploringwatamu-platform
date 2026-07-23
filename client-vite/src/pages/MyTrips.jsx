@@ -94,8 +94,8 @@ export default function MyTrips() {
                         <span className="font-medium capitalize">{booking.paymentType}</span>
                       </div>
                       <div>
-                        <span className="text-gray-400 text-xs block">Amount Paid</span>
-                        <span className="font-medium text-green-700">KES {booking.amountPaid?.toLocaleString()}</span>
+                        <span className="text-gray-400 text-xs block">{booking.status === 'confirmed' ? 'Amount Paid' : 'Amount (on confirmation)'}</span>
+                        <span className={`font-medium ${booking.status === 'confirmed' ? 'text-green-700' : 'text-gray-700'}`}>KES {booking.amountPaid?.toLocaleString()}</span>
                       </div>
                       {booking.amountDue > 0 && (
                         <div>
