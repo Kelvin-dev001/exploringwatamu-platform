@@ -1,0 +1,45 @@
+# ExploringWatamu Backend — Agent & Contributor Guide
+
+## What this is
+Node/Express 5 + MongoDB (Mongoose) REST API for the ExploringWatamu tourism platform.
+Monorepo siblings: `admin-vite` (admin web), `client-vite` (MVP client web — **canonical**),
+`client` (Expo mobile — a later phase).
+
+## MVP focus
+Open Group Tours + the vibe + referral/e-card loop. Watamu only. Admin-managed but built
+vendor-ready. Payments (M-Pesa) are **disabled** until `PAYMENTS_ENABLED=true`; bookings are
+confirmed by **admin approval**, not automated payment.
+
+## Commands (run inside /backend)
+- Install: `npm install`
+- Dev: `npm run dev` (nodemon)
+- Start: `npm start`
+- Test: `npm test` (Jest + Supertest)
+- Seed an admin: `npm run seed:admin -- <email> <password>`
+
+## Environment
+Copy `.env.example` to `.env`. Required: `MONGODB_URI`, `JWT_SECRET` (>= 16 chars). The app
+**fails fast** if these are missing or insecure. Never commit real secrets.
+
+## Architecture
+- `src/config/env.js` — validated config; the single source for secrets and feature flags.
+- `src/app.js` — Express app factory (helmet, CORS, rate limiting, routes, error handler).
+  Exported so tests can import the app without a DB or a live port.
+- `src/server.js` — connects the DB, then listens.
+- `src/routes/*` — thin routers. `src/controllers/*` — handlers. `src/models/*` — Mongoose schemas.
+- `src/middleware/*` — `authUser`, `authAdmin`, `validate` (zod), `rateLimiters`, `errorHandler`.
+- `src/validators/*` — zod schemas.
+
+## Conventions
+- Validate request input with zod via `validate(schema)` at the route.
+- Never leak internal errors: `next(err)` and let the central handler format the response.
+- Admin identities live in the `Admin` collection (hashed). Seed via the script — no env or
+  plaintext admin passwords.
+- Money and capacity changes must be atomic (see `confirmBooking`).
+
+## Working rules
+- Plan first; no production code until the plan is approved.
+- Feature branches + PRs; keep commits clean; don't break `main`.
+- Run a security review before each deploy.
+- Keep modules loosely coupled: Marketplace, Open Group Tours (MVP), Custom Trip Builder (future),
+  Hosted Experiences (future).

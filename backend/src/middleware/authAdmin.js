@@ -1,16 +1,19 @@
-const jwt = require('jsonwebtoken');
+'use strict';
 
-module.exports = function(req, res, next) {
+const jwt = require('jsonwebtoken');
+const config = require('../config/env');
+
+// Verifies an admin JWT. Requires the `admin` claim.
+module.exports = function authAdmin(req, res, next) {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Only allow tokens with the 'admin' flag
-    if (!decoded.admin) return res.status(403).json({ error: 'User token not allowed for this route.' });
-    req.admin = { email: decoded.email }; // Just attach email from token
+    const decoded = jwt.verify(token, config.jwtSecret);
+    if (!decoded.admin) return res.status(403).json({ error: 'Admin access required' });
+    req.admin = { id: decoded.id, email: decoded.email, role: decoded.role || 'admin' };
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 };

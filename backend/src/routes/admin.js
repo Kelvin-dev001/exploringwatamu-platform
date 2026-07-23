@@ -1,54 +1,44 @@
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const config = require('../config/env');
+const Admin = require('../models/Admin');
+const authAdmin = require('../middleware/authAdmin');
+const { authLimiter, adminLimiter } = require('../middleware/rateLimiters');
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@exploringwatamu.com";
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
-const ADMIN_PASSWORD_PLAIN = process.env.ADMIN_PASSWORD;
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
-
-// --- Auth middleware ---
-const authAdmin = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "Missing authorization header" });
-  const token = authHeader.split(" ")[1];
+// --- Login (DB-backed admin, hashed passwords only) ---
+router.post('/login', authLimiter, async (req, res, next) => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    if (!payload.admin) throw new Error("Not admin");
-    req.admin = payload;
-    next();
-  } catch (e) {
-    return res.status(401).json({ error: "Invalid or expired token" });
-  }
-};
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required.' });
+    }
+    const admin = await Admin.findOne({ email: String(email).toLowerCase().trim() });
+    if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
 
-// --- Login ---
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (email !== ADMIN_EMAIL) {
-    return res.status(401).json({ error: "Invalid credentials" });
+    const valid = await admin.validatePassword(password);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, admin: true, role: admin.role || 'admin' },
+      config.jwtSecret,
+      { expiresIn: config.adminJwtExpiresIn }
+    );
+    res.json({ token, admin: { email: admin.email, role: admin.role || 'admin' } });
+  } catch (err) {
+    next(err);
   }
-  let isValid = false;
-  if (ADMIN_PASSWORD_HASH) {
-    isValid = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
-  } else if (ADMIN_PASSWORD_PLAIN) {
-    isValid = password === ADMIN_PASSWORD_PLAIN;
-  }
-  if (isValid) {
-    const token = jwt.sign({ email, admin: true }, JWT_SECRET, { expiresIn: "2d" });
-    return res.json({ token, admin: { email } });
-  }
-  return res.status(401).json({ error: "Invalid credentials" });
 });
 
 // --- Profile ---
-router.get('/profile', authAdmin, (req, res) => {
+router.get('/profile', adminLimiter, authAdmin, (req, res) => {
   res.json({ admin: req.admin });
 });
 
-// --- Dashboard Stats ---
-router.get('/stats', authAdmin, async (req, res) => {
+// --- Dashboard stats ---
+router.get('/stats', adminLimiter, authAdmin, async (req, res, next) => {
   try {
     const Hotel = require('../models/Hotel');
     const Transfer = require('../models/Transfer');
@@ -56,37 +46,33 @@ router.get('/stats', authAdmin, async (req, res) => {
     const Service = require('../models/Service');
     const Vehicle = require('../models/Vehicle');
     const Property = require('../models/PropertyForSale');
+    const User = require('../models/User');
+    const TourBooking = require('../models/TourBooking');
+    const CarHireBooking = require('../models/CarHireBooking');
+    const ServiceBooking = require('../models/ServiceBooking');
+    const PropertyViewing = require('../models/PropertyViewingBooking');
+    const GroupBooking = require('../models/GroupBooking');
 
-    const [hotels, transfers, tours, services, vehicles, properties] = await Promise.all([
-      Hotel.countDocuments(),
-      Transfer.countDocuments(),
-      Tour.countDocuments(),
-      Service.countDocuments(),
-      Vehicle.countDocuments(),
-      Property.countDocuments(),
-    ]);
-
-    // Count all bookings across collections
-    let bookings = 0;
-    try {
-      const TourBooking = require('../models/TourBooking');
-      const CarHireBooking = require('../models/CarHireBooking');
-      const ServiceBooking = require('../models/ServiceBooking');
-      const PropertyViewing = require('../models/PropertyViewingBooking');
-      const [tb, cb, sb, pv] = await Promise.all([
+    const [users, hotels, transfers, tours, services, vehicles, properties, tb, cb, sb, pv, gb] =
+      await Promise.all([
+        User.countDocuments(),
+        Hotel.countDocuments(),
+        Transfer.countDocuments(),
+        Tour.countDocuments(),
+        Service.countDocuments(),
+        Vehicle.countDocuments(),
+        Property.countDocuments(),
         TourBooking.countDocuments(),
         CarHireBooking.countDocuments(),
         ServiceBooking.countDocuments(),
         PropertyViewing.countDocuments(),
+        GroupBooking.countDocuments(),
       ]);
-      bookings = tb + cb + sb + pv;
-    } catch {
-      bookings = 0;
-    }
 
     res.json({
-      users: 0,
-      bookings,
+      users,
+      bookings: tb + cb + sb + pv + gb,
+      groupBookings: gb,
       hotels,
       vehicles,
       transfers,
@@ -95,47 +81,32 @@ router.get('/stats', authAdmin, async (req, res) => {
       tours,
     });
   } catch (err) {
-    console.error("Stats error:", err);
-    res.status(500).json({ error: "Failed to load stats", details: err.message });
+    next(err);
   }
 });
 
-// --- Recent Bookings ---
-router.get('/recent-bookings', authAdmin, async (req, res) => {
+// --- Recent bookings across all booking types ---
+router.get('/recent-bookings', adminLimiter, authAdmin, async (req, res, next) => {
   try {
-    const allBookings = [];
+    const sources = [
+      ['../models/TourBooking', 'Tour'],
+      ['../models/CarHireBooking', 'CarHire'],
+      ['../models/ServiceBooking', 'Service'],
+      ['../models/PropertyViewingBooking', 'PropertyViewing'],
+      ['../models/GroupBooking', 'GroupTour'],
+    ];
 
-    // Try each booking model — if a model doesn't exist, skip it
-    try {
-      const TourBooking = require('../models/TourBooking');
-      const tourBookings = await TourBooking.find().sort({ createdAt: -1 }).limit(5).lean();
-      tourBookings.forEach(b => allBookings.push({ ...b, bookingType: 'Tour' }));
-    } catch {}
+    const all = [];
+    for (const [modelPath, bookingType] of sources) {
+      const Model = require(modelPath);
+      const rows = await Model.find().sort({ createdAt: -1 }).limit(5).lean();
+      rows.forEach((b) => all.push({ ...b, bookingType }));
+    }
 
-    try {
-      const CarHireBooking = require('../models/CarHireBooking');
-      const carBookings = await CarHireBooking.find().sort({ createdAt: -1 }).limit(5).lean();
-      carBookings.forEach(b => allBookings.push({ ...b, bookingType: 'CarHire' }));
-    } catch {}
-
-    try {
-      const ServiceBooking = require('../models/ServiceBooking');
-      const serviceBookings = await ServiceBooking.find().sort({ createdAt: -1 }).limit(5).lean();
-      serviceBookings.forEach(b => allBookings.push({ ...b, bookingType: 'Service' }));
-    } catch {}
-
-    try {
-      const PropertyViewing = require('../models/PropertyViewingBooking');
-      const pvBookings = await PropertyViewing.find().sort({ createdAt: -1 }).limit(5).lean();
-      pvBookings.forEach(b => allBookings.push({ ...b, bookingType: 'PropertyViewing' }));
-    } catch {}
-
-    // Sort all by date, return most recent 10
-    allBookings.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    res.json(allBookings.slice(0, 10));
+    all.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    res.json(all.slice(0, 10));
   } catch (err) {
-    console.error("Recent bookings error:", err);
-    res.status(500).json({ error: "Failed to load recent bookings" });
+    next(err);
   }
 });
 

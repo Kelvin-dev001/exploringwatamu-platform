@@ -1,24 +1,26 @@
+'use strict';
+
 const GroupBooking = require('../models/GroupBooking');
 const GroupTrip = require('../models/GroupTrip');
 const User = require('../models/User');
 const Referral = require('../models/Referral');
+const config = require('../config/env');
 
-// POST /join — Create a booking with vibe data (authUser required)
-exports.joinTrip = async (req, res) => {
+// POST /join — Create a pending booking with vibe data (authUser required).
+// Input is validated upstream by validate(joinTripSchema).
+exports.joinTrip = async (req, res, next) => {
   try {
-    const { tripId, paymentType, fullName, email, phone, travelPersonalities, travelGroup, selectedAvatar, referredByCode } = req.body;
-
-    if (!tripId || !paymentType || !fullName || !email || !phone) {
-      return res.status(400).json({ error: 'All fields are required.' });
-    }
-
-    if (!travelPersonalities || travelPersonalities.length === 0 || travelPersonalities.length > 3) {
-      return res.status(400).json({ error: 'Select 1-3 personalities.' });
-    }
-
-    if (!travelGroup) {
-      return res.status(400).json({ error: 'Travel group selection is required.' });
-    }
+    const {
+      tripId,
+      paymentType,
+      fullName,
+      email,
+      phone,
+      travelPersonalities,
+      travelGroup,
+      selectedAvatar,
+      referredByCode,
+    } = req.body;
 
     const trip = await GroupTrip.findById(tripId);
     if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
@@ -47,85 +49,82 @@ exports.joinTrip = async (req, res) => {
       selectedAvatar: selectedAvatar || 'avatar_1.png',
     });
 
-    // Handle referral if provided
     if (referredByCode) {
       const referrer = await User.findOne({ referralCode: referredByCode });
-      if (referrer) {
-        booking.referredBy = referrer._id;
-      }
+      if (referrer) booking.referredBy = referrer._id;
     }
 
     await booking.save();
 
-    // Generate e-card URL for sharing
-    const eCardUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/ecard/${booking._id}`;
-    booking.eCardUrl = eCardUrl;
+    booking.eCardUrl = `${config.frontendUrl}/ecard/${booking._id}`;
     await booking.save();
 
     res.status(201).json({ booking, amountPaid });
   } catch (err) {
-    console.error('Join trip error:', err);
-    res.status(500).json({ error: 'Failed to create booking.', details: err.message });
+    next(err);
   }
 };
 
-// POST /confirm — Called after successful M-Pesa payment to confirm booking
-exports.confirmBooking = async (req, res) => {
+// POST /confirm — Admin confirms a booking (admin-approve flow while payments
+// are disabled). Slot is claimed atomically to prevent overselling.
+exports.confirmBooking = async (req, res, next) => {
   try {
-    const { bookingId, mpesaReceiptNumber } = req.body;
+    const { bookingId, mpesaReceiptNumber } = req.body || {};
+    if (!bookingId) return res.status(400).json({ error: 'bookingId is required.' });
 
     const booking = await GroupBooking.findById(bookingId);
     if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status === 'confirmed') return res.status(400).json({ error: 'Booking already confirmed.' });
+    if (booking.status === 'cancelled') return res.status(400).json({ error: 'Cannot confirm a cancelled booking.' });
 
-    if (booking.status === 'confirmed') {
-      return res.status(400).json({ error: 'Booking already confirmed.' });
+    // Atomically claim a slot only if capacity remains.
+    const trip = await GroupTrip.findOneAndUpdate(
+      { _id: booking.trip, $expr: { $lt: ['$confirmedParticipants', '$maxParticipants'] } },
+      { $inc: { confirmedParticipants: 1 } },
+      { new: true }
+    );
+    if (!trip) return res.status(400).json({ error: 'This trip is full.' });
+
+    if (trip.confirmedParticipants >= trip.maxParticipants && trip.status !== 'full') {
+      trip.status = 'full';
+      await trip.save();
     }
 
-    // Update booking status
     booking.status = 'confirmed';
-    booking.mpesaReceiptNumber = mpesaReceiptNumber;
+    if (mpesaReceiptNumber) booking.mpesaReceiptNumber = mpesaReceiptNumber;
     await booking.save();
 
-    // Increment trip confirmed participants
-    const trip = await GroupTrip.findById(booking.trip);
-    trip.confirmedParticipants += 1;
-    if (trip.confirmedParticipants >= trip.maxParticipants) {
-      trip.status = 'full';
-    }
-    await trip.save();
-
-    // If this booking has a referrer, create a referral record and award points
+    // Award referral points to the referrer, if any.
     if (booking.referredBy) {
-      const referral = new Referral({
-        referrer: booking.referredBy,
-        referee: booking.user,
-        booking: booking._id,
-        pointsAwarded: 100,
-        status: 'confirmed',
-        confirmedAt: new Date(),
-      });
-      await referral.save();
-
-      // Award points to referrer
       const referrer = await User.findById(booking.referredBy);
-      referrer.safariPoints = (referrer.safariPoints || 0) + 100;
-      await referrer.save();
+      if (referrer) {
+        const referral = new Referral({
+          referrer: booking.referredBy,
+          referee: booking.user,
+          booking: booking._id,
+          pointsAwarded: 100,
+          status: 'confirmed',
+          confirmedAt: new Date(),
+        });
+        await referral.save();
 
-      // Update referral status to 'paid'
-      referral.status = 'paid';
-      referral.awardedAt = new Date();
-      await referral.save();
+        referrer.safariPoints = (referrer.safariPoints || 0) + 100;
+        await referrer.save();
+
+        referral.status = 'paid';
+        referral.awardedAt = new Date();
+        await referral.save();
+      }
     }
 
     res.json({ booking });
   } catch (err) {
-    console.error('Confirm booking error:', err);
-    res.status(500).json({ error: 'Failed to confirm booking.', details: err.message });
+    next(err);
   }
 };
 
-// GET /my-bookings — Get all bookings for current user (authUser required)
-exports.getMyBookings = async (req, res) => {
+// GET /my-bookings — bookings for the current user (authUser required)
+exports.getMyBookings = async (req, res, next) => {
   try {
     const bookings = await GroupBooking.find({ user: req.user._id })
       .populate('trip', 'title heroImage startDate endDate meetingPoint fullPrice depositAmount balanceDueDate slug')
@@ -133,28 +132,26 @@ exports.getMyBookings = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(bookings);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch bookings.' });
+    next(err);
   }
 };
 
-// GET /trip/:tripId/participants — Get all confirmed participants for a trip (public)
-exports.getTripParticipants = async (req, res) => {
+// GET /trip/:tripId/participants — confirmed participants for a trip (public)
+exports.getTripParticipants = async (req, res, next) => {
   try {
     const { tripId } = req.params;
-
     const bookings = await GroupBooking.find({ trip: tripId, status: 'confirmed' })
       .populate('user', 'name avatar')
       .select('user travelPersonalities travelGroup selectedAvatar createdAt')
       .sort({ createdAt: -1 });
-
     res.json(bookings);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch participants.' });
+    next(err);
   }
 };
 
-// GET /admin/all — Get all bookings (authAdmin required)
-exports.getAllBookingsAdmin = async (req, res) => {
+// GET /admin/all — all bookings (authAdmin required)
+exports.getAllBookingsAdmin = async (req, res, next) => {
   try {
     const bookings = await GroupBooking.find()
       .populate('trip', 'title startDate endDate')
@@ -163,12 +160,12 @@ exports.getAllBookingsAdmin = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(bookings);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch bookings.' });
+    next(err);
   }
 };
 
-// GET /admin/trip/:tripId — Get bookings for a specific trip (authAdmin required)
-exports.getBookingsByTripAdmin = async (req, res) => {
+// GET /admin/trip/:tripId — bookings for a specific trip (authAdmin required)
+exports.getBookingsByTripAdmin = async (req, res, next) => {
   try {
     const { tripId } = req.params;
     const bookings = await GroupBooking.find({ trip: tripId })
@@ -177,6 +174,6 @@ exports.getBookingsByTripAdmin = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(bookings);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch bookings.' });
+    next(err);
   }
 };

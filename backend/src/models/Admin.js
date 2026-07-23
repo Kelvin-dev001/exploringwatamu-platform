@@ -1,19 +1,23 @@
+'use strict';
+
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
-const adminSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true }
-});
+const adminSchema = new mongoose.Schema(
+  {
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    passwordHash: { type: String, required: true },
+    role: { type: String, enum: ['admin', 'staff'], default: 'admin' },
+  },
+  { timestamps: true }
+);
 
-// Helper to set password securely
-adminSchema.methods.setPassword = async function(password) {
+adminSchema.methods.setPassword = async function setPassword(password) {
   this.passwordHash = await bcrypt.hash(password, 12);
 };
 
-// Helper to validate password
-adminSchema.methods.validatePassword = async function(password) {
-  return await bcrypt.compare(password, this.passwordHash);
+adminSchema.methods.validatePassword = async function validatePassword(password) {
+  return bcrypt.compare(password, this.passwordHash);
 };
 
 module.exports = mongoose.model('Admin', adminSchema);

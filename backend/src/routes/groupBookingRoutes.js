@@ -1,35 +1,25 @@
+'use strict';
+
 const express = require('express');
 const router = express.Router();
-const rateLimit = require('express-rate-limit');
 const groupBookingController = require('../controllers/groupBookingController');
 const authUser = require('../middleware/authUser');
 const authAdmin = require('../middleware/authAdmin');
+const validate = require('../middleware/validate');
+const { joinTripSchema } = require('../validators/groupBookingValidators');
+const { bookingLimiter, adminLimiter, publicReadLimiter } = require('../middleware/rateLimiters');
 
-const bookingLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  message: { error: 'Too many requests. Please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Public
+router.get('/trip/:tripId/participants', publicReadLimiter, groupBookingController.getTripParticipants);
 
-const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 60,
-  message: { error: 'Too many requests. Please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Public routes
-router.get('/trip/:tripId/participants', groupBookingController.getTripParticipants);
-
-// Protected routes (user)
-router.post('/join', bookingLimiter, authUser, groupBookingController.joinTrip);
-router.post('/confirm', bookingLimiter, authUser, groupBookingController.confirmBooking);
+// User (traveller submits a booking request + vibe data)
+router.post('/join', bookingLimiter, authUser, validate(joinTripSchema), groupBookingController.joinTrip);
 router.get('/my-bookings', bookingLimiter, authUser, groupBookingController.getMyBookings);
 
-// Admin routes
+// Admin — confirming a booking is an admin action in the admin-approve flow
+// (payments are disabled). This also closes the prior hole where any user
+// could confirm any booking.
+router.post('/confirm', adminLimiter, authAdmin, groupBookingController.confirmBooking);
 router.get('/admin/all', adminLimiter, authAdmin, groupBookingController.getAllBookingsAdmin);
 router.get('/admin/trip/:tripId', adminLimiter, authAdmin, groupBookingController.getBookingsByTripAdmin);
 
