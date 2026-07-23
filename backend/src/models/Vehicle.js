@@ -7,4 +7,7 @@ const VehicleSchema = new mongoose.Schema({
   description: { type: String }
 }, { timestamps: true });
 
+// Vendor-ready ownership (null = platform-managed).
+VehicleSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
 module.exports = mongoose.model('Vehicle', VehicleSchema);

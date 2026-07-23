@@ -15,4 +15,7 @@ const TourSchema = new mongoose.Schema({
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 
+// Vendor-ready ownership (null = platform-managed).
+TourSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
 module.exports = mongoose.model('Tour', TourSchema);
