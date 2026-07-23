@@ -52,4 +52,7 @@ const HotelSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Vendor-ready ownership (null = platform-managed).
+HotelSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
 module.exports = mongoose.model('Hotel', HotelSchema);

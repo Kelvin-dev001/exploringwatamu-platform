@@ -7,4 +7,7 @@ const CarHireSchema = new mongoose.Schema({
   description: { type: String, default: '' }
 }, { timestamps: true });
 
+// Vendor-ready ownership (null = platform-managed).
+CarHireSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
 module.exports = mongoose.model('CarHire', CarHireSchema);

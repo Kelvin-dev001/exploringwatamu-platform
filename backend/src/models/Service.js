@@ -11,4 +11,7 @@ const ServiceSchema = new mongoose.Schema({
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 
+// Vendor-ready ownership (null = platform-managed).
+ServiceSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
 module.exports = mongoose.model('Service', ServiceSchema);

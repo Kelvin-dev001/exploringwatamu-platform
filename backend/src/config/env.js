@@ -50,6 +50,25 @@ const config = {
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
+
+  // Where admin booking notifications are sent.
+  adminNotifyEmail: process.env.ADMIN_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || '',
+
+  // Outbound email (SMTP). If host/user are unset, the mailer uses a safe
+  // dev transport that serializes messages instead of sending them.
+  mail: {
+    from: process.env.MAIL_FROM || 'ExploringWatamu <no-reply@exploringwatamu.com>',
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+  },
+
+  brand: {
+    name: 'ExploringWatamu',
+    supportEmail: process.env.SUPPORT_EMAIL || 'hello@exploringwatamu.com',
+  },
 };
 
 module.exports = config;

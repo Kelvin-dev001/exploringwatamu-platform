@@ -27,15 +27,18 @@ Copy `.env.example` to `.env`. Required: `MONGODB_URI`, `JWT_SECRET` (>= 16 char
   Exported so tests can import the app without a DB or a live port.
 - `src/server.js` — connects the DB, then listens.
 - `src/routes/*` — thin routers. `src/controllers/*` — handlers. `src/models/*` — Mongoose schemas.
-- `src/middleware/*` — `authUser`, `authAdmin`, `validate` (zod), `rateLimiters`, `errorHandler`.
+- `src/middleware/*` — `authUser`, `authAdmin`, `requireRole`, `validate` (zod), `rateLimiters`, `errorHandler`.
 - `src/validators/*` — zod schemas.
+- `src/services/*` — `mailer` (nodemailer; a safe no-op until SMTP is set), `documents` (pdfkit quotation/receipt PDFs), `bookingNotifications`. Mail/PDF libs are lazy-loaded so the app boots without them.
 
 ## Conventions
 - Validate request input with zod via `validate(schema)` at the route.
 - Never leak internal errors: `next(err)` and let the central handler format the response.
 - Admin identities live in the `Admin` collection (hashed). Seed via the script — no env or
   plaintext admin passwords.
-- Money and capacity changes must be atomic (see `confirmBooking`).
+- Money and capacity changes must be atomic (see `confirmBooking` / `cancelBookingAdmin`).
+- Emails are sent fire-and-forget (see `sendAsync`): a mail failure must never break a booking.
+- Every listing carries an `owner` ref (null = platform-managed) so vendor self-service needs no migration later. Set `owner` on create.
 
 ## Working rules
 - Plan first; no production code until the plan is approved.

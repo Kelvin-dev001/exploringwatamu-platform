@@ -31,6 +31,7 @@ exports.createGroupTrip = async (req, res) => {
       depositAmount: Number(req.body.depositAmount),
       balanceDueDate: req.body.balanceDueDate || undefined,
       status: req.body.status || 'draft',
+      owner: (req.admin && req.admin.id) || null,
       heroImage,
       gallery: galleryUrls,
     };

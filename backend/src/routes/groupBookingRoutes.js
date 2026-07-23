@@ -20,6 +20,7 @@ router.get('/my-bookings', bookingLimiter, authUser, groupBookingController.getM
 // (payments are disabled). This also closes the prior hole where any user
 // could confirm any booking.
 router.post('/confirm', adminLimiter, authAdmin, groupBookingController.confirmBooking);
+router.put('/admin/:id/cancel', adminLimiter, authAdmin, groupBookingController.cancelBookingAdmin);
 router.get('/admin/all', adminLimiter, authAdmin, groupBookingController.getAllBookingsAdmin);
 router.get('/admin/trip/:tripId', adminLimiter, authAdmin, groupBookingController.getBookingsByTripAdmin);
 

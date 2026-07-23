@@ -5,6 +5,18 @@ const GroupTrip = require('../models/GroupTrip');
 const User = require('../models/User');
 const Referral = require('../models/Referral');
 const config = require('../config/env');
+const {
+  notifyBookingRequested,
+  notifyBookingConfirmed,
+  notifyBookingCancelled,
+} = require('../services/bookingNotifications');
+
+// Fire-and-forget email helper: never let an email failure break the request.
+function sendAsync(promiseFactory, label) {
+  Promise.resolve()
+    .then(promiseFactory)
+    .catch((err) => console.error(`[email] ${label} failed:`, err.message));
+}
 
 // POST /join — Create a pending booking with vibe data (authUser required).
 // Input is validated upstream by validate(joinTripSchema).
@@ -55,9 +67,11 @@ exports.joinTrip = async (req, res, next) => {
     }
 
     await booking.save();
-
     booking.eCardUrl = `${config.frontendUrl}/ecard/${booking._id}`;
     await booking.save();
+
+    // Email the traveller (with quotation) and notify admin — non-blocking.
+    sendAsync(() => notifyBookingRequested(booking, trip), 'booking-requested');
 
     res.status(201).json({ booking, amountPaid });
   } catch (err) {
@@ -116,6 +130,47 @@ exports.confirmBooking = async (req, res, next) => {
         await referral.save();
       }
     }
+
+    // Email the traveller a confirmation + receipt — non-blocking.
+    sendAsync(() => notifyBookingConfirmed(booking, trip), 'booking-confirmed');
+
+    res.json({ booking });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/:id/cancel — Admin cancels a booking, releasing a seat if it was
+// confirmed, and notifies the traveller.
+exports.cancelBookingAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const booking = await GroupBooking.findById(id).populate('trip');
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ error: 'Booking is already cancelled.' });
+    }
+
+    const tripDoc = booking.trip; // populated document (for the email)
+    const wasConfirmed = booking.status === 'confirmed';
+
+    booking.status = 'cancelled';
+    await booking.save();
+
+    // Release the seat and re-open a full trip if it was confirmed.
+    if (wasConfirmed && tripDoc) {
+      const updated = await GroupTrip.findOneAndUpdate(
+        { _id: tripDoc._id, confirmedParticipants: { $gt: 0 } },
+        { $inc: { confirmedParticipants: -1 } },
+        { new: true }
+      );
+      if (updated && updated.status === 'full' && updated.confirmedParticipants < updated.maxParticipants) {
+        updated.status = 'published';
+        await updated.save();
+      }
+    }
+
+    sendAsync(() => notifyBookingCancelled(booking, tripDoc), 'booking-cancelled');
 
     res.json({ booking });
   } catch (err) {
