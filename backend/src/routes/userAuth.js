@@ -8,8 +8,10 @@ const config = require('../config/env');
 const User = require('../models/User');
 const authUser = require('../middleware/authUser');
 const validate = require('../middleware/validate');
-const { registerSchema, loginSchema } = require('../validators/authValidators');
+const crypto = require('crypto');
+const { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validators/authValidators');
 const { authLimiter } = require('../middleware/rateLimiters');
+const { sendPasswordResetEmail } = require('../services/notifications/authNotifications');
 
 // POST /api/auth/register
 router.post('/register', authLimiter, validate(registerSchema), async (req, res, next) => {
@@ -104,6 +106,47 @@ router.post('/google', authLimiter, async (req, res) => {
   } catch (err) {
     console.error('Google auth error:', err?.response?.data || err.message);
     res.status(401).json({ error: 'Google authentication failed.' });
+  }
+});
+
+// POST /api/auth/forgot-password — always responds 200 (never reveals whether the email exists)
+router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (user && user.passwordHash) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      user.resetTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      user.resetTokenExpires = new Date(Date.now() + config.resetTokenTtlMinutes * 60 * 1000);
+      await user.save();
+      const resetUrl = `${config.frontendUrl}/reset-password?token=${rawToken}`;
+      try {
+        await sendPasswordResetEmail(user, resetUrl);
+      } catch (mailErr) {
+        console.error('[reset-email]', mailErr.message);
+      }
+    }
+    res.json({ message: 'If that email exists, a reset link has been sent.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({ resetTokenHash: tokenHash, resetTokenExpires: { $gt: new Date() } });
+    if (!user) return res.status(400).json({ error: 'Invalid or expired reset token.' });
+
+    await user.setPassword(password);
+    user.resetTokenHash = undefined;
+    user.resetTokenExpires = undefined;
+    await user.save();
+    res.json({ message: 'Password has been reset. You can now sign in.' });
+  } catch (err) {
+    next(err);
   }
 });
 

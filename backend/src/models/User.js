@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
     // Safari Points for referrals
     safariPoints: { type: Number, default: 0 },
     referralCode: { type: String, unique: true, sparse: true }, // slug-based like 'sarah-smith'
+
+    // Password reset (hashed token + expiry)
+    resetTokenHash: { type: String },
+    resetTokenExpires: { type: Date },
   },
   { timestamps: true }
 );
