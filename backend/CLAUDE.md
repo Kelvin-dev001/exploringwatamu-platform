@@ -30,6 +30,7 @@ Copy `.env.example` to `.env`. Required: `MONGODB_URI`, `JWT_SECRET` (>= 16 char
 - `src/middleware/*` — `authUser`, `authAdmin`, `requireRole`, `validate` (zod), `rateLimiters`, `errorHandler`.
 - `src/validators/*` — zod schemas.
 - `src/services/*` — `mailer` (nodemailer; a safe no-op until SMTP is set), `documents` (pdfkit quotation/receipt PDFs), `bookingNotifications`. Mail/PDF libs are lazy-loaded so the app boots without them.
+- `src/services/bookingRegistry.js` + `bookingService.js` — the unified booking engine. Every booking type (tour, carhire, service, propertyviewing, grouptour) has one registry entry; controllers share `paginate`/`cancelById`; `GET /api/bookings` gives admins one view across all types. Add a new booking type by adding a registry entry.
 
 ## Conventions
 - Validate request input with zod via `validate(schema)` at the route.

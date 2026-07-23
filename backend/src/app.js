@@ -60,6 +60,7 @@ function buildApp() {
   app.use('/api/auth', require('./routes/userAuth'));
   app.use('/api/group-trips', require('./routes/groupTripRoutes'));
   app.use('/api/group-bookings', require('./routes/groupBookingRoutes'));
+  app.use('/api/bookings', require('./routes/bookings'));
   app.use('/api/referrals', require('./routes/referralRoutes'));
   app.use('/api/reviews', require('./routes/reviews'));
 
