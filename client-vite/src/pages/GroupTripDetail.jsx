@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../api.js';
@@ -55,9 +55,8 @@ export default function GroupTripDetail() {
     travelGroup: '',
     selectedAvatar: 'avatar_1.png',
   });
-  const [modalStep, setModalStep] = useState('form'); // 'form' | 'vibe' | 'payment' | 'processing' | 'success' | 'error'
+  const [modalStep, setModalStep] = useState('form'); // 'form' | 'vibe' | 'review' | 'submitting' | 'success' | 'error'
   const [modalError, setModalError] = useState('');
-  const [checkoutRequestId, setCheckoutRequestId] = useState('');
   const [bookingData, setBookingData] = useState(null);
 
   const countdown = useCountdown(trip?.startDate);
@@ -83,62 +82,20 @@ export default function GroupTripDetail() {
   const handleFormChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleVibeComplete = (vibeData) => {
-    setFormData(prev => ({
-      ...prev,
-      ...vibeData,
-    }));
-    setModalStep('payment');
+    setFormData(prev => ({ ...prev, ...vibeData }));
+    setModalStep('review');
   };
 
-  const pollPaymentStatus = useCallback(async (crid, bookingId, attempts = 0) => {
-    if (attempts >= 12) {
-      setModalStep('error');
-      setModalError('Payment confirmation timed out. If you completed the M-Pesa payment, please contact us with your receipt number.');
-      return;
-    }
-    try {
-      const res = await axios.post(`${API_URL}/mpesa/query`, { checkoutRequestId: crid }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const code = res.data?.ResultCode;
-      if (code === 0 || String(code) === '0') {
-        // Confirm booking on backend
-        await axios.post(`${API_URL}/group-bookings/confirm`, {
-          bookingId,
-          mpesaReceiptNumber: res.data?.mpesaReceiptNumber,
-        }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // Fetch booking data for e-card
-        const bookingRes = await axios.get(`${API_URL}/group-bookings/${bookingId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setBookingData(bookingRes.data);
-        setModalStep('success');
-        return;
-      }
-      if (code !== undefined && code !== null && String(code) !== '0') {
-        setModalStep('error');
-        setModalError(res.data?.ResultDesc || 'Payment was not completed.');
-        return;
-      }
-    } catch {
-      // ignore and retry
-    }
-    setTimeout(() => pollPaymentStatus(crid, bookingId, attempts + 1), 5000);
-  }, [token]);
-
-  const handlePaySubmit = async (e) => {
+  // Submit a booking REQUEST (no payment). The backend creates a pending
+  // booking, emails a quotation to the traveller, and notifies the admin,
+  // who confirms it. No M-Pesa here.
+  const handleSubmitRequest = async (e) => {
     e.preventDefault();
     setModalError('');
-    setModalStep('processing');
+    setModalStep('submitting');
 
     try {
-      const amount = formData.paymentType === 'full' ? trip.fullPrice : trip.depositAmount;
-
-      // Step 1: Create booking with vibe data
-      const bookingRes = await axios.post(`${API_URL}/group-bookings/join`, {
+      const res = await axios.post(`${API_URL}/group-bookings/join`, {
         tripId: trip._id,
         paymentType: formData.paymentType,
         fullName: formData.fullName,
@@ -149,25 +106,20 @@ export default function GroupTripDetail() {
         selectedAvatar: formData.selectedAvatar,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      const bookingId = bookingRes.data.booking._id;
-
-      // Step 2: Trigger STK push
-      const stkRes = await axios.post(`${API_URL}/mpesa/stkpush`, {
-        bookingId,
-        phone: formData.phone,
-        amount,
-      }, { headers: { Authorization: `Bearer ${token}` } });
-
-      const crid = stkRes.data.checkoutRequestId;
-      setCheckoutRequestId(crid);
-
-      // Step 3: Poll for status
-      setTimeout(() => pollPaymentStatus(crid, bookingId, 0), 5000);
+      setBookingData(res.data.booking);
+      setModalStep('success');
     } catch (err) {
+      const data = err.response?.data;
+      const msg =
+        data?.error ||
+        (Array.isArray(data?.issues) && data.issues.map((i) => i.message).join(', ')) ||
+        'Something went wrong. Please try again.';
       setModalStep('error');
-      setModalError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setModalError(msg);
     }
   };
+
+  const amountNow = formData.paymentType === 'full' ? trip?.fullPrice : trip?.depositAmount;
 
   if (loading) {
     return (
@@ -244,7 +196,7 @@ export default function GroupTripDetail() {
             </div>
           </div>
 
-          {/* Who is In Carousel - NEW FEATURE 1 */}
+          {/* Who is In Carousel */}
           <ParticipantCarousel tripId={trip._id} />
 
           {/* Description */}
@@ -334,7 +286,7 @@ export default function GroupTripDetail() {
         {/* Sticky pricing box */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl shadow-md p-6 lg:sticky lg:top-20 space-y-4">
-            {/* Referral Card - NEW FEATURE 4 */}
+            {/* Referral Card */}
             {user && <ReferralCard />}
 
             {/* Pricing */}
@@ -356,12 +308,12 @@ export default function GroupTripDetail() {
                   className="w-full py-3 rounded-xl font-bold text-white text-lg transition-opacity hover:opacity-90 active:scale-95"
                   style={{ backgroundColor: '#ffb347' }}
                 >
-                  Join This Trip 🚀
+                  Request to Join 🚀
                 </button>
               )}
 
               <div className="mt-5 pt-5 border-t border-gray-100 space-y-2 text-sm text-gray-500">
-                <p>🔒 Secure M-Pesa Payment</p>
+                <p>📝 Reserve now, pay after we confirm</p>
                 <p>✅ Verified Experience</p>
                 <p>👥 Group Adventure</p>
               </div>
@@ -381,7 +333,7 @@ export default function GroupTripDetail() {
             {modalStep === 'form' && (
               <>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Join This Trip</h2>
+                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Request to Join</h2>
                   <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
                 </div>
 
@@ -407,23 +359,23 @@ export default function GroupTripDetail() {
                       <input type="email" name="email" value={formData.email} onChange={handleFormChange} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone (M-Pesa number)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone (WhatsApp / M-Pesa)</label>
                       <input type="tel" name="phone" value={formData.phone} onChange={handleFormChange} required placeholder="07XXXXXXXX" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Payment Option</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">How you'll pay (after we confirm your spot)</label>
                       <div className="space-y-2">
                         <label className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50" style={{ borderColor: formData.paymentType === 'deposit' ? '#ffb347' : '#e5e7eb' }}>
                           <input type="radio" name="paymentType" value="deposit" checked={formData.paymentType === 'deposit'} onChange={handleFormChange} className="radio radio-sm" />
                           <div>
-                            <p className="font-medium text-sm">Pay Deposit</p>
-                            <p className="text-xs text-gray-500">KES {trip.depositAmount?.toLocaleString()} now</p>
+                            <p className="font-medium text-sm">Deposit</p>
+                            <p className="text-xs text-gray-500">KES {trip.depositAmount?.toLocaleString()} to secure your spot</p>
                           </div>
                         </label>
                         <label className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50" style={{ borderColor: formData.paymentType === 'full' ? '#ffb347' : '#e5e7eb' }}>
                           <input type="radio" name="paymentType" value="full" checked={formData.paymentType === 'full'} onChange={handleFormChange} className="radio radio-sm" />
                           <div>
-                            <p className="font-medium text-sm">Pay Full Amount</p>
+                            <p className="font-medium text-sm">Full Amount</p>
                             <p className="text-xs text-gray-500">KES {trip.fullPrice?.toLocaleString()}</p>
                           </div>
                         </label>
@@ -437,7 +389,7 @@ export default function GroupTripDetail() {
               </>
             )}
 
-            {/* FEATURE 2: Travel Vibe Selector */}
+            {/* Travel Vibe Selector */}
             {modalStep === 'vibe' && (
               <div>
                 <div className="flex items-center justify-between mb-5">
@@ -448,10 +400,10 @@ export default function GroupTripDetail() {
               </div>
             )}
 
-            {modalStep === 'payment' && (
-              <form onSubmit={handlePaySubmit} className="space-y-4">
+            {modalStep === 'review' && (
+              <form onSubmit={handleSubmitRequest} className="space-y-4">
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Ready to Pay?</h2>
+                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Review &amp; Submit</h2>
                   <button onClick={() => setModalStep('vibe')} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">←</button>
                 </div>
 
@@ -465,21 +417,29 @@ export default function GroupTripDetail() {
                   <p><strong>Traveling as:</strong> {formData.travelGroup}</p>
                 </div>
 
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+                  <div className="flex justify-between"><span>Payment option</span><span className="font-medium capitalize">{formData.paymentType}</span></div>
+                  <div className="flex justify-between mt-1"><span>Amount on confirmation</span><span className="font-semibold">KES {amountNow?.toLocaleString()}</span></div>
+                </div>
+
+                <p className="text-xs text-gray-500">
+                  This sends a booking request. We'll email you a quotation and confirm your spot shortly —
+                  no payment is taken now.
+                </p>
+
                 <button type="submit" className="w-full py-3 rounded-xl font-bold text-white text-lg" style={{ backgroundColor: '#ffb347' }}>
-                  Proceed to Payment 💳
+                  Submit Booking Request
                 </button>
               </form>
             )}
 
-            {modalStep === 'processing' && (
+            {modalStep === 'submitting' && (
               <div className="text-center py-10">
-                <div className="text-5xl mb-4">📱</div>
-                <h2 className="text-xl font-bold mb-2" style={{ color: '#1e7575' }}>Check Your Phone</h2>
-                <p className="text-gray-600 text-sm mb-4">An M-Pesa payment prompt has been sent to your phone. Enter your PIN to complete payment.</p>
-                <div className="flex justify-center">
+                <div className="text-5xl mb-4">📨</div>
+                <h2 className="text-xl font-bold mb-2" style={{ color: '#1e7575' }}>Sending your request…</h2>
+                <div className="flex justify-center mt-3">
                   <span className="loading loading-spinner loading-md" style={{ color: '#24b3b3' }}></span>
                 </div>
-                <p className="text-xs text-gray-400 mt-4">Waiting for confirmation...</p>
               </div>
             )}
 
@@ -487,11 +447,14 @@ export default function GroupTripDetail() {
               <div className="text-center py-6 space-y-6">
                 <div className="text-5xl mb-4">🎉</div>
                 <div>
-                  <h2 className="text-xl font-bold mb-2 text-green-700">Booking Confirmed!</h2>
-                  <p className="text-gray-600 text-sm">Your payment was successful. You're officially on this trip!</p>
+                  <h2 className="text-xl font-bold mb-2 text-green-700">Request received!</h2>
+                  <p className="text-gray-600 text-sm">
+                    Your spot is <strong>pending confirmation</strong>. We've emailed a quotation to
+                    {' '}<strong>{bookingData.email}</strong> and will confirm shortly.
+                  </p>
                 </div>
 
-                {/* FEATURE 3: E-Card Preview */}
+                {/* E-Card Preview */}
                 <ECardPreview booking={bookingData} trip={trip} user={user} />
 
                 <button
@@ -507,10 +470,10 @@ export default function GroupTripDetail() {
             {modalStep === 'error' && (
               <div className="text-center py-10">
                 <div className="text-5xl mb-4">❌</div>
-                <h2 className="text-xl font-bold mb-2 text-red-600">Payment Failed</h2>
-                <p className="text-gray-600 text-sm mb-6">{modalError || 'Something went wrong. Please try again.'}</p>
+                <h2 className="text-xl font-bold mb-2 text-red-600">Something went wrong</h2>
+                <p className="text-gray-600 text-sm mb-6">{modalError || 'Please try again.'}</p>
                 <div className="flex gap-3 justify-center">
-                  <button onClick={() => { setModalStep('form'); setModalError(''); }} className="px-5 py-2.5 rounded-lg font-semibold text-white" style={{ backgroundColor: '#24b3b3' }}>Try Again</button>
+                  <button onClick={() => { setModalStep('review'); setModalError(''); }} className="px-5 py-2.5 rounded-lg font-semibold text-white" style={{ backgroundColor: '#24b3b3' }}>Try Again</button>
                   <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-lg font-semibold border border-gray-300 text-gray-600">Close</button>
                 </div>
               </div>
