@@ -7,7 +7,10 @@
     "start": "node src/server.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
-    "seed:admin": "node scripts/createAdmin.js"
+    "seed:admin": "node scripts/createAdmin.js",
+    "test:e2e": "cross-env NODE_ENV=test jest tests/e2e --runInBand",
+    "loadtest": "node scripts/loadtest.js",
+    "seed:loadtest": "node scripts/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +36,7 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^30.2.0",
+    "mongodb-memory-server": "^10.1.2",
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4"
   }
