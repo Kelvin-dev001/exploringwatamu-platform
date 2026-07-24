@@ -11,6 +11,8 @@ const navLinks = [
   { name: "Properties", to: "/properties" },
   { name: "Vehicles", to: "/vehicles" },
   { name: "Group Trips", to: "/grouptrips" },
+  { name: "All Bookings", to: "/bookings" },
+  { name: "Notifications", to: "/notifications" },
 ];
 
 export default function Navbar() {
