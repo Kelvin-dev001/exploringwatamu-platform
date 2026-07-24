@@ -1,6 +1,7 @@
 'use strict';
 
 const config = require('../config/env');
+const { record } = require('./notifications/log');
 
 let transporter = null;
 
@@ -24,20 +25,26 @@ function getTransporter() {
   return transporter;
 }
 
-async function sendMail({ to, subject, html, text, attachments } = {}) {
+async function sendMail({ to, subject, html, text, attachments, event = null, user = null } = {}) {
   if (!to) return { skipped: true, reason: 'no recipient' };
-  const info = await getTransporter().sendMail({
-    from: config.mail.from,
-    to,
-    subject,
-    html,
-    text,
-    attachments,
-  });
-  if (!config.mail.host) {
-    console.log(`[mailer] SMTP not configured — email NOT sent. to=${to} subject="${subject}"`);
+  try {
+    const info = await getTransporter().sendMail({
+      from: config.mail.from,
+      to,
+      subject,
+      html,
+      text,
+      attachments,
+    });
+    if (!config.mail.host) {
+      console.log(`[mailer] SMTP not configured — email NOT sent. to=${to} subject="${subject}"`);
+    }
+    await record({ user, channel: 'email', event, to, subject, status: config.mail.host ? 'sent' : 'skipped' });
+    return info;
+  } catch (err) {
+    await record({ user, channel: 'email', event, to, subject, status: 'failed', error: err.message });
+    throw err;
   }
-  return info;
 }
 
 module.exports = { sendMail, getTransporter };

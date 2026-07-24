@@ -69,6 +69,17 @@ const config = {
     name: 'ExploringWatamu',
     supportEmail: process.env.SUPPORT_EMAIL || 'hello@exploringwatamu.com',
   },
+
+  // SMS via Africa's Talking. A no-op (logged) when username/apiKey are unset.
+  sms: {
+    env: process.env.AT_ENV || 'production', // 'sandbox' | 'production'
+    username: process.env.AT_USERNAME || '',
+    apiKey: process.env.AT_API_KEY || '',
+    senderId: process.env.AT_SENDER_ID || '',
+  },
+
+  // Password-reset token lifetime, in minutes.
+  resetTokenTtlMinutes: Number(process.env.RESET_TOKEN_TTL_MINUTES) || 60,
 };
 
 module.exports = config;
