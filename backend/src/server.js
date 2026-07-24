@@ -6,9 +6,11 @@
 const config = require('./config/env');
 const connectDB = require('./config/db');
 const buildApp = require('./app');
+const ensureBootstrapAdmin = require('./bootstrap/ensureAdmin');
 
 async function start() {
   await connectDB();
+  await ensureBootstrapAdmin();
   const app = buildApp();
   app.listen(config.port, () => {
     console.log(`Server running on port ${config.port} [${config.nodeEnv}]`);

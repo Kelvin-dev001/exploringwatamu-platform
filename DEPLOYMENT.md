@@ -47,6 +47,8 @@ npm run seed:admin -- you@example.com yourStrongPassword
 ```
 (That's how you'll log into the admin portal.)
 
+*Alternative (no shell needed):* set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` in the Render environment variables. On startup the backend auto-creates that admin (and resets its password to match the env if it ever drifts), so you can log in without running any command.
+
 ## Step 4 — Frontends (Vercel)
 Deploy the two web apps as **separate Vercel projects from the same repo**:
 

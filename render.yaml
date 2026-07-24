@@ -24,6 +24,10 @@ services:
       # --- Secrets: set these in the Render dashboard (never in code) ---
       - key: MONGODB_URI
         sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
       - key: FRONTEND_URLS
         sync: false
       - key: FRONTEND_URL
