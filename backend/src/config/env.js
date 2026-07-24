@@ -80,6 +80,14 @@ const config = {
 
   // Password-reset token lifetime, in minutes.
   resetTokenTtlMinutes: Number(process.env.RESET_TOKEN_TTL_MINUTES) || 60,
+
+  // Optional bootstrap admin: if both are set, an admin account is auto-created
+  // (and its password kept in sync) on server startup — set the first admin's
+  // credentials via environment instead of running the seed script.
+  bootstrapAdmin: {
+    email: process.env.BOOTSTRAP_ADMIN_EMAIL || '',
+    password: process.env.BOOTSTRAP_ADMIN_PASSWORD || '',
+  },
 };
 
 module.exports = config;
