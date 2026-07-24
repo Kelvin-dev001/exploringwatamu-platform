@@ -44,6 +44,9 @@ import GroupTripList from './pages/grouptrips/GroupTripList';
 import NewGroupTrip from './pages/grouptrips/NewGroupTrip';
 import EditGroupTrip from './pages/grouptrips/EditGroupTrip';
 import GroupTripBookingList from './pages/grouptrips/GroupTripBookingList';
+// Bookings & Notifications
+import AllBookings from './pages/bookings/AllBookings';
+import NotificationsLog from './pages/notifications/NotificationsLog';
 
 // PrivateRoute component to protect authenticated routes
 function PrivateRoute({ children }) {
@@ -65,6 +68,24 @@ function App() {
             element={
               <PrivateRoute>
                 <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Unified bookings + notifications (Protected) */}
+          <Route
+            path="/bookings"
+            element={
+              <PrivateRoute>
+                <AllBookings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <PrivateRoute>
+                <NotificationsLog />
               </PrivateRoute>
             }
           />
