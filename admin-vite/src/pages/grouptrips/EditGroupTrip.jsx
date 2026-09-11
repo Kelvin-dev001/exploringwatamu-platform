@@ -3,6 +3,8 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { API_URL } from "../../api.js";
+import { parseApiError } from "../../apiError.js";
+import FormError, { FieldError } from "../../components/FormError";
 
 export default function EditGroupTrip() {
   const { id } = useParams();
@@ -36,6 +38,7 @@ export default function EditGroupTrip() {
   const [excludeInput, setExcludeInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [formError, setFormError] = useState(null);
 
   useEffect(() => {
     const fetchTrip = async () => {
@@ -161,6 +164,7 @@ export default function EditGroupTrip() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
     try {
       const data = new FormData();
       data.append("title", form.title);
@@ -189,7 +193,7 @@ export default function EditGroupTrip() {
       navigate("/grouptrips");
     } catch (err) {
       console.error("Update error:", err?.response?.data || err);
-      window.alert(err?.response?.data?.error || "Failed to update group trip.");
+      setFormError(parseApiError(err, "Failed to update group trip."));
     }
     setLoading(false);
   };
@@ -216,6 +220,7 @@ export default function EditGroupTrip() {
           onChange={(e) => handleChange("title", e.target.value)}
           required
         />
+        <FieldError error={formError} name="title" />
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Short Description *</label>
@@ -226,6 +231,7 @@ export default function EditGroupTrip() {
           onChange={(e) => handleChange("shortDescription", e.target.value)}
           required
         />
+        <FieldError error={formError} name="shortDescription" />
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Full Description</label>
@@ -249,6 +255,7 @@ export default function EditGroupTrip() {
             onChange={(e) => handleChange("startDate", e.target.value)}
             required
           />
+          <FieldError error={formError} name="startDate" />
         </div>
         <div>
           <label className="block font-semibold mb-1">End Date *</label>
@@ -259,6 +266,7 @@ export default function EditGroupTrip() {
             onChange={(e) => handleChange("endDate", e.target.value)}
             required
           />
+          <FieldError error={formError} name="endDate" />
         </div>
         <div>
           <label className="block font-semibold mb-1">Balance Due Date</label>
@@ -268,6 +276,7 @@ export default function EditGroupTrip() {
             value={form.balanceDueDate}
             onChange={(e) => handleChange("balanceDueDate", e.target.value)}
           />
+          <FieldError error={formError} name="balanceDueDate" />
         </div>
       </div>
 
@@ -303,6 +312,7 @@ export default function EditGroupTrip() {
             required
             min={1}
           />
+          <FieldError error={formError} name="maxParticipants" />
         </div>
         <div>
           <label className="block font-semibold mb-1">Full Price (KES) *</label>
@@ -314,6 +324,7 @@ export default function EditGroupTrip() {
             required
             min={0}
           />
+          <FieldError error={formError} name="fullPrice" />
         </div>
         <div>
           <label className="block font-semibold mb-1">Deposit Amount (KES) *</label>
@@ -325,6 +336,7 @@ export default function EditGroupTrip() {
             required
             min={0}
           />
+          <FieldError error={formError} name="depositAmount" />
         </div>
       </div>
 
@@ -345,6 +357,7 @@ export default function EditGroupTrip() {
         <button type="button" className="btn btn-sm btn-accent mt-2" onClick={addDay}>
           + Add Day
         </button>
+        <FieldError error={formError} name="itinerary" />
       </div>
 
       {/* Includes */}
@@ -425,6 +438,7 @@ export default function EditGroupTrip() {
           className="file-input file-input-bordered w-full"
           onChange={handleHeroUpload}
         />
+        <FieldError error={formError} name="heroImage" />
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Gallery Images</label>
@@ -456,6 +470,7 @@ export default function EditGroupTrip() {
             <img key={i} src={url} alt={`new${i}`} className="w-16 h-12 object-cover rounded opacity-60" />
           ))}
         </div>
+        <FieldError error={formError} name="gallery" />
       </div>
 
       {/* Status */}
@@ -471,6 +486,8 @@ export default function EditGroupTrip() {
           <option value="closed">Closed</option>
         </select>
       </div>
+
+      <FormError error={formError} />
 
       <button
         type="submit"

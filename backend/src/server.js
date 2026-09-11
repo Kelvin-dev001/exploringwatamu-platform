@@ -9,6 +9,9 @@ const buildApp = require('./app');
 const ensureBootstrapAdmin = require('./bootstrap/ensureAdmin');
 
 async function start() {
+  if (!config.cloudinary.enabled) {
+    console.warn('[config] Cloudinary is not configured: image uploads will answer 503 until CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET are set.');
+  }
   await connectDB();
   await ensureBootstrapAdmin();
   const app = buildApp();

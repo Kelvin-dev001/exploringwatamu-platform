@@ -14,6 +14,7 @@ Unit tests (`tests/*.test.js`) need no database. **E2E tests** (`tests/e2e/*.e2e
 
 - **Auth** — register, login, wrong password, and safe forgot/reset-password behaviour.
 - **Group tour lifecycle** — admin create → publish → user join (pending) → admin confirm → public participants feed → unified `/api/bookings` → admin cancel (seat released).
+- **Admin group-trip create/update** — multipart with and without images, field-level 400s from zod validation, and upload failures mapped to real codes (400 too large / unexpected field / rejected format, 502 Cloudinary failure, 503 image hosting not configured). Cloudinary's storage engine is mocked: no network or credentials needed.
 
 ## Load test (no dependencies)
 

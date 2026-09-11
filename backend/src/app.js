@@ -41,7 +41,7 @@ function buildApp() {
 
   // Lightweight health check — no DB dependency, safe for uptime probes.
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', env: config.nodeEnv, uptime: process.uptime() });
+    res.json({ status: 'ok', env: config.nodeEnv, uptime: process.uptime(), imageUploads: config.cloudinary.enabled });
   });
 
   // Feature routes

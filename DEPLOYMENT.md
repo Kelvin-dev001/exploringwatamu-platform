@@ -74,7 +74,7 @@ Save (Render redeploys). The apps can now call the API.
 Set these on Render and redeploy; each is a safe no-op until configured:
 - **Email:** `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `ADMIN_NOTIFY_EMAIL`.
 - **SMS:** `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID` (Africa's Talking).
-- **Image uploads:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+- **Image uploads:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — set all three (a partial set stops the API from booting). Until then, saving a listing *with* images answers 503 "Image hosting is not configured"; listings without images still work. `/api/health` reports `"imageUploads": true` once they're picked up.
 - **Google sign-in:** `GOOGLE_CLIENT_ID` (and set `VITE_GOOGLE_CLIENT_ID` on the Vercel apps).
 
 ---
