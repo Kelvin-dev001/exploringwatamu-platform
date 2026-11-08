@@ -38,7 +38,7 @@ export default function ProfilePill({ compact = false, className }) {
         className
       )}
     >
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ocean-900 text-coral-300">
+      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ocean-900 text-lagoon-300">
         {FirstIcon ? <FirstIcon className="size-3.5" /> : <Sparkles className="size-3.5" />}
       </span>
       {!compact && <span className="font-semibold text-ocean-900/50">Your Watamu</span>}

@@ -21,7 +21,7 @@ const WAYS_IN = [
     icon: Compass,
     span: 'md:col-span-2 md:row-span-2',
     tone: 'bg-ocean-900 text-sand-50',
-    art: <WaveField className="text-ocean-700" rows={10} gap={18} />,
+    art: <WaveField className="text-lagoon-600/40" rows={10} gap={18} />,
     big: true,
   },
   {
@@ -35,7 +35,7 @@ const WAYS_IN = [
     big: true,
   },
   { to: '/hotels', title: 'Stays', desc: 'Hotels, villas and beach houses.', icon: BedDouble, tone: 'bg-white', art: <Weave className="text-sand-200" /> },
-  { to: '/transfers', title: 'Transfers', desc: 'Airport and hotel pick-ups.', icon: Plane, tone: 'bg-sand-200/70', art: null },
+  { to: '/transfers', title: 'Transfers', desc: 'Airport and hotel pick-ups.', icon: Plane, tone: 'bg-lagoon-100', art: null },
   { to: '/carhire', title: 'Car hire', desc: 'Explore the coast at your pace.', icon: CarFront, tone: 'bg-mangrove-100', art: null },
   { to: '/services', title: 'Local services', desc: 'Chefs, guides, wellness.', icon: Sparkles, tone: 'bg-ochre-100', art: null },
   {
@@ -125,7 +125,7 @@ export default function Home() {
             {HOW.map((step, i) => (
               <li key={step.title} className="relative">
                 <span className="font-display text-6xl italic text-coral-200">{String(i + 1).padStart(2, '0')}</span>
-                <step.icon className="mt-4 size-6 text-ocean-500" />
+                <step.icon className="mt-4 size-6 text-lagoon-600" />
                 <h3 className="mt-3 font-display text-2xl text-ocean-900">{step.title}</h3>
                 <p className="mt-2 text-ocean-900/65">{step.text}</p>
               </li>

@@ -6,7 +6,7 @@ import { useVibeProfile } from '@/context/VibeProfileContext';
 import { VIBES, COMPANIONS, STAYS, MAX_VIBES, personalHeadline } from '@/lib/vibes';
 import { Button } from '@/components/ui/button';
 import { WaveField, Rosette } from '@/components/brand/Patterns';
-import { SunMark } from '@/components/brand/Logo';
+import { BrandBadge } from '@/components/brand/Logo';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
@@ -37,7 +37,7 @@ function OptionTile({ selected, onClick, icon: Icon, label, blurb, disabled }) {
         <span
           className={cn(
             'grid size-11 shrink-0 place-items-center rounded-full transition-colors',
-            selected ? 'bg-coral-500 text-white' : 'bg-sand-50/10 text-coral-300'
+            selected ? 'bg-coral-500 text-white' : 'bg-lagoon-500/15 text-lagoon-300'
           )}
         >
           <Icon className="size-5" />
@@ -101,15 +101,18 @@ export default function VibeOnboarding() {
           aria-describedby="vibe-onboarding-hint"
         >
           {/* Atmosphere: tide lines and a carved rosette */}
-          <WaveField className="pointer-events-none fixed inset-0 text-ocean-700/50" rows={8} gap={18} />
+          <WaveField className="pointer-events-none fixed inset-0 text-ocean-700/60" rows={8} gap={18} />
           <Rosette className="pointer-events-none fixed -right-24 -top-24 hidden text-ocean-600/60 lg:block" size={420} strokeWidth={0.8} />
 
           <div className="relative mx-auto flex min-h-full max-w-6xl flex-col px-5 py-6 sm:px-8 lg:px-12">
             {/* Top bar */}
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2.5" style={{ '--logo-bg': 'var(--color-ocean-900)' }}>
-                <SunMark className="text-sand-50" />
-                <span className="font-display text-xl italic">Watamu</span>
+              <span className="flex items-center gap-3">
+                <BrandBadge priority className="size-12 ring-2 ring-sand-50/10" />
+                <span className="flex flex-col leading-none">
+                  <span className="text-[0.6rem] font-bold uppercase tracking-[0.32em] text-lagoon-300">Exploring</span>
+                  <span className="font-display text-xl font-semibold">Watamu</span>
+                </span>
               </span>
               <button
                 type="button"

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Luggage, LogOut, Menu, Mail, MapPin, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext.jsx';
-import { Logo } from '@/components/brand/Logo';
+import { Logo, BrandBadge } from '@/components/brand/Logo';
 import { ArchBand, Rosette } from '@/components/brand/Patterns';
 import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
@@ -187,18 +187,21 @@ function Footer() {
   ];
   return (
     <footer className="relative mt-24 overflow-hidden bg-ocean-900 text-sand-50">
+      <div className="h-1.5 bg-gradient-to-r from-lagoon-500 via-ochre-500 to-coral-500" />
       <ArchBand className="text-ocean-700" />
       <Rosette className="pointer-events-none absolute -bottom-28 -right-20 text-ocean-800" size={380} strokeWidth={0.9} />
       <Container size="wide" className="relative grid gap-12 py-16 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
-          <Logo tone="light" />
+          <Link to="/" aria-label="Exploring Watamu — home" className="inline-block">
+            <BrandBadge className="size-28 ring-4 ring-ocean-800" />
+          </Link>
           <p className="mt-6 max-w-sm font-display text-2xl italic leading-snug text-sand-50/90">
             Your Watamu, tuned to you — built by people who live here.
           </p>
         </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <p className="eyebrow !text-coral-300">{col.title}</p>
+            <p className="eyebrow !text-lagoon-300">{col.title}</p>
             <ul className="mt-4 space-y-2.5">
               {col.links.map((l) => (
                 <li key={l.to + l.label}>
@@ -211,7 +214,7 @@ function Footer() {
           </div>
         ))}
         <div>
-          <p className="eyebrow !text-coral-300">Talk to us</p>
+          <p className="eyebrow !text-lagoon-300">Talk to us</p>
           <ul className="mt-4 space-y-2.5 text-sand-50/75">
             <li>
               <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 transition hover:text-sand-50">

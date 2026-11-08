@@ -4,7 +4,7 @@ import { Container, SectionHeading, Badge, Chip, Card } from '@/components/ui/pr
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { ArchBand, ChainBand, WaveField, Weave, Rosette, DoorFrame } from '@/components/brand/Patterns';
-import { Logo } from '@/components/brand/Logo';
+import { Logo, BrandBadge } from '@/components/brand/Logo';
 import ProfilePill from '@/components/personalise/ProfilePill';
 import { useVibeProfile } from '@/context/VibeProfileContext';
 import { VIBES } from '@/lib/vibes';
@@ -16,9 +16,10 @@ import { VIBES } from '@/lib/vibes';
 const PALETTE = [
   { name: 'Sand', note: 'Space & surfaces', shades: ['50', '100', '200', '300', '400', '500'], key: 'sand' },
   { name: 'Ocean', note: 'Ink & deep sections', shades: ['100', '300', '500', '700', '900', '950'], key: 'ocean' },
-  { name: 'Coral', note: 'Action & highlight', shades: ['50', '100', '200', '400', '500', '700'], key: 'coral' },
+  { name: 'Lagoon', note: 'Turquoise ring & shallows', shades: ['50', '100', '300', '500', '600', '700'], key: 'lagoon' },
+  { name: 'Coral', note: 'Sunset · action & highlight', shades: ['50', '100', '200', '400', '500', '700'], key: 'coral' },
   { name: 'Mangrove', note: 'Nature & calm', shades: ['50', '100', '300', '500', '700'], key: 'mangrove' },
-  { name: 'Ochre', note: 'Sun & ratings', shades: ['100', '300', '500', '700'], key: 'ochre' },
+  { name: 'Ochre', note: 'Golden sand · ratings', shades: ['100', '300', '500', '700'], key: 'ochre' },
 ];
 
 function Block({ eyebrow, title, children }) {
@@ -79,12 +80,13 @@ export default function StyleGuide() {
   return (
     <div className="pb-10">
       <Container size="wide" className="py-16">
+        <BrandBadge priority className="mb-8 size-32" />
         <p className="eyebrow">Design system · Phase 1</p>
         <h1 className="mt-4 max-w-4xl font-display text-5xl leading-[1.02] text-ocean-900 sm:text-7xl">
           Warm Swahili-coast <em className="text-coral-500">editorial</em>
         </h1>
         <p className="mt-6 max-w-2xl text-xl text-ocean-900/70">
-          Sand for space, deep ocean for ink, coral for action. Big serif type does the work photography will
+          Every colour comes from the badge: cream sky, navy dhow, lagoon turquoise, golden sand and the setting sun. Big serif type does the work photography will
           do later, and original carved-door patterns give the site its own texture.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">

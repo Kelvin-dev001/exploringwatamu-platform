@@ -5,6 +5,7 @@ import { personalHeadline, byId, VIBES } from '@/lib/vibes';
 import { Container, Badge } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { DoorFrame, Rosette, WaveField, Weave } from '@/components/brand/Patterns';
+import { BrandBadge } from '@/components/brand/Logo';
 
 const rise = {
   hidden: { opacity: 0, y: 18 },
@@ -17,13 +18,16 @@ function DoorwayArt() {
     <div className="relative mx-auto aspect-[4/5] w-full max-w-md">
       <Weave className="absolute -left-6 top-10 h-40 w-40 text-sand-300" />
       <DoorFrame className="absolute inset-0 bg-ocean-900 shadow-lift">
-        <div className="absolute inset-x-0 top-[38%] mx-auto size-28 rounded-full bg-coral-500 sm:size-32" />
-        <div className="absolute inset-x-0 bottom-0 top-[52%] bg-ocean-800">
-          <WaveField className="text-ocean-500/70" rows={7} gap={16} amplitude={5} />
+        <div className="absolute inset-x-0 top-0 h-[52%] bg-gradient-to-b from-ocean-900 via-ocean-700 to-ocean-600" />
+        <div className="absolute inset-x-0 top-[36%] mx-auto size-28 rounded-full bg-coral-500 shadow-[0_0_60px_10px_rgb(224_108_49/0.35)] sm:size-32" />
+        <div className="absolute inset-x-0 top-[50%] h-[6%] bg-ochre-500" />
+        <div className="absolute inset-x-0 bottom-0 top-[56%] bg-lagoon-600">
+          <WaveField className="text-lagoon-300/60" rows={7} gap={16} amplitude={5} />
         </div>
-        <Rosette className="absolute left-1/2 top-[12%] -translate-x-1/2 text-ocean-600" size={92} />
+        <Rosette className="absolute left-1/2 top-[10%] -translate-x-1/2 text-ocean-500/80" size={92} />
         <div className="absolute inset-3 rounded-t-[999px] rounded-b-[calc(var(--radius-card)-6px)] border border-sand-50/15" />
       </DoorFrame>
+      <BrandBadge className="absolute -left-4 top-6 size-24 rotate-[-10deg] ring-4 ring-sand-50 sm:-left-8 sm:size-28" />
       <div className="absolute -bottom-5 -right-3 rotate-[-3deg] rounded-2xl bg-white px-4 py-3 shadow-lift sm:-right-8">
         <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-ocean-900/50">Watamu, Kenya</p>
         <p className="font-display text-lg italic text-ocean-900">Where the tide sets the plan</p>
