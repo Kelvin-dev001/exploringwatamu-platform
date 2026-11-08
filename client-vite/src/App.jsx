@@ -1,11 +1,12 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
 import Home from './pages/Home.jsx';
 
 // Everything except the homepage loads on demand, so first visits stay fast.
 const Hotels = lazy(() => import('./pages/Hotels.jsx'));
-const Tours = lazy(() => import('./pages/Tours.jsx'));
+const Experiences = lazy(() => import('./pages/Experiences.jsx'));
+const ExperienceDetail = lazy(() => import('./pages/ExperienceDetail.jsx'));
 const Transfers = lazy(() => import('./pages/Transfers.jsx'));
 const Services = lazy(() => import('./pages/Services.jsx'));
 const CarHire = lazy(() => import('./pages/CarHire.jsx'));
@@ -34,7 +35,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/hotels" element={<Hotels />} />
-            <Route path="/tours" element={<Tours />} />
+            <Route path="/experiences" element={<Experiences />} />
+            <Route path="/experiences/:id" element={<ExperienceDetail />} />
+            {/* Old links keep working */}
+            <Route path="/tours" element={<Navigate to="/experiences" replace />} />
             <Route path="/transfers" element={<Transfers />} />
             <Route path="/services" element={<Services />} />
             <Route path="/carhire" element={<CarHire />} />

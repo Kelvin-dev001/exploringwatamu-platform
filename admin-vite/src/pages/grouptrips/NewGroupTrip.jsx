@@ -5,6 +5,7 @@ import { useAdminAuth } from "../../context/AdminAuthContext";
 import { API_URL } from "../../api.js";
 import { parseApiError } from "../../apiError.js";
 import FormError, { FieldError } from "../../components/FormError";
+import DiscoveryFields, { EMPTY_DISCOVERY, appendDiscovery, discoveryFrom } from "../../components/DiscoveryFields";
 
 const DEFAULT_FORM = {
   title: "",
@@ -22,6 +23,7 @@ const DEFAULT_FORM = {
   includes: [],
   excludes: [],
   status: "draft",
+  ...EMPTY_DISCOVERY,
 };
 
 export default function NewGroupTrip() {
@@ -134,6 +136,7 @@ export default function NewGroupTrip() {
       data.append("includes", JSON.stringify(form.includes));
       data.append("excludes", JSON.stringify(form.excludes));
       data.append("status", form.status);
+      appendDiscovery(data, form);
       if (heroFile) data.append("heroImage", heroFile);
       galleryFiles.forEach((file) => data.append("gallery", file));
 
@@ -411,6 +414,8 @@ export default function NewGroupTrip() {
           <option value="published">Published</option>
         </select>
       </div>
+
+      <DiscoveryFields value={form} onChange={handleChange} />
 
       <FormError error={formError} />
 

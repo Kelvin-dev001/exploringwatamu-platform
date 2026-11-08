@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ArrowUpRight, Compass, Users, BedDouble, Plane, CarFront, Sparkles, Home as HomeIcon, MousePointerClick, CalendarDays, MessageSquareQuote } from 'lucide-react';
 import { useFirstVisitPrompt } from '@/context/VibeProfileContext';
 import PersonalHero from '@/components/home/PersonalHero';
+import PickedForYou from '@/components/home/PickedForYou';
 import { Container, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { ArchBand, ChainBand, WaveField, Weave, Rosette } from '@/components/brand/Patterns';
@@ -15,7 +16,7 @@ import { cn } from '@/lib/utils';
  */
 const WAYS_IN = [
   {
-    to: '/tours',
+    to: '/experiences',
     title: 'Experiences',
     desc: 'Marine park snorkelling, Mida Creek, Gede Ruins, forest walks and more.',
     icon: Compass,
@@ -96,6 +97,8 @@ export default function Home() {
     <>
       <PersonalHero />
 
+      <PickedForYou />
+
       <ArchBand className="text-sand-300" />
 
       <section className="bg-sand-100 py-20 lg:py-28">
@@ -106,7 +109,7 @@ export default function Home() {
               title="Everything Watamu, in one place"
               lede="Start with an experience, a stay or a group trip — we’ll help you fit the rest around it."
             />
-            <Button to="/tours" variant="outline" className="self-start md:self-auto">
+            <Button to="/experiences" variant="outline" className="self-start md:self-auto">
               All experiences <ArrowUpRight />
             </Button>
           </div>

@@ -12,7 +12,7 @@ import VibeOnboarding from '@/components/personalise/VibeOnboarding';
 import { cn } from '@/lib/utils';
 
 const PRIMARY = [
-  { to: '/tours', label: 'Experiences' },
+  { to: '/experiences', label: 'Experiences' },
   { to: '/group-trips', label: 'Group trips' },
   { to: '/hotels', label: 'Stays' },
   { to: '/transfers', label: 'Transfers' },

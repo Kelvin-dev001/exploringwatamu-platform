@@ -1,6 +1,7 @@
 'use strict';
 
 const { z } = require('zod');
+const { VIBES, SUITS, ENERGY } = require('../constants/discovery');
 
 // Group trips are submitted as multipart/form-data, so every value arrives as a
 // string (blank when an admin leaves an input empty) and lists arrive
@@ -10,6 +11,22 @@ const { z } = require('zod');
 
 const isBlank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
 const blankToUndefined = (v) => (isBlank(v) ? undefined : v);
+
+// Tag lists arrive as a JSON array string, a comma list, or a real array.
+const listOrUndefined = (v) => {
+  if (v === undefined) return undefined;
+  if (Array.isArray(v)) return v;
+  if (isBlank(v)) return [];
+  const t = String(v).trim();
+  if (t.startsWith('[')) {
+    try {
+      return JSON.parse(t);
+    } catch {
+      return [t];
+    }
+  }
+  return t.split(',').map((x) => x.trim()).filter(Boolean);
+};
 
 const requiredText = (label) =>
   z.preprocess(
@@ -73,6 +90,15 @@ const tripFields = {
   ),
   // URL of an already-hosted image, when no new file is uploaded.
   heroImage: optionalText(),
+  // Discovery tags (optional). Omitted keys stay omitted so updates from
+  // older forms don't wipe existing tags.
+  vibes: z.preprocess(listOrUndefined, z.array(z.enum(VIBES, { error: 'Unknown vibe' })).optional()),
+  suits: z.preprocess(listOrUndefined, z.array(z.enum(SUITS, { error: 'Unknown traveller type' })).optional()),
+  energy: z.preprocess(blankToUndefined, z.enum(ENERGY, { error: 'Energy must be easy, moderate or active' }).optional()),
+  durationHours: z.preprocess(
+    (v) => (isBlank(v) ? undefined : typeof v === 'string' ? Number(v.trim()) : v),
+    z.number({ error: 'Duration (hours) must be a number' }).positive('Duration (hours) must be more than 0').optional()
+  ),
 };
 
 function checkDatesAndPrices(trip, ctx) {

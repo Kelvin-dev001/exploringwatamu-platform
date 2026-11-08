@@ -83,7 +83,7 @@ export default function PersonalHero() {
           )}
 
           <motion.div variants={rise} initial="hidden" animate="show" custom={4} className="mt-9 flex flex-wrap items-center gap-3">
-            <Button to="/tours" size="lg">
+            <Button to="/experiences" size="lg">
               {headline ? 'See my experiences' : 'Browse experiences'} <ArrowRight />
             </Button>
             {headline ? (

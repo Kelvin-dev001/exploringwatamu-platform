@@ -5,6 +5,7 @@ import { useAdminAuth } from "../../context/AdminAuthContext";
 import { API_URL } from "../../api.js";
 import { parseApiError } from "../../apiError.js";
 import FormError, { FieldError } from "../../components/FormError";
+import DiscoveryFields, { EMPTY_DISCOVERY, appendDiscovery, discoveryFrom } from "../../components/DiscoveryFields";
 
 export default function EditGroupTrip() {
   const { id } = useParams();
@@ -27,6 +28,7 @@ export default function EditGroupTrip() {
     includes: [],
     excludes: [],
     status: "draft",
+    ...EMPTY_DISCOVERY,
     existingHeroImage: "",
     existingGallery: [],
   });
@@ -65,6 +67,7 @@ export default function EditGroupTrip() {
             includes: Array.isArray(trip.includes) ? trip.includes : [],
             excludes: Array.isArray(trip.excludes) ? trip.excludes : [],
             status: trip.status || "draft",
+            ...discoveryFrom(trip),
             existingHeroImage: trip.heroImage || "",
             existingGallery: Array.isArray(trip.gallery) ? trip.gallery : [],
           });
@@ -182,6 +185,7 @@ export default function EditGroupTrip() {
       data.append("includes", JSON.stringify(form.includes));
       data.append("excludes", JSON.stringify(form.excludes));
       data.append("status", form.status);
+      appendDiscovery(data, form);
       data.append("existingGallery", JSON.stringify(form.existingGallery));
       if (heroFile) data.append("heroImage", heroFile);
       galleryFiles.forEach((file) => data.append("gallery", file));
@@ -486,6 +490,8 @@ export default function EditGroupTrip() {
           <option value="closed">Closed</option>
         </select>
       </div>
+
+      <DiscoveryFields value={form} onChange={handleChange} />
 
       <FormError error={formError} />
 

@@ -1,4 +1,5 @@
 const Tour = require('../models/Tour');
+const { parseDiscovery } = require('../constants/discovery');
 
 // Helper to parse JSON strings from FormData
 const parseJSON = (val, fallback = []) => {
@@ -50,6 +51,7 @@ exports.createTour = async (req, res) => {
       priceForeignerAdult: Number(req.body.priceForeignerAdult),
       priceForeignerChild: Number(req.body.priceForeignerChild),
       active: req.body.active === 'true' || req.body.active === true,
+      ...parseDiscovery(req.body),
     };
     const tour = new Tour(tourData);
     await tour.save();
@@ -81,6 +83,7 @@ exports.updateTour = async (req, res) => {
       priceForeignerAdult: Number(req.body.priceForeignerAdult),
       priceForeignerChild: Number(req.body.priceForeignerChild),
       active: req.body.active === 'true' || req.body.active === true,
+      ...parseDiscovery(req.body),
     };
     const tour = await Tour.findByIdAndUpdate(req.params.id, tourData, { new: true, runValidators: true }).populate('vehicles');
     if (!tour) return res.status(404).json({ error: 'Not found' });

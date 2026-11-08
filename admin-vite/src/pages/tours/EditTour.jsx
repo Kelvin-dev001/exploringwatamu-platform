@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { API_URL } from "../../api.js";
+import DiscoveryFields, { EMPTY_DISCOVERY, appendDiscovery, discoveryFrom } from "../../components/DiscoveryFields";
 
 export default function EditTour() {
   const { id } = useParams();
@@ -23,7 +24,8 @@ export default function EditTour() {
     priceResidentChild: "",
     priceForeignerAdult: "",
     priceForeignerChild: "",
-    active: true
+    active: true,
+    ...EMPTY_DISCOVERY
   });
   const [highlightInput, setHighlightInput] = useState("");
   const [carryInput, setCarryInput] = useState("");
@@ -51,29 +53,14 @@ export default function EditTour() {
           priceResidentChild: t.priceResidentChild || "",
           priceForeignerAdult: t.priceForeignerAdult || "",
           priceForeignerChild: t.priceForeignerChild || "",
-          active: Boolean(t.active)
+          active: Boolean(t.active),
+          ...discoveryFrom(t)
         });
         setGalleryPreview(Array.isArray(t.gallery) ? t.gallery : []);
       })
       .catch(() => {});
   }, [id]);
 
-  // Image upload to cloudinary (multiple images)
-  const uploadGalleryToCloudinary = async files => {
-    const urls = [];
-    for (let file of files) {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("upload_preset", "your_upload_preset");
-      try {
-        const res = await axios.post("https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", data);
-        urls.push(res.data.secure_url);
-      } catch (err) {
-        // Optionally show error
-      }
-    }
-    return urls;
-  };
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -111,20 +98,34 @@ export default function EditTour() {
   const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
-    let galleryUrls = form.gallery;
-    if (galleryFiles.length > 0) {
-      const uploaded = await uploadGalleryToCloudinary(galleryFiles);
-      galleryUrls = [...form.gallery, ...uploaded];
-    }
     try {
-      await axios.put(API_URL + `/tours/${id}`,
-        { ...form, gallery: galleryUrls },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Multipart, like New Tour: the API keeps `existingGallery` and uploads
+      // new files to Cloudinary server-side. (Previously the gallery was sent
+      // as `gallery`, which the API ignores, so every save wiped the photos.)
+      const data = new FormData();
+      data.append("name", form.name);
+      data.append("description", form.description);
+      data.append("recommendedTimes", form.recommendedTimes);
+      data.append("duration", form.duration);
+      data.append("highlights", JSON.stringify(form.highlights));
+      data.append("whatToCarry", JSON.stringify(form.whatToCarry));
+      data.append("vehicles", JSON.stringify(form.vehicles));
+      data.append("existingGallery", JSON.stringify(form.gallery));
+      data.append("priceResidentAdult", form.priceResidentAdult);
+      data.append("priceResidentChild", form.priceResidentChild);
+      data.append("priceForeignerAdult", form.priceForeignerAdult);
+      data.append("priceForeignerChild", form.priceForeignerChild);
+      data.append("active", form.active);
+      appendDiscovery(data, form);
+      galleryFiles.forEach(file => data.append("gallery", file));
+
+      await axios.put(API_URL + `/tours/${id}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       window.alert("Tour updated!");
       navigate("/tours");
     } catch (err) {
-      window.alert("Failed to update tour.");
+      window.alert(err?.response?.data?.error || "Failed to update tour.");
     } finally {
       setLoading(false);
     }
@@ -196,7 +197,8 @@ export default function EditTour() {
         <input type="checkbox" checked={form.active} onChange={e => handleChange("active", e.target.checked)} className="checkbox" />
         <span>Active</span>
       </label>
-      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`}>Save</button>
+      <DiscoveryFields value={form} onChange={handleChange} />
+      <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`} disabled={loading}>Save</button>
     </form>
   );
 }
