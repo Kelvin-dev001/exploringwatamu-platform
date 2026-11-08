@@ -1,3 +1,152 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/fraunces/opsz-italic.css";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* ------------------------------------------------------------------
+   ExploringWatamu design tokens — "Warm Swahili-coast editorial"
+   Sand for space, deep ocean for ink, coral for action,
+   mangrove for calm, ochre for sun.
+   ------------------------------------------------------------------ */
+@theme {
+  /* Typography */
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Sand — page backgrounds and surfaces */
+  --color-sand-50: #fdfaf5;
+  --color-sand-100: #f8f1e6;
+  --color-sand-200: #efe3cf;
+  --color-sand-300: #e2cfb0;
+  --color-sand-400: #cdb28a;
+  --color-sand-500: #b0915f;
+
+  /* Ocean — ink, headers, deep sections */
+  --color-ocean-50: #eef6f6;
+  --color-ocean-100: #d5eaea;
+  --color-ocean-200: #a9d3d3;
+  --color-ocean-300: #6fb5b8;
+  --color-ocean-400: #3f9399;
+  --color-ocean-500: #23767e;
+  --color-ocean-600: #1a5d66;
+  --color-ocean-700: #164a53;
+  --color-ocean-800: #133a42;
+  --color-ocean-900: #0f2a33;
+  --color-ocean-950: #091b21;
+
+  /* Coral — primary action, highlights */
+  --color-coral-50: #fdf2ee;
+  --color-coral-100: #fbe1d7;
+  --color-coral-200: #f6bfab;
+  --color-coral-300: #ef9677;
+  --color-coral-400: #e8714e;
+  --color-coral-500: #d9573a;
+  --color-coral-600: #b9432c;
+  --color-coral-700: #933525;
+
+  /* Mangrove — nature, calm, success */
+  --color-mangrove-50: #f1f5ee;
+  --color-mangrove-100: #dfe8d9;
+  --color-mangrove-300: #a2b894;
+  --color-mangrove-500: #5d7a4e;
+  --color-mangrove-700: #3c5233;
+
+  /* Ochre — sun, warmth, ratings */
+  --color-ochre-100: #fbecd0;
+  --color-ochre-300: #f0c374;
+  --color-ochre-500: #d99a2b;
+  --color-ochre-700: #9a6a17;
+
+  /* Legacy brand names kept so pages not yet redesigned keep working */
+  --color-primary: #24b3b3;
+  --color-primary-dark: #1e7575;
+  --color-secondary: #ffb347;
+  --color-cream: #fbeec1;
+  --color-accent: #46c3d6;
+
+  /* Shape and depth */
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --shadow-soft: 0 1px 2px rgb(15 42 51 / 0.04), 0 8px 24px -12px rgb(15 42 51 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(15 42 51 / 0.05), 0 22px 44px -18px rgb(15 42 51 / 0.32);
+
+  /* Motion */
+  --ease-tide: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tailwind v4 changed the default border colour to currentColor;
+   keep the v3 behaviour so older pages don't grow dark borders. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-sand-200, currentColor);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-sand-50 font-sans text-ocean-900;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
+  }
+
+  ::selection {
+    background: var(--color-coral-200);
+    color: var(--color-ocean-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-coral-500);
+    outline-offset: 3px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Editorial eyebrow label above headings */
+  .eyebrow {
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-coral-600;
+  }
+
+  /* Paper grain over sand sections (pure CSS, no image) */
+  .grain {
+    background-image: radial-gradient(rgb(15 42 51 / 0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheet-in-bottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

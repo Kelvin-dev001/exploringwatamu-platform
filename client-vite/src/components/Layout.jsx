@@ -1,198 +1,255 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaBars, FaTimes, FaHome, FaBed, FaCar, FaMap, FaStar, FaCarSide, FaBuilding, FaUsers, FaRoute } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, Luggage, LogOut, Menu, Mail, MapPin, ArrowUpRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext.jsx';
+import { Logo } from '@/components/brand/Logo';
+import { ArchBand, Rosette } from '@/components/brand/Patterns';
+import { Container } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
+import ProfilePill from '@/components/personalise/ProfilePill';
+import VibeOnboarding from '@/components/personalise/VibeOnboarding';
+import { cn } from '@/lib/utils';
 
-const navLinks = [
-  { to: '/', label: 'Home', icon: <FaHome /> },
-  { to: '/hotels', label: 'Accommodation', icon: <FaBed /> },
-  { to: '/transfers', label: 'Transfers', icon: <FaCar /> },
-  { to: '/tours', label: 'Tours', icon: <FaMap /> },
-  { to: '/services', label: 'Services', icon: <FaStar /> },
-  { to: '/carhire', label: 'Car Hire', icon: <FaCarSide /> },
-  { to: '/properties-for-sale', label: 'Properties', icon: <FaBuilding /> },
-  { to: '/group-trips', label: 'Group Trips', icon: <FaUsers /> },
+const PRIMARY = [
+  { to: '/tours', label: 'Experiences' },
+  { to: '/group-trips', label: 'Group trips' },
+  { to: '/hotels', label: 'Stays' },
+  { to: '/transfers', label: 'Transfers' },
 ];
+const MORE = [
+  { to: '/carhire', label: 'Car hire', desc: 'Self-drive or with a driver' },
+  { to: '/services', label: 'Local services', desc: 'Chefs, guides, wellness and more' },
+  { to: '/properties-for-sale', label: 'Property for sale', desc: 'Own a piece of the coast' },
+];
+const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 
-export default function Layout({ children }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+const navLinkClass = ({ isActive }) =>
+  cn(
+    'relative px-3 py-2 text-[0.95rem] font-semibold transition-colors',
+    'after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:rounded-full after:bg-coral-500 after:transition-transform after:duration-300',
+    isActive ? 'text-ocean-900 after:scale-x-100' : 'text-ocean-900/65 hover:text-ocean-900 after:scale-x-0 hover:after:scale-x-100'
+  );
+
+/** Small accessible "More" dropdown. */
+function MoreMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  // Close menu on route change
+  useEffect(() => setOpen(false), [location.pathname]);
   useEffect(() => {
-    setMenuOpen(false);
-  }, [location.pathname]);
-
-  // Prevent body scroll when menu is open
-  useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [menuOpen]);
+    if (!open) return undefined;
+    const onDown = (e) => !ref.current?.contains(e.target) && setOpen(false);
+    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fbeec1' }}>
-      {/* Navbar */}
-      <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: '#24b3b3' }}>
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14 sm:h-16">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full" />
-            <span className="text-white font-bold text-base sm:text-xl">
-              Exploring Watamu
-            </span>
-          </Link>
-
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                style={{
-                  backgroundColor: location.pathname === link.to ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: location.pathname === link.to ? '#ffffff' : 'rgba(255,255,255,0.85)',
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
-            {user ? (
-              <>
-                <Link
-                  to="/my-trips"
-                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1"
-                  style={{
-                    backgroundColor: location.pathname === '/my-trips' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                    color: location.pathname === '/my-trips' ? '#ffffff' : 'rgba(255,255,255,0.85)',
-                  }}
-                >
-                  <FaRoute /> My Trips
-                </Link>
-                <button
-                  onClick={() => { logout(); navigate('/'); }}
-                  className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="ml-1 px-4 py-2 rounded-lg text-sm font-semibold text-white border border-white/30 hover:bg-white/10 transition-all duration-200"
-              >
-                Sign In
-              </Link>
-            )}
-          </div>
-
-          {/* Hamburger button */}
-          <button
-            className="lg:hidden text-white text-2xl p-2 rounded-lg active:bg-white/20 transition-colors"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? <FaTimes /> : <FaBars />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile overlay */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile slide-in menu */}
-      <div
-        className={`fixed top-0 right-0 h-full w-72 z-50 transform transition-transform duration-300 ease-in-out lg:hidden shadow-2xl ${
-          menuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        style={{ backgroundColor: '#1e7575' }}
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1 px-3 py-2 text-[0.95rem] font-semibold text-ocean-900/65 transition hover:text-ocean-900"
       >
-        <div className="flex items-center justify-between px-5 h-14 border-b border-white/10">
-          <span className="text-white font-bold text-lg">Menu</span>
-          <button
-            onClick={() => setMenuOpen(false)}
-            className="text-white text-2xl p-1"
-            aria-label="Close menu"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        <div className="py-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-5 py-3.5 text-base font-medium transition-all duration-200"
-              style={{
-                backgroundColor: location.pathname === link.to ? 'rgba(255,255,255,0.15)' : 'transparent',
-                color: location.pathname === link.to ? '#ffffff' : 'rgba(255,255,255,0.8)',
-                borderLeft: location.pathname === link.to ? '3px solid #ffb347' : '3px solid transparent',
-              }}
-            >
-              <span className="text-lg">{link.icon}</span>
-              {link.label}
+        More <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="absolute left-1/2 top-full z-50 mt-3 w-72 -translate-x-1/2 rounded-2xl border border-sand-200 bg-white p-2 shadow-lift animate-[fade-in_.15s_ease-out]">
+          {MORE.map((item) => (
+            <Link key={item.to} to={item.to} className="block rounded-xl px-4 py-3 transition hover:bg-sand-100">
+              <span className="block font-semibold text-ocean-900">{item.label}</span>
+              <span className="block text-sm text-ocean-900/55">{item.desc}</span>
             </Link>
           ))}
-          {user ? (
-            <>
-              <Link
-                to="/my-trips"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-5 py-3.5 text-base font-medium transition-all duration-200"
-                style={{
-                  backgroundColor: location.pathname === '/my-trips' ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  color: location.pathname === '/my-trips' ? '#ffffff' : 'rgba(255,255,255,0.8)',
-                  borderLeft: location.pathname === '/my-trips' ? '3px solid #ffb347' : '3px solid transparent',
-                }}
-              >
-                <span className="text-lg"><FaRoute /></span>
-                My Trips
-              </Link>
-              <button
-                onClick={() => { logout(); navigate('/'); setMenuOpen(false); }}
-                className="flex items-center gap-3 px-5 py-3.5 text-base font-medium w-full text-left"
-                style={{ color: 'rgba(255,255,255,0.7)', borderLeft: '3px solid transparent' }}
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-5 py-3.5 text-base font-medium"
-              style={{ color: '#ffb347', borderLeft: '3px solid transparent' }}
-            >
-              Sign In
-            </Link>
-          )}
         </div>
+      )}
+    </div>
+  );
+}
+
+function Header() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const signOut = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <header
+      className={cn(
+        'sticky top-0 z-40 border-b transition-all duration-300',
+        scrolled ? 'border-sand-200 bg-sand-50/90 backdrop-blur-md' : 'border-transparent bg-sand-50'
+      )}
+    >
+      <Container size="wide" className="flex h-[4.5rem] items-center gap-4">
+        <Logo />
+
+        <nav aria-label="Main" className="ml-6 hidden items-center lg:flex">
+          {PRIMARY.map((item) => (
+            <NavLink key={item.to} to={item.to} className={navLinkClass}>
+              {item.label}
+            </NavLink>
+          ))}
+          <MoreMenu />
+        </nav>
+
+        <div className="ml-auto flex items-center gap-2">
+          <ProfilePill className="hidden md:inline-flex" />
+          <Button
+            to="/my-trips"
+            variant="ghost"
+            size="icon"
+            aria-label="My trips"
+            className="hidden sm:inline-flex"
+          >
+            <Luggage />
+          </Button>
+          {user ? (
+            <Button variant="ghost" size="icon" aria-label="Sign out" onClick={signOut} className="hidden lg:inline-flex">
+              <LogOut />
+            </Button>
+          ) : (
+            <Button to="/login" variant="ocean" size="sm" className="hidden lg:inline-flex">
+              Sign in
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" aria-label="Open menu" className="lg:hidden" onClick={() => setMenuOpen(true)}>
+            <Menu />
+          </Button>
+        </div>
+      </Container>
+
+      {/* Personal pill gets its own row on small phones */}
+      <div className="border-t border-sand-200/70 px-5 py-2 md:hidden">
+        <ProfilePill compact className="w-full justify-center" />
       </div>
 
-      {/* Main content */}
-      <main className="flex-1">{children}</main>
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen} title="Explore Watamu">
+        <nav aria-label="Mobile" className="flex flex-1 flex-col px-3 pb-6">
+          {[...PRIMARY, ...MORE].map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center justify-between rounded-xl px-3 py-3.5 font-display text-xl transition',
+                  isActive ? 'bg-white text-ocean-900 shadow-soft' : 'text-ocean-900/80 hover:bg-white/70'
+                )
+              }
+            >
+              {item.label}
+              <ArrowUpRight className="size-4 text-coral-500" />
+            </NavLink>
+          ))}
+          <div className="mt-auto space-y-3 border-t border-sand-200 px-3 pt-6">
+            <Button to="/my-trips" variant="outline" className="w-full">
+              <Luggage /> My trips
+            </Button>
+            {user ? (
+              <Button variant="ghost" className="w-full" onClick={signOut}>
+                <LogOut /> Sign out
+              </Button>
+            ) : (
+              <Button to="/login" variant="ocean" className="w-full">
+                Sign in
+              </Button>
+            )}
+          </div>
+        </nav>
+      </Sheet>
+    </header>
+  );
+}
 
-      {/* Footer */}
-      <footer style={{ backgroundColor: '#1e7575' }} className="text-center py-6 sm:py-8">
-        <p className="text-white/70 text-xs sm:text-sm">
-          © {new Date().getFullYear()} Exploring Watamu. All rights reserved.
-        </p>
-        <p className="text-white/50 text-xs mt-1">
-          Experiencing the sweetness of Watamu, Kenya 🇰🇪
-        </p>
-      </footer>
+function Footer() {
+  const columns = [
+    { title: 'Explore', links: [...PRIMARY, MORE[0]] },
+    { title: 'Plan', links: [MORE[1], MORE[2], { to: '/my-trips', label: 'My trips' }, { to: '/login', label: 'Sign in' }] },
+  ];
+  return (
+    <footer className="relative mt-24 overflow-hidden bg-ocean-900 text-sand-50">
+      <ArchBand className="text-ocean-700" />
+      <Rosette className="pointer-events-none absolute -bottom-28 -right-20 text-ocean-800" size={380} strokeWidth={0.9} />
+      <Container size="wide" className="relative grid gap-12 py-16 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div>
+          <Logo tone="light" />
+          <p className="mt-6 max-w-sm font-display text-2xl italic leading-snug text-sand-50/90">
+            Your Watamu, tuned to you — built by people who live here.
+          </p>
+        </div>
+        {columns.map((col) => (
+          <div key={col.title}>
+            <p className="eyebrow !text-coral-300">{col.title}</p>
+            <ul className="mt-4 space-y-2.5">
+              {col.links.map((l) => (
+                <li key={l.to + l.label}>
+                  <Link to={l.to} className="text-sand-50/75 transition hover:text-sand-50">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        <div>
+          <p className="eyebrow !text-coral-300">Talk to us</p>
+          <ul className="mt-4 space-y-2.5 text-sand-50/75">
+            <li>
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 transition hover:text-sand-50">
+                <Mail className="size-4" /> {SUPPORT_EMAIL}
+              </a>
+            </li>
+            <li className="inline-flex items-center gap-2">
+              <MapPin className="size-4" /> Watamu, Kilifi County, Kenya
+            </li>
+          </ul>
+        </div>
+      </Container>
+      <Container size="wide" className="relative flex flex-col gap-2 border-t border-sand-50/10 py-6 text-sm text-sand-50/50 sm:flex-row sm:justify-between">
+        <p>© {new Date().getFullYear()} Exploring Watamu. All rights reserved.</p>
+        <p>Prices on request · No payment until you confirm</p>
+      </Container>
+    </footer>
+  );
+}
+
+export default function Layout({ children }) {
+  const location = useLocation();
+  useEffect(() => window.scrollTo(0, 0), [location.pathname]);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-sand-50">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-ocean-900 focus:px-4 focus:py-2 focus:text-sand-50"
+      >
+        Skip to content
+      </a>
+      <Header />
+      <main id="main" className="flex-1">
+        {children}
+      </main>
+      <Footer />
+      <VibeOnboarding />
     </div>
   );
 }
