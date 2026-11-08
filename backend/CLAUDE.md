@@ -20,6 +20,9 @@ confirmed by **admin approval**, not automated payment.
 ## Environment
 Copy `.env.example` to `.env`. Required: `MONGODB_URI`, `JWT_SECRET` (>= 16 chars). The app
 **fails fast** if these are missing or insecure. Never commit real secrets.
+`CLOUDINARY_*` is optional but all-or-nothing: a partial set fails boot; none makes image
+uploads answer 503. Upload routes use `uploadFields`/`uploadArray`/`uploadSingle` from
+`middleware/upload.js`, never raw multer, so failures map to 400/502/503 instead of a 500.
 
 ## Architecture
 - `src/config/env.js` — validated config; the single source for secrets and feature flags.

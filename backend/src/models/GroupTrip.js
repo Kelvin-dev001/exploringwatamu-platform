@@ -20,7 +20,7 @@ const groupTripSchema = new mongoose.Schema({
   includes: [{ type: String }],
   excludes: [{ type: String }],
   accommodationDetails: { type: String },
-  maxParticipants: { type: Number, required: true },
+  maxParticipants: { type: Number, required: true, min: [1, 'maxParticipants must be at least 1'] },
   confirmedParticipants: { type: Number, default: 0 },
   fullPrice: { type: Number, required: true },
   depositAmount: { type: Number, required: true },
@@ -36,9 +36,10 @@ groupTripSchema.virtual('slotsRemaining').get(function () {
 groupTripSchema.set('toJSON', { virtuals: true });
 groupTripSchema.set('toObject', { virtuals: true });
 
-// Pre-save: auto-set status to 'full' if confirmedParticipants >= maxParticipants
+// Pre-save: auto-set status to 'full' once confirmedParticipants reaches a real
+// capacity. Without the > 0 guard a 0/NaN maxParticipants made new trips "full".
 groupTripSchema.pre('save', function (next) {
-  if (this.confirmedParticipants >= this.maxParticipants) {
+  if (this.maxParticipants > 0 && this.confirmedParticipants >= this.maxParticipants) {
     this.status = 'full';
   }
   next();

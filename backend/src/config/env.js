@@ -21,12 +21,33 @@ function readEnv(name, { aliases = [], required = false, min = 0 } = {}) {
   return value;
 }
 
+// Reads an all-or-nothing group of variables. A partially set group is a
+// misconfiguration (e.g. one secret missed on the host), so refuse to boot;
+// a fully unset group just leaves that integration disabled.
+function readEnvGroup(label, names) {
+  const values = {};
+  for (const name of names) values[name] = String(process.env[name] || '').trim();
+  const missing = names.filter((name) => !values[name]);
+  if (missing.length > 0 && missing.length < names.length) {
+    throw new Error(`[config] ${label} is partially configured. Missing: ${missing.join(', ')}`);
+  }
+  return { enabled: missing.length === 0, values };
+}
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 const jwtSecret = readEnv('JWT_SECRET', { required: true, min: 16 });
 if (jwtSecret === 'your_jwt_secret') {
   throw new Error('[config] JWT_SECRET is set to an insecure default value. Set a strong, unique secret.');
 }
+
+// Image hosting is optional but all-or-nothing. While unset, upload routes
+// answer 503 "Image hosting is not configured" (see middleware/upload.js).
+const cloudinaryEnv = readEnvGroup('Cloudinary', [
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+]);
 
 const config = {
   nodeEnv,
@@ -46,9 +67,10 @@ const config = {
     .filter(Boolean),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   cloudinary: {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    enabled: cloudinaryEnv.enabled,
+    cloudName: cloudinaryEnv.values.CLOUDINARY_CLOUD_NAME,
+    apiKey: cloudinaryEnv.values.CLOUDINARY_API_KEY,
+    apiSecret: cloudinaryEnv.values.CLOUDINARY_API_SECRET,
   },
 
   // Where admin booking notifications are sent.
