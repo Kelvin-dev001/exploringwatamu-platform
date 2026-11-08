@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CheckCircle2, MailCheck, Search, FileText, ArrowRight } from 'lucide-react';
@@ -7,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { BrandBadge } from '@/components/brand/Logo';
 import { WaveField } from '@/components/brand/Patterns';
 import { useAuth } from '@/context/AuthContext.jsx';
+import Seo from '@/components/seo/Seo';
+
 
 const NEXT = [
   { icon: MailCheck, title: 'Check your inbox', text: 'We’ve emailed a copy of your itinerary with your reference.' },
@@ -19,12 +20,9 @@ export default function TripRequested() {
   const { state } = useLocation();
   const { user } = useAuth() || {};
 
-  useEffect(() => {
-    document.title = `Trip request ${reference} · Exploring Watamu`;
-  }, [reference]);
-
   return (
     <>
+      <Seo title={`Trip request ${reference}`} noindex />
       <section className="relative overflow-hidden bg-ocean-900 text-sand-50">
         <WaveField className="absolute inset-0 text-ocean-800" rows={8} gap={18} />
         <Container size="narrow" className="relative py-16 text-center lg:py-24">
@@ -67,7 +65,7 @@ export default function TripRequested() {
             Keep exploring <ArrowRight />
           </Button>
         </div>
-        <p className="mt-8 text-center text-sm text-ocean-900/55">
+        <p className="mt-8 text-center text-sm text-ocean-900/60">
           <CheckCircle2 className="mr-1 inline size-4 text-lagoon-600" />
           {user ? (
             <>Track it any time in <Link to="/my-trips" className="font-semibold underline">My bookings</Link>.</>

@@ -159,7 +159,7 @@ export default function TripRequestDetail() {
               ))}
               {(r.ideas || []).length > 0 && (
                 <div>
-                  <p className="font-semibold">Also interested in (not scheduled)</p>
+                  <p className="font-semibold">Stays, extras &amp; unscheduled</p>
                   <ul className="ml-5 list-disc text-sm">{r.ideas.map((it, j) => <li key={j}>{it.title}</li>)}</ul>
                 </div>
               )}

@@ -41,7 +41,7 @@ export default function ProfilePill({ compact = false, className }) {
       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ocean-900 text-lagoon-300">
         {FirstIcon ? <FirstIcon className="size-3.5" /> : <Sparkles className="size-3.5" />}
       </span>
-      {!compact && <span className="font-semibold text-ocean-900/50">Your Watamu</span>}
+      {!compact && <span className="font-semibold text-ocean-900/60">Your Watamu</span>}
       <span className="truncate font-semibold text-ocean-900">{summary}</span>
       <Pencil className="size-3.5 shrink-0 text-ocean-900/40 transition group-hover:text-coral-500" />
     </button>

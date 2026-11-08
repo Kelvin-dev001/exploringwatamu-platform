@@ -31,7 +31,7 @@ export default function ReferralCard() {
   if (loading) {
     return (
       <div className="flex justify-center py-4">
-        <span className="loading loading-spinner loading-sm" style={{ color: '#24b3b3' }}></span>
+        <span className="loading loading-spinner loading-sm" style={{ color: '#02a8ab' }}></span>
       </div>
     );
   }
@@ -44,11 +44,11 @@ export default function ReferralCard() {
   const referralsCount = referralStats.user?.referralsCount || 0;
 
   return (
-    <div className="bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(135deg, #24b3b3 0%, #46c3d6 100%)' }}>
+    <div className="bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(135deg, #02a8ab 0%, #1db6b9 100%)' }}>
       <div className="rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">🎫 Safari Points</h3>
-          <div className="badge badge-lg" style={{ backgroundColor: '#ffb347', color: '#1e7575', borderColor: '#ffb347' }}>
+          <div className="badge badge-lg" style={{ backgroundColor: '#e06c31', color: '#215a75', borderColor: '#e06c31' }}>
             {safariPoints} pts
           </div>
         </div>

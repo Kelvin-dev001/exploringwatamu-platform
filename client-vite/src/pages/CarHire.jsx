@@ -1,83 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_URL } from '../api.js';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import ImageGallery from '../components/ImageGallery.jsx';
+import { CarFront, Users } from 'lucide-react';
+import useListing from '@/components/listing/useListing';
+import PageHero from '@/components/listing/PageHero';
+import ListingCard from '@/components/listing/ListingCard';
+import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
+import AddToTripButton from '@/components/trip/AddToTripButton';
+import Seo from '@/components/seo/Seo';
+import { Container } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/button';
+import { snapshotFor } from '@/lib/trip';
+
+const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
 export default function CarHire() {
-  const [cars, setCars] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const fetchCars = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API_URL}/carhire`);
-        if (Array.isArray(res.data)) {
-          setCars(res.data);
-        } else if (res.data && Array.isArray(res.data.data)) {
-          setCars(res.data.data);
-        } else {
-          setCars([]);
-        }
-      } catch (err) {
-        setError('Failed to load cars.');
-      }
-      setLoading(false);
-    };
-    fetchCars();
-  }, []);
-
+  const { items, loading, error, retry } = useListing('/carhire');
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8" style={{ backgroundColor: '#fbeec1', minHeight: '100vh' }}>
-      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>
-        Car Hire
-      </h1>
-      <p className="text-center mb-6" style={{ color: '#1e7575' }}>
-        Hire a car for your adventure in Watamu.
-      </p>
-
-      {loading ? (
-        <LoadingSpinner loading={true} />
-      ) : error ? (
-        <div className="text-center py-16">
-          <p className="text-5xl mb-4">⚠️</p>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      ) : cars.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          {cars.map((car) => {
-            const vehicleImage = car.vehicle?.image ? [car.vehicle.image] : [];
-            const vehicleName = car.vehicle?.name || 'Vehicle';
-            return (
-              <div key={car._id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <ImageGallery images={vehicleImage} alt={vehicleName} />
-                <div className="p-5">
-                  <h3 className="text-xl font-bold" style={{ color: '#24b3b3' }}>{vehicleName}</h3>
-                  {car.description && (
-                    <p className="text-gray-600 text-sm mt-1 line-clamp-3">{car.description}</p>
-                  )}
-                  {car.vehicle?.capacity && (
-                    <p className="text-gray-500 text-xs mt-1">👥 {car.vehicle.capacity} seats</p>
-                  )}
-                  {car.dailyRate != null && (
-                    <p className="font-bold text-lg mt-2" style={{ color: '#ffb347' }}>
-                      KES {Number(car.dailyRate).toLocaleString()}/day
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <p className="text-5xl mb-4">🚗</p>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No cars available yet</h2>
-          <p className="text-gray-500">Check back soon for car hire options.</p>
-        </div>
-      )}
-    </div>
+    <>
+      <Seo title="Car hire in Watamu" description="Hire a car to explore Watamu, Malindi and the Kenyan coast at your own pace. Add it to your trip for one combined quote." />
+      <PageHero eyebrow="Getting around" title="Car hire" lede="Explore Gede, Malindi and the forest at your own pace. Self-drive or with a driver." />
+      <Container size="wide" className="py-10 lg:py-14">
+        {error ? (
+          <ErrorState what="cars" onRetry={retry} />
+        ) : loading ? (
+          <GridSkeleton count={3} />
+        ) : items.length === 0 ? (
+          <EmptyState title="Cars are arranged on request" text="Tell us your dates and what you need — we’ll include a car in your quote.">
+            <Button href="mailto:hello@exploringwatamu.com?subject=Car%20hire%20request">Ask our team</Button>
+          </EmptyState>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((c, i) => (
+              <ListingCard
+                key={c._id}
+                images={c.vehicle?.image ? [c.vehicle.image] : []}
+                art={ART_CYCLE[i % ART_CYCLE.length]}
+                title={c.vehicle?.name || 'Vehicle'}
+                meta={[c.vehicle?.capacity && { icon: Users, text: `${c.vehicle.capacity} seats` }, c.vehicle?.type && { icon: CarFront, text: c.vehicle.type }]}
+                description={c.description}
+                price={c.dailyRate != null ? { amount: c.dailyRate, unit: 'per day' } : null}
+                actions={<AddToTripButton snapshot={snapshotFor('carhire', c)} label="Add car" />}
+              />
+            ))}
+          </div>
+        )}
+      </Container>
+    </>
   );
 }

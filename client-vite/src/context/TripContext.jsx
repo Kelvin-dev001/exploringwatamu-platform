@@ -38,8 +38,8 @@ export function TripProvider({ children, initialTrip }) {
   }, []);
 
   const add = useCallback(
-    (snapshot, to = 'auto') => {
-      setTrip((t) => T.addItem(t, snapshot, to));
+    (snapshot, to) => {
+      setTrip((t) => T.addItem(t, snapshot, to ?? T.defaultLane(snapshot)));
       notify(`Added “${snapshot.title}” to your trip`);
     },
     [notify]

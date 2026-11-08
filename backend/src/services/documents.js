@@ -110,7 +110,7 @@ function buildTripQuotePdf(request) {
         d.items.forEach((it) => doc.fontSize(9).fillColor('#333').text(`   • ${it.title}`));
       });
       if ((request.ideas || []).length) {
-        doc.fontSize(10).fillColor('#0b2642').text('Also requested');
+        doc.fontSize(10).fillColor('#0b2642').text('Stays, extras & unscheduled');
         request.ideas.forEach((it) => doc.fontSize(9).fillColor('#333').text(`   • ${it.title}`));
       }
       doc.moveDown();

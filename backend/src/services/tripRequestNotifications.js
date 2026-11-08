@@ -21,7 +21,7 @@ function itineraryHtml(r) {
     })
     .join('');
   const ideas = (r.ideas || []).length
-    ? `<p style="margin:12px 0 4px;font-weight:bold">Also interested in</p><ul style="margin:0;padding-left:18px">${r.ideas
+    ? `<p style="margin:12px 0 4px;font-weight:bold">Stays, extras &amp; unscheduled</p><ul style="margin:0;padding-left:18px">${r.ideas
         .map((it) => `<li>${escapeHtml(it.title)}</li>`)
         .join('')}</ul>`
     : '';

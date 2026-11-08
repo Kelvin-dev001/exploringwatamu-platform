@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import ExperienceCard from '@/components/experience/ExperienceCard';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
+import Seo from '@/components/seo/Seo';
+
 import { ArchBand } from '@/components/brand/Patterns';
 import { cn } from '@/lib/utils';
 
@@ -56,7 +58,7 @@ function useFilters() {
 function FilterGroup({ title, children }) {
   return (
     <div className="border-b border-sand-200 py-5 first:pt-0 last:border-0">
-      <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-ocean-900/50">{title}</p>
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-ocean-900/60">{title}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -142,6 +144,7 @@ export default function Experiences() {
 
   return (
     <>
+      <Seo title="Experiences in Watamu" description="Snorkelling in the marine park, sunset dhows on Mida Creek, Gede Ruins and more — ranked for how you like to travel. Add them to your trip for one tailored quote." />
       <section className="grain border-b border-sand-200">
         <Container size="wide" className="pb-10 pt-12 lg:pb-14 lg:pt-16">
           <p className="eyebrow">{profile ? 'Sorted for you' : 'The Watamu store'}</p>

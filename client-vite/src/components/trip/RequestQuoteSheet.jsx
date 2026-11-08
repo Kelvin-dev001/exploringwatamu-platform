@@ -17,13 +17,13 @@ function Field({ label, error, children, hint }) {
     <label className="block">
       <span className="mb-1.5 block text-sm font-semibold text-ocean-900">{label}</span>
       {children}
-      {hint && !error && <span className="mt-1 block text-xs text-ocean-900/50">{hint}</span>}
+      {hint && !error && <span className="mt-1 block text-xs text-ocean-900/60">{hint}</span>}
       {error && <span className="mt-1 block text-xs font-semibold text-coral-600">{error}</span>}
     </label>
   );
 }
 
-const inputCls = 'h-12 w-full rounded-xl border border-sand-300 bg-white px-4 text-ocean-900 placeholder:text-ocean-900/35 focus:border-ocean-900';
+const inputCls = 'h-12 w-full rounded-xl border border-sand-300 bg-white px-4 text-ocean-900 placeholder:text-ocean-900/45 focus:border-ocean-900';
 
 /** Contact details + send. Guests welcome; signed-in travellers are pre-filled. */
 export default function RequestQuoteSheet({ open, onOpenChange, residency }) {
@@ -113,7 +113,7 @@ export default function RequestQuoteSheet({ open, onOpenChange, residency }) {
           <Button type="submit" size="lg" className="w-full" disabled={sending}>
             {sending ? 'Sending…' : (<><Send /> Send my trip</>)}
           </Button>
-          <p className="flex items-center justify-center gap-1.5 text-xs text-ocean-900/55">
+          <p className="flex items-center justify-center gap-1.5 text-xs text-ocean-900/60">
             <ShieldCheck className="size-3.5 text-lagoon-600" /> We only use your details to plan this trip.
           </p>
         </div>

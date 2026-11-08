@@ -29,7 +29,7 @@ function DoorwayArt() {
       </DoorFrame>
       <BrandBadge className="absolute -left-4 top-6 size-24 rotate-[-10deg] ring-4 ring-sand-50 sm:-left-8 sm:size-28" />
       <div className="absolute -bottom-5 -right-3 rotate-[-3deg] rounded-2xl bg-white px-4 py-3 shadow-lift sm:-right-8">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-ocean-900/50">Watamu, Kenya</p>
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-ocean-900/60">Watamu, Kenya</p>
         <p className="font-display text-lg italic text-ocean-900">Where the tide sets the plan</p>
       </div>
     </div>

@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import ExperienceCard, { VibeArt } from '@/components/experience/ExperienceCard';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import AddToTripButton from '@/components/trip/AddToTripButton';
+import Seo from '@/components/seo/Seo';
+import { absoluteUrl } from '@/lib/site';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 const ENERGY_LABEL = { easy: 'Easy going', moderate: 'Moderate', active: 'Active' };
@@ -64,9 +66,9 @@ function PricePanel({ item }) {
         className="w-full [&>button]:flex-1"
       />
       <div className="mt-6">
-        <p className="text-sm text-ocean-900/55">from</p>
+        <p className="text-sm text-ocean-900/60">from</p>
         <p className="font-display text-4xl text-ocean-900">{adult != null ? formatKES(adult) : 'On request'}</p>
-        <p className="text-sm text-ocean-900/55">per adult{child != null ? ` · children ${formatKES(child)}` : ''}</p>
+        <p className="text-sm text-ocean-900/60">per adult{child != null ? ` · children ${formatKES(child)}` : ''}</p>
       </div>
       <AddToTripButton item={item} size="lg" full className="mt-6" />
       <Button variant="link" className="mt-4 w-full justify-center text-sm" href={`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`}>
@@ -112,13 +114,6 @@ export default function ExperienceDetail() {
     ).slice(0, 3);
   }, [items, item, profile]);
 
-  useEffect(() => {
-    if (item) document.title = `${item.title} · Exploring Watamu`;
-    return () => {
-      document.title = 'Exploring Watamu — Your Watamu, tuned to you';
-    };
-  }, [item]);
-
   if (state.loading) {
     return (
       <Container size="wide" className="py-16">
@@ -131,6 +126,7 @@ export default function ExperienceDetail() {
   if (state.error || !item) {
     return (
       <Container size="narrow" className="py-24 text-center">
+        <Seo title="Experience not found" noindex />
         <p className="font-display text-3xl text-ocean-900">We couldn’t find that experience</p>
         <p className="mt-3 text-ocean-900/60">It may have finished for the season.</p>
         <Button to="/experiences" className="mt-8">
@@ -143,8 +139,21 @@ export default function ExperienceDetail() {
   const raw = item.raw || {};
   const suits = item.suits.map((s) => byId(COMPANIONS, s)?.label).filter(Boolean);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TouristTrip',
+    name: item.title,
+    description: item.summary,
+    image: item.gallery?.length ? item.gallery : undefined,
+    url: absoluteUrl(item.href),
+    touristType: item.vibes.map((v) => byId(VIBES, v)?.label).filter(Boolean),
+    offers: raw.priceForeignerAdult != null ? { '@type': 'Offer', price: raw.priceForeignerAdult, priceCurrency: 'KES', availability: 'https://schema.org/InStock' } : undefined,
+    provider: { '@type': 'TravelAgency', name: 'Exploring Watamu' },
+  };
+
   return (
     <>
+      <Seo title={item.title} description={item.summary} image={item.image} type="article" jsonLd={jsonLd} />
       <Container size="wide" className="pt-8">
         <Link to="/experiences" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ocean-900/60 hover:text-ocean-900">
           <ArrowLeft className="size-4" /> All experiences
@@ -194,7 +203,7 @@ export default function ExperienceDetail() {
             )}
             {suits.length > 0 && (
               <div className="flex items-center gap-2">
-                <dt className="text-ocean-900/55">Great for</dt>
+                <dt className="text-ocean-900/60">Great for</dt>
                 <dd className="font-semibold">{suits.join(', ')}</dd>
               </div>
             )}

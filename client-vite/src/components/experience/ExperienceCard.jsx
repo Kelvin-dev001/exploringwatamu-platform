@@ -97,7 +97,7 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ocean-900/55">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ocean-900/60">
           {vibe && (
             <span className="inline-flex items-center gap-1">
               <vibe.icon className="size-4 text-coral-500" /> {vibe.label}
@@ -130,7 +130,7 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
         )}
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-          <div className="text-sm text-ocean-900/55">
+          <div className="text-sm text-ocean-900/60">
             {price !== null && price !== undefined ? (
               <>
                 from

@@ -7,6 +7,8 @@ import { useAuth } from '@/context/AuthContext.jsx';
 import { Container, Badge, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { formatKES } from '@/lib/catalog';
+import Seo from '@/components/seo/Seo';
+
 
 const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
@@ -71,6 +73,7 @@ export default function MyTrips() {
 
   return (
     <Container size="default" className="py-12 lg:py-16">
+      <Seo title="My bookings" noindex />
       <p className="eyebrow">Hi {user?.name?.split(' ')[0] || 'there'}</p>
       <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">My bookings</h1>
       {error && <p className="mt-6 rounded-xl bg-coral-50 p-4 text-coral-700">{error}</p>}
@@ -102,7 +105,7 @@ export default function MyTrips() {
                     <div className="mt-4 rounded-2xl bg-sand-100 p-4">
                       <p className="text-sm text-ocean-900/60">Your quote</p>
                       <p className="font-display text-3xl text-ocean-900">{formatKES(r.quote.total)}</p>
-                      {r.quote.validUntil && <p className="text-xs text-ocean-900/55">Valid until {fmt(r.quote.validUntil)} · full details in your email</p>}
+                      {r.quote.validUntil && <p className="text-xs text-ocean-900/60">Valid until {fmt(r.quote.validUntil)} · full details in your email</p>}
                     </div>
                   )}
                 </article>
@@ -143,18 +146,18 @@ export default function MyTrips() {
                     )}
                     <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                       <div>
-                        <dt className="text-xs text-ocean-900/50">{b.status === 'confirmed' ? 'Amount paid' : 'Due on confirmation'}</dt>
+                        <dt className="text-xs text-ocean-900/60">{b.status === 'confirmed' ? 'Amount paid' : 'Due on confirmation'}</dt>
                         <dd className="font-semibold">{formatKES(b.amountPaid)}</dd>
                       </div>
                       {b.amountDue > 0 && (
                         <div>
-                          <dt className="text-xs text-ocean-900/50">Balance</dt>
+                          <dt className="text-xs text-ocean-900/60">Balance</dt>
                           <dd className="font-semibold text-coral-600">{formatKES(b.amountDue)}</dd>
                         </div>
                       )}
                       {trip?.balanceDueDate && b.paymentType === 'deposit' && (
                         <div>
-                          <dt className="text-xs text-ocean-900/50">Balance due</dt>
+                          <dt className="text-xs text-ocean-900/60">Balance due</dt>
                           <dd className="font-semibold">{fmt(trip.balanceDueDate)}</dd>
                         </div>
                       )}

@@ -8,6 +8,8 @@ import { Logo, BrandBadge } from '@/components/brand/Logo';
 import ProfilePill from '@/components/personalise/ProfilePill';
 import { useVibeProfile } from '@/context/VibeProfileContext';
 import { VIBES } from '@/lib/vibes';
+import Seo from '@/components/seo/Seo';
+
 
 /*
  * Living design-system reference at /style-guide. Not linked from the nav;
@@ -50,7 +52,7 @@ function SampleExperienceCard({ vibe, title, duration, from, match }) {
         </div>
       </DoorFrame>
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-center gap-3 text-sm text-ocean-900/55">
+        <div className="flex items-center gap-3 text-sm text-ocean-900/60">
           <span className="inline-flex items-center gap-1">
             <v.icon className="size-4 text-coral-500" /> {v.label}
           </span>
@@ -60,7 +62,7 @@ function SampleExperienceCard({ vibe, title, duration, from, match }) {
         </div>
         <h3 className="mt-2 font-display text-2xl leading-tight text-ocean-900">{title}</h3>
         <div className="mt-auto flex items-end justify-between pt-6">
-          <p className="text-sm text-ocean-900/55">
+          <p className="text-sm text-ocean-900/60">
             from <span className="block font-display text-2xl text-ocean-900">{from}</span>
           </p>
           <Button size="sm">
@@ -79,6 +81,7 @@ export default function StyleGuide() {
 
   return (
     <div className="pb-10">
+      <Seo title="Design system" noindex />
       <Container size="wide" className="py-16">
         <BrandBadge priority className="mb-8 size-32" />
         <p className="eyebrow">Design system · Phase 1</p>
@@ -104,7 +107,7 @@ export default function StyleGuide() {
           {PALETTE.map((p) => (
             <div key={p.key}>
               <p className="font-display text-2xl text-ocean-900">{p.name}</p>
-              <p className="text-sm text-ocean-900/55">{p.note}</p>
+              <p className="text-sm text-ocean-900/60">{p.note}</p>
               <div className="mt-3 flex overflow-hidden rounded-2xl border border-sand-200">
                 {p.shades.map((s) => (
                   <div key={s} className="h-20 flex-1" style={{ background: `var(--color-${p.key}-${s})` }} title={`${p.key}-${s}`}>
@@ -135,7 +138,7 @@ export default function StyleGuide() {
               Body — Plus Jakarta Sans keeps prices, dates and forms crisp and readable at small sizes, on every
               screen. It pairs with the serif without competing.
             </p>
-            <p className="text-sm text-ocean-900/55">Small print · No payment until you confirm</p>
+            <p className="text-sm text-ocean-900/60">Small print · No payment until you confirm</p>
           </div>
         </div>
       </Block>
@@ -211,7 +214,7 @@ export default function StyleGuide() {
           <SampleExperienceCard vibe="romance" title="Sunset dhow on Mida Creek" duration="3 hours" from="$60" />
           <SampleExperienceCard vibe="culture" title="Gede Ruins & Swahili food walk" duration="Full day" from="$55" />
         </div>
-        <p className="mt-4 text-sm text-ocean-900/50">Sample content and prices for layout only.</p>
+        <p className="mt-4 text-sm text-ocean-900/60">Sample content and prices for layout only.</p>
       </Block>
 
       <Sheet open={sheet} onOpenChange={setSheet} title="My Watamu trip" description="Phase 3 puts the itinerary here.">

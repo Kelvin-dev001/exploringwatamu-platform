@@ -8,15 +8,18 @@ import { cn } from '@/lib/utils';
  * Add an experience to the trip. Once added it turns into "In your trip",
  * which opens the trip drawer. Safe inside clickable cards (stops the click).
  */
-export default function AddToTripButton({ item, size = 'sm', className, full = false }) {
-  const { has, addExperience, openDrawer } = useTrip();
-  const inTrip = has(keyFor(item.kind, item.id));
-  const disabled = item.kind === 'group' && item.full;
+export default function AddToTripButton({ item, snapshot, size = 'sm', className, full = false, label = 'Add to my trip' }) {
+  const { has, add, addExperience, openDrawer } = useTrip();
+  const key = snapshot ? snapshot.key : keyFor(item.kind, item.id);
+  const title = snapshot ? snapshot.title : item.title;
+  const inTrip = has(key);
+  const disabled = !snapshot && item.kind === 'group' && item.full;
 
   const onClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (inTrip) openDrawer();
+    else if (snapshot) add(snapshot);
     else addExperience(item);
   };
 
@@ -26,7 +29,7 @@ export default function AddToTripButton({ item, size = 'sm', className, full = f
       variant={inTrip ? 'outline' : 'primary'}
       onClick={onClick}
       disabled={disabled}
-      aria-label={inTrip ? `${item.title} is in your trip. Open trip` : `Add ${item.title} to my trip`}
+      aria-label={inTrip ? `${title} is in your trip. Open trip` : `Add ${title} to my trip`}
       className={cn('relative z-10', full && 'w-full', inTrip && 'border-lagoon-500 text-lagoon-700 hover:bg-lagoon-50', className)}
     >
       {inTrip ? (
@@ -35,7 +38,7 @@ export default function AddToTripButton({ item, size = 'sm', className, full = f
         </>
       ) : (
         <>
-          <Plus /> Add to my trip
+          <Plus /> {label}
         </>
       )}
     </Button>

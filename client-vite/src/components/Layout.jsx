@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Luggage, LogOut, Menu, Mail, MapPin, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext.jsx';
@@ -8,7 +8,10 @@ import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import ProfilePill from '@/components/personalise/ProfilePill';
-import VibeOnboarding from '@/components/personalise/VibeOnboarding';
+import { useVibeProfile } from '@/context/VibeProfileContext';
+
+// Only loaded when the question is actually shown (first visit or the pill).
+const VibeOnboarding = lazy(() => import('@/components/personalise/VibeOnboarding'));
 import TripDrawer, { TripToast, TripButton } from '@/components/trip/TripDrawer';
 import { cn } from '@/lib/utils';
 
@@ -55,6 +58,7 @@ function MoreMenu() {
       <button
         type="button"
         aria-expanded={open}
+        aria-haspopup="true"
         onClick={() => setOpen((o) => !o)}
         className="inline-flex items-center gap-1 px-3 py-2 text-[0.95rem] font-semibold text-ocean-900/65 transition hover:text-ocean-900"
       >
@@ -65,7 +69,7 @@ function MoreMenu() {
           {MORE.map((item) => (
             <Link key={item.to} to={item.to} className="block rounded-xl px-4 py-3 transition hover:bg-sand-100">
               <span className="block font-semibold text-ocean-900">{item.label}</span>
-              <span className="block text-sm text-ocean-900/55">{item.desc}</span>
+              <span className="block text-sm text-ocean-900/60">{item.desc}</span>
             </Link>
           ))}
         </div>
@@ -223,7 +227,7 @@ function Footer() {
           </ul>
         </div>
       </Container>
-      <Container size="wide" className="relative flex flex-col gap-2 border-t border-sand-50/10 py-6 text-sm text-sand-50/50 sm:flex-row sm:justify-between">
+      <Container size="wide" className="relative flex flex-col gap-2 border-t border-sand-50/10 py-6 text-sm text-sand-50/65 sm:flex-row sm:justify-between">
         <p>© {new Date().getFullYear()} Exploring Watamu. All rights reserved.</p>
         <p>Prices on request · No payment until you confirm</p>
       </Container>
@@ -233,6 +237,11 @@ function Footer() {
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const { onboardingOpen } = useVibeProfile();
+  const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  useEffect(() => {
+    if (onboardingOpen) setOnboardingLoaded(true);
+  }, [onboardingOpen]);
   useEffect(() => window.scrollTo(0, 0), [location.pathname]);
 
   return (
@@ -248,7 +257,11 @@ export default function Layout({ children }) {
         {children}
       </main>
       <Footer />
-      <VibeOnboarding />
+      {onboardingLoaded && (
+        <Suspense fallback={null}>
+          <VibeOnboarding />
+        </Suspense>
+      )}
       <TripDrawer />
       <TripToast />
     </div>

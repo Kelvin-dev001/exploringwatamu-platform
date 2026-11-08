@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowUpRight, Compass, Users, BedDouble, Plane, CarFront, Sparkles, Home as HomeIcon, MousePointerClick, CalendarDays, MessageSquareQuote } from 'lucide-react';
 import { useFirstVisitPrompt } from '@/context/VibeProfileContext';
+import Seo from '@/components/seo/Seo';
+import { SITE, absoluteUrl } from '@/lib/site';
 import PersonalHero from '@/components/home/PersonalHero';
 import PickedForYou from '@/components/home/PickedForYou';
 import { Container, SectionHeading } from '@/components/ui/primitives';
@@ -95,6 +97,20 @@ export default function Home() {
 
   return (
     <>
+      <Seo
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'TravelAgency',
+          name: SITE.name,
+          url: SITE.url,
+          logo: absoluteUrl(SITE.image),
+          image: absoluteUrl(SITE.image),
+          email: SITE.email,
+          description: SITE.description,
+          areaServed: { '@type': 'Place', name: 'Watamu, Kilifi County, Kenya' },
+          address: { '@type': 'PostalAddress', addressLocality: 'Watamu', addressRegion: 'Kilifi County', addressCountry: 'KE' },
+        }}
+      />
       <PersonalHero />
 
       <PickedForYou />

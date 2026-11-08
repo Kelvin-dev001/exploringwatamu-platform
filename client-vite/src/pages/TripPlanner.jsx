@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import Board from '@/components/trip/Board';
 import RequestQuoteSheet from '@/components/trip/RequestQuoteSheet';
+import Seo from '@/components/seo/Seo';
+
 import { WaveField } from '@/components/brand/Patterns';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
@@ -67,7 +69,7 @@ function Starters({ ranked, items, profile, onStart, openOnboarding }) {
       </div>
       {starters.length > 0 && (
         <>
-          <p className="mt-8 text-xs font-bold uppercase tracking-[0.18em] text-ocean-900/50">Or start from a ready-made plan</p>
+          <p className="mt-8 text-xs font-bold uppercase tracking-[0.18em] text-ocean-900/60">Or start from a ready-made plan</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {starters.map(({ vibe, vibeProfile, count }) => (
               <button
@@ -81,7 +83,7 @@ function Starters({ ranked, items, profile, onStart, openOnboarding }) {
                 </span>
                 <span>
                   <span className="block font-display text-lg text-ocean-900">{vibe.label}</span>
-                  <span className="text-sm text-ocean-900/55">{count} experiences to choose from</span>
+                  <span className="text-sm text-ocean-900/60">{count} experiences to choose from</span>
                 </span>
               </button>
             ))}
@@ -120,13 +122,6 @@ export default function TripPlanner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    document.title = 'My trip planner · Exploring Watamu';
-    return () => {
-      document.title = 'Exploring Watamu — Your Watamu, tuned to you';
-    };
-  }, []);
-
   const start = (rankedList) => t.autoPlan(rankedList);
 
   const share = async () => {
@@ -150,6 +145,7 @@ export default function TripPlanner() {
 
   return (
     <>
+      <Seo title="Plan your Watamu trip" description="Drag experiences onto days, add stays and transfers, and get one tailored quote from our local team." path="/trip" />
       <section className="relative overflow-hidden bg-ocean-900 text-sand-50">
         <WaveField className="absolute inset-0 text-ocean-800" rows={8} gap={18} />
         <Container size="wide" className="relative py-12 lg:py-16">
@@ -213,7 +209,7 @@ export default function TripPlanner() {
                 className="h-11 w-full rounded-xl border border-sand-300 bg-sand-50 px-3 text-ocean-900"
               />
               {!trip.arrival && (
-                <span className="mt-2 flex items-center justify-between text-xs text-ocean-900/55">
+                <span className="mt-2 flex items-center justify-between text-xs text-ocean-900/60">
                   No dates yet? Plan {trip.days.length} day{trip.days.length === 1 ? '' : 's'}
                   <span className="inline-flex gap-1">
                     <button type="button" className="rounded-full border border-sand-300 px-2" onClick={() => t.setDayCount(trip.days.length - 1)} aria-label="One day fewer">−</button>
@@ -265,7 +261,7 @@ export default function TripPlanner() {
         <aside className="xl:sticky xl:top-28 xl:self-start">
           <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-6 shadow-soft">
             <p className="font-display text-2xl text-ocean-900">Your trip</p>
-            <p className="mt-1 text-sm text-ocean-900/55">
+            <p className="mt-1 text-sm text-ocean-900/60">
               {count} item{count === 1 ? '' : 's'} · {trip.days.length} day{trip.days.length === 1 ? '' : 's'} · {trip.adults + trip.children} traveller{trip.adults + trip.children === 1 ? '' : 's'}
             </p>
             <ResidencyToggle
@@ -277,10 +273,10 @@ export default function TripPlanner() {
               className="mt-5 w-full [&>button]:flex-1"
             />
             <div className="mt-5 border-t border-sand-200 pt-5">
-              <p className="text-sm text-ocean-900/55">Estimated from</p>
+              <p className="text-sm text-ocean-900/60">Estimated from</p>
               <p className="font-display text-4xl text-ocean-900">{formatKES(total)}</p>
-              {unpriced > 0 && <p className="mt-1 text-xs text-ocean-900/55">+ {unpriced} item{unpriced === 1 ? '' : 's'} priced in your quote</p>}
-              <p className="mt-2 text-xs text-ocean-900/50">Indicative only. Your quote confirms availability and the final price.</p>
+              {unpriced > 0 && <p className="mt-1 text-xs text-ocean-900/60">+ {unpriced} item{unpriced === 1 ? '' : 's'} priced in your quote</p>}
+              <p className="mt-2 text-xs text-ocean-900/60">Indicative only. Your quote confirms availability and the final price.</p>
             </div>
             <Button className="mt-6 w-full" size="lg" onClick={() => setRequestOpen(true)} disabled={!count}>
               <Send /> Request my quote
@@ -290,7 +286,7 @@ export default function TripPlanner() {
                 Sent as <span className="font-mono font-semibold">{trip.lastRequest.reference}</span>. Changed something? Send it again and we’ll use the latest version.
               </p>
             )}
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ocean-900/55">
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ocean-900/60">
               <Check className="size-3.5 text-lagoon-600" /> No payment until you confirm
             </p>
             {count > 0 && (
@@ -309,7 +305,7 @@ export default function TripPlanner() {
               </div>
             )}
             {count > 0 && (
-              <a href={mailHref} className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ocean-900/45 hover:text-ocean-900">
+              <a href={mailHref} className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ocean-900/60 hover:text-ocean-900">
                 <Mail className="size-3.5" /> Prefer email? Send it from your inbox
               </a>
             )}

@@ -72,6 +72,32 @@ export const TRANSFERS = {
   out: { key: 'transfer:airport-out', kind: 'transfer', id: 'airport-out', title: 'Airport drop-off', hours: 1.5, lengthLabel: 'About 1½ hours', price: {} },
 };
 
+/*
+ * Stays, transfers, car hire and local services join the trip too, so the
+ * quote covers everything. They're priced by our team (not in the estimate);
+ * `rateLabel` shows the listed rate in the planner and to the admin.
+ */
+const kes = (n) => (n === null || n === undefined || n === '' ? null : `KES ${Math.round(Number(n)).toLocaleString('en-KE')}`);
+
+export function snapshotFor(kind, doc) {
+  const id = doc._id || doc.id;
+  switch (kind) {
+    case 'stay':
+      return { key: keyFor('stay', id), kind: 'stay', id, title: `Stay · ${doc.name}`, hours: null, vibe: 'slow', href: '/hotels', image: doc.images?.[0] || null, rateLabel: doc.pricePerNight != null ? `${kes(doc.pricePerNight)} / night` : null, price: {} };
+    case 'transfer':
+      return { key: keyFor('transfer', id), kind: 'transfer', id, title: doc.route || 'Transfer', hours: 1.5, href: '/transfers', image: doc.vehicle?.image || null, rateLabel: doc.price != null ? `${kes(doc.price)} per trip` : null, lengthLabel: doc.vehicle?.name || null, price: {} };
+    case 'carhire':
+      return { key: keyFor('carhire', id), kind: 'carhire', id, title: `Car hire · ${doc.vehicle?.name || 'Vehicle'}`, hours: null, href: '/carhire', image: doc.vehicle?.image || null, rateLabel: doc.dailyRate != null ? `${kes(doc.dailyRate)} / day` : null, price: {} };
+    case 'service':
+      return { key: keyFor('service', id), kind: 'service', id, title: doc.name, hours: null, vibe: 'slow', href: '/services', image: doc.gallery?.[0] || null, rateLabel: doc.price != null ? `${kes(doc.price)}${doc.pricingType ? ` ${doc.pricingType}` : ''}` : null, price: {} };
+    default:
+      throw new Error(`Unknown trip item kind: ${kind}`);
+  }
+}
+
+/** Where a newly added item should go: dated activities onto days, everything else waits. */
+export const defaultLane = (snap) => (snap.kind === 'tour' || snap.kind === 'group' || snap.kind === 'transfer' ? 'auto' : 'ideas');
+
 /* ---------- Dates ---------- */
 
 const parse = (d) => (d ? new Date(`${d}T00:00:00`) : null);
@@ -304,7 +330,7 @@ export function tripSummary(trip, { headline } = {}) {
     d.items.forEach((k) => lines.push(`  - ${trip.items[k]?.title}`));
   });
   if (trip.ideas.length) {
-    lines.push('', 'Also interested in:');
+    lines.push('', 'Stays, extras & unscheduled:');
     trip.ideas.forEach((k) => lines.push(`  - ${trip.items[k]?.title}`));
   }
   if (trip.notes) lines.push('', `Notes: ${trip.notes}`);
@@ -321,7 +347,7 @@ function requestItem(snap, residency) {
   return {
     kind: KIND[snap.kind] || 'other',
     refId: snap.id ? String(snap.id) : undefined,
-    title: snap.title,
+    title: snap.rateLabel ? `${snap.title} (listed ${snap.rateLabel})`.slice(0, 200) : snap.title,
     hours: snap.hours ?? null,
     listedPrice: listed ?? null,
   };

@@ -21,6 +21,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'));
 const TripPlanner = lazy(() => import('./pages/TripPlanner.jsx'));
 const TripRequested = lazy(() => import('./pages/TripRequested.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
 function PageFallback() {
   return (
@@ -55,6 +56,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/style-guide" element={<StyleGuide />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
     </Layout>

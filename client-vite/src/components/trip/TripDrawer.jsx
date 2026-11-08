@@ -11,9 +11,9 @@ function Row({ snap, onRemove }) {
     <li className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-soft">
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-ocean-900">{snap.title}</p>
-        {snap.lengthLabel && <p className="text-xs text-ocean-900/55">{snap.lengthLabel}</p>}
+        {(snap.rateLabel || snap.lengthLabel) && <p className="text-xs text-ocean-900/60">{snap.rateLabel ? `Listed ${snap.rateLabel}` : snap.lengthLabel}</p>}
       </div>
-      <button type="button" onClick={onRemove} aria-label={`Remove ${snap.title}`} className="rounded-full p-2 text-ocean-900/40 hover:bg-coral-50 hover:text-coral-600">
+      <button type="button" onClick={onRemove} aria-label={`Remove ${snap.title}`} className="rounded-full p-2 text-ocean-900/55 hover:bg-coral-50 hover:text-coral-600">
         <Trash2 className="size-4" />
       </button>
     </li>
@@ -42,7 +42,7 @@ export default function TripDrawer() {
             {trip.days.map((d, i) =>
               d.items.length ? (
                 <div key={i}>
-                  <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-ocean-900/50">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-ocean-900/60">
                     <CalendarDays className="size-3.5" /> {dayLabel(trip, i)}
                   </p>
                   <ul className="space-y-2">
@@ -53,7 +53,7 @@ export default function TripDrawer() {
             )}
             {trip.ideas.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-ocean-900/50">Not scheduled yet</p>
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-ocean-900/60">Not scheduled · stays & extras</p>
                 <ul className="space-y-2">
                   {trip.ideas.map((k) => trip.items[k] && <Row key={k} snap={trip.items[k]} onRemove={() => remove(k)} />)}
                 </ul>
@@ -70,7 +70,7 @@ export default function TripDrawer() {
             </span>
             <span className="font-display text-2xl text-ocean-900">{formatKES(total)}</span>
           </div>
-          {unpriced > 0 && <p className="text-xs text-ocean-900/55">+ {unpriced} item{unpriced === 1 ? '' : 's'} priced in your quote</p>}
+          {unpriced > 0 && <p className="text-xs text-ocean-900/60">+ {unpriced} item{unpriced === 1 ? '' : 's'} priced in your quote</p>}
           <Button to="/trip" className="w-full" size="lg" onClick={() => setDrawerOpen(false)}>
             Plan my days <ArrowRight />
           </Button>
