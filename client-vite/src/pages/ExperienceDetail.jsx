@@ -9,6 +9,7 @@ import { Container, Badge, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import ExperienceCard, { VibeArt } from '@/components/experience/ExperienceCard';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
+import AddToTripButton from '@/components/trip/AddToTripButton';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 const ENERGY_LABEL = { easy: 'Easy going', moderate: 'Moderate', active: 'Active' };
@@ -67,8 +68,9 @@ function PricePanel({ item }) {
         <p className="font-display text-4xl text-ocean-900">{adult != null ? formatKES(adult) : 'On request'}</p>
         <p className="text-sm text-ocean-900/55">per adult{child != null ? ` · children ${formatKES(child)}` : ''}</p>
       </div>
-      <Button className="mt-6 w-full" size="lg" href={`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`}>
-        <Mail /> Request a price
+      <AddToTripButton item={item} size="lg" full className="mt-6" />
+      <Button variant="link" className="mt-4 w-full justify-center text-sm" href={`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`}>
+        <Mail /> Or just ask about this one
       </Button>
       <ul className="mt-5 space-y-2 text-sm text-ocean-900/65">
         <li className="flex gap-2">

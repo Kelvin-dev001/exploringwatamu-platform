@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import ProfilePill from '@/components/personalise/ProfilePill';
 import VibeOnboarding from '@/components/personalise/VibeOnboarding';
+import TripDrawer, { TripToast, TripButton } from '@/components/trip/TripDrawer';
 import { cn } from '@/lib/utils';
 
 const PRIMARY = [
@@ -114,15 +115,7 @@ function Header() {
 
         <div className="ml-auto flex items-center gap-2">
           <ProfilePill className="hidden md:inline-flex" />
-          <Button
-            to="/my-trips"
-            variant="ghost"
-            size="icon"
-            aria-label="My trips"
-            className="hidden sm:inline-flex"
-          >
-            <Luggage />
-          </Button>
+          <TripButton />
           {user ? (
             <Button variant="ghost" size="icon" aria-label="Sign out" onClick={signOut} className="hidden lg:inline-flex">
               <LogOut />
@@ -161,8 +154,11 @@ function Header() {
             </NavLink>
           ))}
           <div className="mt-auto space-y-3 border-t border-sand-200 px-3 pt-6">
+            <Button to="/trip" className="w-full">
+              <Luggage /> My trip planner
+            </Button>
             <Button to="/my-trips" variant="outline" className="w-full">
-              <Luggage /> My trips
+              My bookings
             </Button>
             {user ? (
               <Button variant="ghost" className="w-full" onClick={signOut}>
@@ -183,7 +179,7 @@ function Header() {
 function Footer() {
   const columns = [
     { title: 'Explore', links: [...PRIMARY, MORE[0]] },
-    { title: 'Plan', links: [MORE[1], MORE[2], { to: '/my-trips', label: 'My trips' }, { to: '/login', label: 'Sign in' }] },
+    { title: 'Plan', links: [MORE[1], MORE[2], { to: '/trip', label: 'Trip planner' }, { to: '/my-trips', label: 'My bookings' }, { to: '/login', label: 'Sign in' }] },
   ];
   return (
     <footer className="relative mt-24 overflow-hidden bg-ocean-900 text-sand-50">
@@ -253,6 +249,8 @@ export default function Layout({ children }) {
       </main>
       <Footer />
       <VibeOnboarding />
+      <TripDrawer />
+      <TripToast />
     </div>
   );
 }

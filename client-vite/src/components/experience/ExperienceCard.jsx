@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Clock, Sparkles, Users, CalendarDays, ArrowUpRight } from 'lucide-react';
+import AddToTripButton from '@/components/trip/AddToTripButton';
+import { Clock, Sparkles, Users, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/primitives';
 import { WaveField, Rosette, ArchBand, Weave, ChainBand } from '@/components/brand/Patterns';
 import { VIBES, byId } from '@/lib/vibes';
@@ -63,10 +64,9 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
   const price = priceFor(item, residency);
 
   return (
-    <Link
-      to={item.href}
+    <article
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-sand-200 bg-white shadow-soft transition-all duration-300 ease-[var(--ease-tide)] hover:-translate-y-1 hover:shadow-lift',
+        'group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-sand-200 bg-white shadow-soft transition-all duration-300 ease-[var(--ease-tide)] hover:-translate-y-1 hover:shadow-lift',
         className
       )}
     >
@@ -117,7 +117,12 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
           )}
         </div>
 
-        <h3 className="mt-2 font-display text-[1.4rem] leading-tight text-ocean-900">{item.title}</h3>
+        <h3 className="mt-2 font-display text-[1.4rem] leading-tight text-ocean-900">
+          {/* Stretched link: the whole card opens the experience, the button stays a real button */}
+          <Link to={item.href} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-[var(--radius-card)] focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-coral-500">
+            {item.title}
+          </Link>
+        </h3>
         {item.summary && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ocean-900/60">{item.summary}</p>}
 
         {match?.great && match.reasons.length > 0 && (
@@ -129,24 +134,25 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
             {price !== null && price !== undefined ? (
               <>
                 from
-                <span className="block font-display text-2xl leading-tight text-ocean-900">{formatKES(price)}</span>
+                <span className="block whitespace-nowrap font-display text-2xl leading-tight text-ocean-900">{formatKES(price)}</span>
                 <span className="text-xs">{item.price.unit}</span>
               </>
             ) : (
               <span className="font-semibold text-ocean-900">Price on request</span>
             )}
           </div>
-          {item.kind === 'group' && item.full ? (
-            <Badge tone="sand">Fully booked</Badge>
-          ) : item.kind === 'group' && item.seatsLeft > 0 && item.seatsLeft <= 5 ? (
-            <Badge tone="ochre">{item.seatsLeft} seats left</Badge>
-          ) : (
-            <span className="grid size-10 place-items-center rounded-full bg-sand-100 text-ocean-900 transition-colors group-hover:bg-coral-500 group-hover:text-white">
-              <ArrowUpRight className="size-4" />
-            </span>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {item.kind === 'group' && item.full ? (
+              <Badge tone="sand">Fully booked</Badge>
+            ) : (
+              <>
+                {item.kind === 'group' && item.seatsLeft > 0 && item.seatsLeft <= 5 && <Badge tone="ochre">{item.seatsLeft} seats left</Badge>}
+                <AddToTripButton item={item} />
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

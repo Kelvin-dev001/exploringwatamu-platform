@@ -19,6 +19,7 @@ const Register = lazy(() => import('./pages/Register.jsx'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'));
+const TripPlanner = lazy(() => import('./pages/TripPlanner.jsx'));
 
 function PageFallback() {
   return (
@@ -45,6 +46,7 @@ function App() {
             <Route path="/properties-for-sale" element={<PropertiesForSale />} />
             <Route path="/group-trips" element={<GroupTrips />} />
             <Route path="/group-trips/:slug" element={<GroupTripDetail />} />
+            <Route path="/trip" element={<TripPlanner />} />
             <Route path="/my-trips" element={<MyTrips />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
