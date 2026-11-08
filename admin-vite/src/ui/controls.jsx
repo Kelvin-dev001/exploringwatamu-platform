@@ -16,7 +16,7 @@ export function Toggle({ checked, onChange, label, disabled, size = 'md' }) {
       onClick={(e) => { e.stopPropagation(); e.preventDefault(); onChange(!checked); }}
       className={cn('relative inline-flex shrink-0 items-center rounded-full transition-colors disabled:opacity-50', size === 'sm' ? 'h-5 w-9' : 'h-6 w-11', checked ? 'bg-ok' : 'bg-line')}
     >
-      <span className={cn('inline-block rounded-full bg-white shadow transition-transform', size === 'sm' ? 'size-4' : 'size-5', checked ? (size === 'sm' ? 'translate-x-[1.1rem]' : 'translate-x-[1.3rem]') : 'translate-x-0.5')} />
+      <span className={cn('inline-block rounded-full bg-white shadow-sm transition-transform', size === 'sm' ? 'size-4' : 'size-5', checked ? (size === 'sm' ? 'translate-x-[1.1rem]' : 'translate-x-[1.3rem]') : 'translate-x-0.5')} />
     </button>
   );
 }

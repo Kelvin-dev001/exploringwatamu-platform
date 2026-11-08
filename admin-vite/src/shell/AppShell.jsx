@@ -6,7 +6,7 @@ import { useTheme } from '@/lib/theme';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Sheet } from '@/ui';
-import { NAV, isActive, isRedesigned } from './nav';
+import { NAV, isActive } from './nav';
 import CommandPalette from './CommandPalette';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://exploringwatamu-platform.vercel.app';
@@ -162,7 +162,6 @@ export default function AppShell({ children }) {
     logout();
     navigate('/admin/login');
   };
-  const redesigned = isRedesigned(pathname);
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
@@ -198,7 +197,7 @@ export default function AppShell({ children }) {
 
         <main id="main" className="flex-1 px-4 pb-28 pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8">
           <div className="mx-auto w-full max-w-6xl">
-            {redesigned ? children : <div className="legacy-page p-4 sm:p-6" data-theme="exploringwatamu">{children}</div>}
+            {children}
           </div>
         </main>
       </div>
