@@ -51,7 +51,7 @@ export default function TripRequests() {
       <PageHeader title="Trip requests" description="Itineraries built on the website. Price them and the traveller gets the quote by email." />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="tablist" aria-label="Status">
+        <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="tablist" aria-label="Status">
           {TABS.map((t) => {
             const n = t.id ? state.counts[t.id] || 0 : allCount;
             const active = status === t.id;

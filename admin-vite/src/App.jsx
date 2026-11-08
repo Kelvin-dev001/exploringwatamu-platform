@@ -5,49 +5,39 @@ import { useAdminAuth } from './context/AdminAuthContext';
 
 // Page imports
 import Dashboard from '@/screens/Dashboard';
+import Bookings from '@/screens/Bookings';
+import GroupTripBookings from '@/screens/GroupTripBookings';
+import Notifications from '@/screens/Notifications';
+import Experiences from '@/screens/catalogue/Experiences';
+import GroupTripsList from '@/screens/catalogue/GroupTrips';
+import { Stays, Transfers, CarHire, Vehicles, Services, Properties } from '@/screens/catalogue/configs';
 import TeamPage from '@/screens/Team';
 import AdminLogin from './pages/login'; // Import your login page
 // Hotels
-import HotelList from './pages/hotels/HotelList';
 import NewHotel from './pages/hotels/NewHotel';
 import EditHotel from './pages/hotels/EditHotel';
 // Transfers
-import TransferList from './pages/transfers/TransferList';
 import NewTransfer from './pages/transfers/NewTransfer';
 import EditTransfer from './pages/transfers/EditTransfer';
-import TransferBookingList from './pages/transfers/TransferBookingList';
 // Services
-import ServiceList from './pages/services/ServiceList';
 import NewService from './pages/services/NewService';
 import EditService from './pages/services/EditService';
-import ServiceBookingList from './pages/services/ServiceBookingList';
 // Vehicles
-import VehicleList from './pages/vehicles/VehicleList';
 import NewVehicle from './pages/vehicles/NewVehicle';
 import EditVehicle from './pages/vehicles/EditVehicle';
 // Properties
-import PropertyList from './pages/properties/PropertyList';
 import NewProperty from './pages/properties/NewProperty';
 import EditProperty from './pages/properties/EditProperty';
-import PropertyViewingBookingList from './pages/properties/PropertyViewingBookingList';
 // Car Hire
-import CarHireList from './pages/carhire/CarHireList';
 import NewCarHire from './pages/carhire/NewCarHire';
 import EditCarHire from './pages/carhire/EditCarHire';
-import CarHireBookingList from './pages/carhire/CarHireBookingList';
 // Tours
-import TourList from './pages/tours/TourList';
 import NewTour from './pages/tours/NewTour';
 import EditTour from './pages/tours/EditTour';
-import TourBookingList from './pages/tours/TourBookingList';
 // Group Trips
-import GroupTripList from './pages/grouptrips/GroupTripList';
 import NewGroupTrip from './pages/grouptrips/NewGroupTrip';
 import EditGroupTrip from './pages/grouptrips/EditGroupTrip';
-import GroupTripBookingList from './pages/grouptrips/GroupTripBookingList';
 // Bookings & Notifications
-import AllBookings from './pages/bookings/AllBookings';
-import NotificationsLog from './pages/notifications/NotificationsLog';
 import TripRequestList from '@/screens/TripRequests';
 import TripRequestDetail from '@/screens/TripRequest';
 
@@ -80,7 +70,7 @@ function App() {
             path="/bookings"
             element={
               <PrivateRoute>
-                <AllBookings />
+                <Bookings />
               </PrivateRoute>
             }
           />
@@ -104,7 +94,7 @@ function App() {
             path="/notifications"
             element={
               <PrivateRoute>
-                <NotificationsLog />
+                <Notifications />
               </PrivateRoute>
             }
           />
@@ -114,7 +104,7 @@ function App() {
             path="/hotels"
             element={
               <PrivateRoute>
-                <HotelList />
+                <Stays />
               </PrivateRoute>
             }
           />
@@ -140,7 +130,7 @@ function App() {
             path="/transfers"
             element={
               <PrivateRoute>
-                <TransferList />
+                <Transfers />
               </PrivateRoute>
             }
           />
@@ -162,11 +152,7 @@ function App() {
           />
           <Route
             path="/transferbookings"
-            element={
-              <PrivateRoute>
-                <TransferBookingList />
-              </PrivateRoute>
-            }
+            element={<Navigate to="/bookings" replace />}
           />
 
           {/* Services (Protected) */}
@@ -174,7 +160,7 @@ function App() {
             path="/services"
             element={
               <PrivateRoute>
-                <ServiceList />
+                <Services />
               </PrivateRoute>
             }
           />
@@ -196,11 +182,7 @@ function App() {
           />
           <Route
             path="/servicebookings"
-            element={
-              <PrivateRoute>
-                <ServiceBookingList />
-              </PrivateRoute>
-            }
+            element={<Navigate to="/bookings?type=service" replace />}
           />
 
           {/* Vehicles (Protected) */}
@@ -208,7 +190,7 @@ function App() {
             path="/vehicles"
             element={
               <PrivateRoute>
-                <VehicleList />
+                <Vehicles />
               </PrivateRoute>
             }
           />
@@ -234,7 +216,7 @@ function App() {
             path="/properties"
             element={
               <PrivateRoute>
-                <PropertyList />
+                <Properties />
               </PrivateRoute>
             }
           />
@@ -256,11 +238,7 @@ function App() {
           />
           <Route
             path="/propertyviewingbookings"
-            element={
-              <PrivateRoute>
-                <PropertyViewingBookingList />
-              </PrivateRoute>
-            }
+            element={<Navigate to="/bookings?type=propertyviewing" replace />}
           />
 
           {/* Car Hire (Protected) */}
@@ -268,7 +246,7 @@ function App() {
             path="/carhire"
             element={
               <PrivateRoute>
-                <CarHireList />
+                <CarHire />
               </PrivateRoute>
             }
           />
@@ -290,11 +268,7 @@ function App() {
           />
           <Route
             path="/carhirebookings"
-            element={
-              <PrivateRoute>
-                <CarHireBookingList />
-              </PrivateRoute>
-            }
+            element={<Navigate to="/bookings?type=carhire" replace />}
           />
 
           {/* Tours (Protected) */}
@@ -302,7 +276,7 @@ function App() {
             path="/tours"
             element={
               <PrivateRoute>
-                <TourList />
+                <Experiences />
               </PrivateRoute>
             }
           />
@@ -324,11 +298,7 @@ function App() {
           />
           <Route
             path="/tourbookings"
-            element={
-              <PrivateRoute>
-                <TourBookingList />
-              </PrivateRoute>
-            }
+            element={<Navigate to="/bookings?type=tour" replace />}
           />
 
           {/* Default route/fallback (Protected) */}
@@ -350,7 +320,7 @@ function App() {
             path="/grouptrips"
             element={
               <PrivateRoute>
-                <GroupTripList />
+                <GroupTripsList />
               </PrivateRoute>
             }
           />
@@ -374,7 +344,7 @@ function App() {
             path="/grouptripbookings/:tripId"
             element={
               <PrivateRoute>
-                <GroupTripBookingList />
+                <GroupTripBookings />
               </PrivateRoute>
             }
           />
