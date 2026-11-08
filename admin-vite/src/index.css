@@ -55,10 +55,14 @@
 
 @layer base {
   html { @apply bg-canvas; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
-  body { @apply bg-canvas text-ink font-sans; }
+  body { @apply bg-canvas text-ink font-sans; overflow-x: clip; }
   :focus-visible { outline: 2px solid rgb(var(--c-brand)); outline-offset: 2px; }
   ::selection { background: rgb(var(--c-brand) / 0.2); }
 }
+
+/* Horizontally scrolling chip rows: swipeable without a visible scrollbar. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* Screens not yet redesigned keep their old light styling inside the new shell. */
 .legacy-page { @apply rounded-xl2 bg-white text-gray-900; color-scheme: light; }

@@ -1,7 +1,7 @@
 'use strict';
 
 const registry = require('../services/bookingRegistry');
-const { paginate } = require('../services/bookingService');
+const { paginate, cancelById } = require('../services/bookingService');
 
 const TYPES = Object.keys(registry);
 
@@ -56,6 +56,22 @@ exports.summary = async (req, res, next) => {
       })
     );
     res.json({ total: byType.reduce((s, r) => s + r.total, 0), byType });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /api/bookings/:type/:id/cancel — soft-cancel a simple booking from the unified view.
+const OWN_FLOW = { grouptour: 'Use the group-trip bookings screen (it releases the seat and emails the traveller).', triprequest: 'Cancel trip requests from the trip request screen.' };
+exports.cancel = async (req, res, next) => {
+  try {
+    const { type, id } = req.params;
+    if (OWN_FLOW[type]) return res.status(400).json({ error: OWN_FLOW[type] });
+    const entry = registry[type];
+    if (!entry) return res.status(400).json({ error: `Unknown booking type: ${type}`, validTypes: TYPES });
+    const doc = await cancelById(entry.Model, id, { populate: entry.populate });
+    if (!doc) return res.status(404).json({ error: 'Booking not found.' });
+    res.json(entry.normalize(doc));
   } catch (err) {
     next(err);
   }

@@ -120,4 +120,7 @@ router.get('/overview', adminLimiter, authAdmin, require('../controllers/adminOv
 // but the last remaining admin can never be removed. ---
 router.use('/team', adminLimiter, authAdmin, require('./adminTeamRoutes'));
 
+// --- Quick inline edits from admin lists (publish, price, mark full) ---
+router.use('/quick', adminLimiter, authAdmin, require('./adminQuickRoutes'));
+
 module.exports = router;
