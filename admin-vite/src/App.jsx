@@ -1,10 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
+import AppShell from '@/shell/AppShell';
 import { useAdminAuth } from './context/AdminAuthContext';
 
 // Page imports
-import AdminDashboard from './pages/AdminDashboard';
+import Dashboard from '@/screens/Dashboard';
+import TeamPage from '@/screens/Team';
 import AdminLogin from './pages/login'; // Import your login page
 // Hotels
 import HotelList from './pages/hotels/HotelList';
@@ -47,8 +48,8 @@ import GroupTripBookingList from './pages/grouptrips/GroupTripBookingList';
 // Bookings & Notifications
 import AllBookings from './pages/bookings/AllBookings';
 import NotificationsLog from './pages/notifications/NotificationsLog';
-import TripRequestList from './pages/triprequests/TripRequestList';
-import TripRequestDetail from './pages/triprequests/TripRequestDetail';
+import TripRequestList from '@/screens/TripRequests';
+import TripRequestDetail from '@/screens/TripRequest';
 
 // PrivateRoute component to protect authenticated routes
 function PrivateRoute({ children }) {
@@ -59,7 +60,7 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <Router>
-      <Layout>
+      <AppShell>
         <Routes>
           {/* Admin Login Route */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -69,7 +70,7 @@ function App() {
             path="/admin/dashboard"
             element={
               <PrivateRoute>
-                <AdminDashboard />
+                <Dashboard />
               </PrivateRoute>
             }
           />
@@ -333,9 +334,13 @@ function App() {
           {/* Default route/fallback (Protected) */}
           <Route
             path="/"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
+          <Route
+            path="/team"
             element={
               <PrivateRoute>
-                <AdminDashboard />
+                <TeamPage />
               </PrivateRoute>
             }
           />
@@ -374,7 +379,7 @@ function App() {
             }
           />
         </Routes>
-      </Layout>
+      </AppShell>
     </Router>
   );
 }

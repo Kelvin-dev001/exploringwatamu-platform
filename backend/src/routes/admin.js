@@ -21,12 +21,15 @@ router.post('/login', authLimiter, async (req, res, next) => {
     const valid = await admin.validatePassword(password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
+    admin.lastLoginAt = new Date();
+    await admin.save();
+
     const token = jwt.sign(
       { id: admin._id, email: admin.email, admin: true, role: admin.role || 'admin' },
       config.jwtSecret,
       { expiresIn: config.adminJwtExpiresIn }
     );
-    res.json({ token, admin: { email: admin.email, role: admin.role || 'admin' } });
+    res.json({ token, admin: { id: admin._id, email: admin.email, name: admin.name || '', role: admin.role || 'admin' } });
   } catch (err) {
     next(err);
   }
@@ -109,5 +112,12 @@ router.get('/recent-bookings', adminLimiter, authAdmin, async (req, res, next) =
     next(err);
   }
 });
+
+// --- Dashboard overview (to-do, money, content health, activity) ---
+router.get('/overview', adminLimiter, authAdmin, require('../controllers/adminOverviewController').overview);
+
+// --- Team: every admin is a full admin; anyone can add or remove a colleague,
+// but the last remaining admin can never be removed. ---
+router.use('/team', adminLimiter, authAdmin, require('./adminTeamRoutes'));
 
 module.exports = router;

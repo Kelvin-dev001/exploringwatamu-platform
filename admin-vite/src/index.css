@@ -1,8 +1,69 @@
+@import '@fontsource-variable/plus-jakarta-sans';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Add any custom styles below */
+/* Semantic colour tokens (RGB triplets). Brand = lagoon turquoise from the
+   badge, accent = sunset coral. Dark values are tuned for contrast. */
+:root {
+  --c-canvas: 247 248 250;
+  --c-surface: 255 255 255;
+  --c-subtle: 241 243 246;
+  --c-line: 228 231 236;
+  --c-ink: 15 23 42;
+  --c-muted: 71 85 105;
+  --c-faint: 100 116 139;
+  --c-brand: 2 128 132;
+  --c-brand-soft: 224 245 245;
+  --c-brand-ink: 255 255 255;
+  --c-accent: 214 98 40;
+  --c-accent-soft: 253 236 225;
+  --c-ok: 21 128 61;
+  --c-ok-soft: 220 252 231;
+  --c-warn: 180 83 9;
+  --c-warn-soft: 254 243 199;
+  --c-danger: 200 30 30;
+  --c-danger-soft: 254 226 226;
+  --c-info: 29 78 216;
+  --c-info-soft: 219 234 254;
+  color-scheme: light;
+}
+.dark {
+  --c-canvas: 9 12 17;
+  --c-surface: 17 21 28;
+  --c-subtle: 25 30 39;
+  --c-line: 39 46 58;
+  --c-ink: 236 239 244;
+  --c-muted: 166 175 189;
+  --c-faint: 132 142 158;
+  --c-brand: 45 200 202;
+  --c-brand-soft: 13 52 56;
+  --c-brand-ink: 4 28 30;
+  --c-accent: 243 151 99;
+  --c-accent-soft: 66 33 18;
+  --c-ok: 74 222 128;
+  --c-ok-soft: 16 52 33;
+  --c-warn: 251 191 36;
+  --c-warn-soft: 59 43 9;
+  --c-danger: 248 113 113;
+  --c-danger-soft: 69 20 20;
+  --c-info: 96 165 250;
+  --c-info-soft: 22 37 66;
+  color-scheme: dark;
+}
 
-/* Remove global resets/styles that override Tailwind/DaisyUI! */
-/* For custom tweaks, use Tailwind utility classes in your components instead. */
+@layer base {
+  html { @apply bg-canvas; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-canvas text-ink font-sans; }
+  :focus-visible { outline: 2px solid rgb(var(--c-brand)); outline-offset: 2px; }
+  ::selection { background: rgb(var(--c-brand) / 0.2); }
+}
+
+/* Screens not yet redesigned keep their old light styling inside the new shell. */
+.legacy-page { @apply rounded-xl2 bg-white text-gray-900; color-scheme: light; }
+.dark .legacy-page { box-shadow: 0 0 0 1px rgb(var(--c-line)); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
