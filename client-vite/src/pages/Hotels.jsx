@@ -1,154 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_URL } from '../api.js';
-import AccommodationTypeTabs from '../components/AccommodationTypeTabs.jsx';
-import StarRatingTabs from '../components/StarRatingTabs.jsx';
-import BookingButtons from '../components/BookingButtons.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import ImageGallery from '../components/ImageGallery.jsx';
+import { useMemo, useState } from 'react';
+import { MapPin, Star, ExternalLink } from 'lucide-react';
+import useListing from '@/components/listing/useListing';
+import PageHero from '@/components/listing/PageHero';
+import ListingCard, { ContactLinks } from '@/components/listing/ListingCard';
+import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
+import AddToTripButton from '@/components/trip/AddToTripButton';
+import Seo from '@/components/seo/Seo';
+import { Container, Chip, Badge } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/button';
+import { snapshotFor } from '@/lib/trip';
+
+const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
+
+const TYPES = [
+  { id: '', label: 'All stays' },
+  { id: 'hotel', label: 'Hotels' },
+  { id: 'airbnb', label: 'Airbnbs' },
+  { id: 'villa', label: 'Villas' },
+];
+const RATINGS = [
+  { id: 0, label: 'Any rating' },
+  { id: 3, label: '3★ and up' },
+  { id: 4, label: '4★ and up' },
+  { id: 5, label: '5★' },
+];
+
+const locationText = (l) => (!l ? null : typeof l === 'string' ? l : l.address || null);
 
 export default function Hotels() {
-  const [accommodations, setAccommodations] = useState([]);
-  const [type, setType] = useState('hotel');
-  const [star, setStar] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { items, loading, error, retry } = useListing('/hotels');
+  const [type, setType] = useState('');
+  const [minStars, setMinStars] = useState(0);
 
-  useEffect(() => {
-    const fetchHotels = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await axios.get(`${API_URL}/hotels`);
-        setAccommodations(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        setError('Failed to load accommodations.');
-        setAccommodations([]);
-      }
-      setLoading(false);
-    };
-    fetchHotels();
-  }, []);
-
-  const filtered = accommodations.filter((acc) => {
-    const matchesType = acc.type === type;
-    const matchesStar = star ? acc.stars === star : true;
-    return matchesType && matchesStar;
-  });
-
-  const getLocationText = (location) => {
-    if (!location) return null;
-    if (typeof location === 'string') return location;
-    if (location.address) return location.address;
-    return null;
-  };
-
-  const getWhatsapp = (acc) => acc.whatsapp || acc.contact?.whatsapp || null;
-  const getEmail = (acc) => acc.email || acc.contact?.email || null;
+  const filtered = useMemo(
+    () => items.filter((a) => (!type || a.type === type) && (!minStars || (a.stars || 0) >= minStars)),
+    [items, type, minStars]
+  );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8" style={{ backgroundColor: '#fbeec1', minHeight: '100vh' }}>
-      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>
-        Accommodations
-      </h1>
-      <p className="text-center mb-6" style={{ color: '#1e7575' }}>
-        Find the perfect place to stay in Watamu.
-      </p>
+    <>
+      <Seo title="Where to stay in Watamu" description="Hotels, beach villas and Airbnbs in Watamu, Kenya. Add a stay to your trip and our local team includes it in your quote." />
+      <PageHero eyebrow="Stays" title="Where to stay in Watamu" lede="Beach hotels, private villas and homes by the creek. Add one to your trip and we’ll include it in your quote." />
 
-      <AccommodationTypeTabs selectedType={type} onSelect={setType} />
-      <StarRatingTabs selectedStar={star} onSelect={setStar} />
-
-      {loading ? (
-        <LoadingSpinner loading={true} />
-      ) : error ? (
-        <div className="text-center py-16">
-          <p className="text-5xl mb-4">⚠️</p>
-          <p className="text-gray-600">{error}</p>
+      <Container size="wide" className="py-10 lg:py-14">
+        <div className="mb-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Type of stay">
+            {TYPES.map((t) => (
+              <Chip key={t.id || 'all'} selected={type === t.id} onClick={() => setType(t.id)}>
+                {t.label}
+              </Chip>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Star rating">
+            {RATINGS.map((r) => (
+              <Chip key={r.id} selected={minStars === r.id} onClick={() => setMinStars(r.id)}>
+                {r.label}
+              </Chip>
+            ))}
+          </div>
         </div>
-      ) : filtered.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          {filtered.map((acc) => {
-            const locationText = getLocationText(acc.location);
-            const whatsapp = getWhatsapp(acc);
-            const email = getEmail(acc);
 
-            return (
-              <div key={acc._id || acc.id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <ImageGallery images={acc.images} alt={acc.name} />
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <h3 className="text-xl font-bold" style={{ color: '#24b3b3' }}>{acc.name}</h3>
-                    {acc.stars > 0 && (
-                      <span className="text-sm shrink-0 ml-2" style={{ color: '#ffb347' }}>
-                        {'★'.repeat(acc.stars)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-gray-600 text-sm mt-1 line-clamp-3">{acc.description}</p>
-                  {locationText && (
-                    <p className="text-gray-500 text-xs mt-2">📍 {locationText}</p>
+        {error ? (
+          <ErrorState what="stays" onRetry={retry} />
+        ) : loading ? (
+          <GridSkeleton />
+        ) : filtered.length === 0 ? (
+          <EmptyState title="No stays match those filters" text="Try another type or rating — or tell us what you’re looking for and we’ll find it.">
+            <Button variant="outline" onClick={() => { setType(''); setMinStars(0); }}>Show all stays</Button>
+            <Button href="mailto:hello@exploringwatamu.com?subject=Help%20me%20find%20a%20stay">Ask our team</Button>
+          </EmptyState>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((a, i) => {
+              const loc = locationText(a.location);
+              const whatsapp = a.whatsapp || a.contact?.whatsapp;
+              const email = a.email || a.contact?.email;
+              return (
+                <ListingCard
+                  key={a._id}
+                  images={a.images}
+                  art={ART_CYCLE[i % ART_CYCLE.length]}
+                  title={a.name}
+                  badge={a.type ? <Badge tone="glass" className="capitalize">{a.type}</Badge> : null}
+                  meta={[
+                    a.stars > 0 && { icon: Star, text: `${a.stars}-star` },
+                    loc && { icon: MapPin, text: loc },
+                  ]}
+                  description={a.description}
+                  chips={a.facilities || []}
+                  price={a.pricePerNight != null ? { amount: a.pricePerNight, unit: 'per night' } : null}
+                  actions={<AddToTripButton snapshot={snapshotFor('stay', a)} label="Add stay" />}
+                >
+                  {a.roomTypes?.length > 0 && (
+                    <p className="mt-3 text-xs text-ocean-900/60">
+                      Rooms: {a.roomTypes.slice(0, 3).map((r) => r.name + (r.price ? ` (KES ${Number(r.price).toLocaleString('en-KE')})` : '')).join(' · ')}
+                    </p>
                   )}
-                  {acc.location?.mapUrl && (
-                    <a
-                      href={acc.location.mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline mt-0.5 inline-block"
-                      style={{ color: '#24b3b3' }}
-                    >
-                      View on map ↗
+                  {a.location?.mapUrl && (
+                    <a href={a.location.mapUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lagoon-700 hover:underline">
+                      View on map <ExternalLink className="size-3" />
                     </a>
                   )}
-                  {acc.pricePerNight != null && (
-                    <p className="font-bold text-lg mt-2" style={{ color: '#ffb347' }}>
-                      KES {Number(acc.pricePerNight).toLocaleString()} <span className="text-xs font-normal text-gray-400">/ night</span>
-                    </p>
-                  )}
-                  {/* Facilities */}
-                  {acc.facilities && acc.facilities.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {acc.facilities.slice(0, 5).map((f, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{f}</span>
-                      ))}
-                      {acc.facilities.length > 5 && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">+{acc.facilities.length - 5}</span>
-                      )}
-                    </div>
-                  )}
-                  {/* Room Types summary */}
-                  {acc.roomTypes && acc.roomTypes.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-400 mb-1">Room types:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {acc.roomTypes.slice(0, 3).map((rt, i) => (
-                          <span key={i} className="text-xs px-2 py-0.5 rounded-full border" style={{ borderColor: '#24b3b3', color: '#24b3b3' }}>
-                            {rt.name}{rt.price ? ` · KES ${Number(rt.price).toLocaleString()}` : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* House rules */}
-                  {acc.houseRules && acc.houseRules.length > 0 && (
-                    <p className="text-gray-400 text-xs mt-2">
-                      📋 {acc.houseRules.length} house rule{acc.houseRules.length > 1 ? 's' : ''}
-                    </p>
-                  )}
-                  {(whatsapp || email) && (
-                    <BookingButtons whatsapp={whatsapp} email={email} />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <p className="text-5xl mb-4">🏨</p>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No accommodations found</h2>
-          <p className="text-gray-500">Try adjusting your filters to see more results.</p>
-        </div>
-      )}
-    </div>
+                  <ContactLinks whatsapp={whatsapp} email={email} subject={`Enquiry: ${a.name}`} />
+                </ListingCard>
+              );
+            })}
+          </div>
+        )}
+      </Container>
+    </>
   );
 }

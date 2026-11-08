@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import * as Dialog from '@radix-ui/react-dialog';
+import { ArrowLeft, CalendarDays, MapPin, Users, Check, X, ShieldCheck, Clock, Share2 } from 'lucide-react';
 import { API_URL } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import TravelVibeSelector from '../components/TravelVibeSelector.jsx';
 import ParticipantCarousel from '../components/ParticipantCarousel.jsx';
 import ECardPreview from '../components/ECardPreview.jsx';
 import ReferralCard from '../components/ReferralCard.jsx';
+import Seo from '@/components/seo/Seo';
+import AddToTripButton from '@/components/trip/AddToTripButton';
+import { Container, Badge } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/button';
+import { VibeArt } from '@/components/experience/ExperienceCard';
+import { normaliseGroupTrip } from '@/lib/catalog';
+import { absoluteUrl } from '@/lib/site';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -123,19 +132,21 @@ export default function GroupTripDetail() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-24">
-        <span className="loading loading-spinner loading-lg" style={{ color: '#24b3b3' }}></span>
-      </div>
+      <Container size="wide" className="py-16" role="status" aria-label="Loading">
+        <div className="aspect-[21/9] w-full animate-pulse rounded-[var(--radius-card)] bg-sand-100" />
+        <div className="mt-8 h-10 w-2/3 animate-pulse rounded bg-sand-100" />
+      </Container>
     );
   }
 
   if (error || !trip) {
     return (
-      <div className="text-center py-24 px-4">
-        <p className="text-2xl mb-3">😕</p>
-        <p className="text-gray-600">{error || 'Trip not found.'}</p>
-        <Link to="/group-trips" className="mt-4 inline-block text-sm font-medium" style={{ color: '#24b3b3' }}>← Back to Trips</Link>
-      </div>
+      <Container size="narrow" className="py-24 text-center">
+        <Seo title="Group trip not found" noindex />
+        <p className="font-display text-3xl text-ocean-900">This trip isn’t available</p>
+        <p className="mt-3 text-ocean-900/60">{error || 'It may be fully booked or finished.'}</p>
+        <Button to="/group-trips" className="mt-8">See upcoming group trips</Button>
+      </Container>
     );
   }
 
@@ -143,258 +154,232 @@ export default function GroupTripDetail() {
   const isFull = trip.status === 'full' || slotsLeft <= 0;
   const isClosed = trip.status === 'closed';
   const slotPercent = Math.min(100, Math.round((trip.confirmedParticipants / trip.maxParticipants) * 100));
+  const exp = normaliseGroupTrip(trip);
+  const kes = (n) => `KES ${Number(n || 0).toLocaleString('en-KE')}`;
+  const inputCls = 'h-12 w-full rounded-xl border border-sand-300 bg-white px-4 text-ocean-900';
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: '#fbeec1' }}>
-      {/* Hero */}
-      <div className="relative w-full h-72 sm:h-96 overflow-hidden">
-        {trip.heroImage ? (
-          <img src={trip.heroImage} alt={trip.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#24b3b3' }}>
-            <span className="text-7xl">🏖️</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-          <h1 className="text-white text-3xl sm:text-4xl font-bold mb-1">{trip.title}</h1>
-          <p className="text-white/80 text-sm sm:text-base">
-            📅 {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
-            {trip.meetingPoint && <span className="ml-4">📍 {trip.meetingPoint}</span>}
-          </p>
+  const share = async () => {
+    const url = absoluteUrl(`/group-trips/${trip.slug}`);
+    try {
+      if (navigator.share) await navigator.share({ title: trip.title, text: trip.shortDescription, url });
+      else await navigator.clipboard.writeText(url);
+    } catch { /* cancelled */ }
+  };
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TouristTrip',
+    name: trip.title,
+    description: trip.shortDescription,
+    image: trip.heroImage || undefined,
+    url: absoluteUrl(`/group-trips/${trip.slug}`),
+    touristType: 'Group travellers',
+    itinerary: (trip.itinerary || []).map((d) => ({ '@type': 'TouristAttraction', name: `Day ${d.day}: ${d.title}` })),
+    offers: { '@type': 'Offer', price: trip.fullPrice, priceCurrency: 'KES', availability: isFull || isClosed ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', validFrom: trip.createdAt },
+    provider: { '@type': 'TravelAgency', name: 'Exploring Watamu' },
+  };
+
+  const PriceBox = (
+    <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-6 shadow-soft">
+      <p className="text-sm text-ocean-900/60">Full price per person</p>
+      <p className="font-display text-4xl text-ocean-900">{kes(trip.fullPrice)}</p>
+      <p className="mt-1 text-sm text-ocean-900/60">or a {kes(trip.depositAmount)} deposit to secure your spot</p>
+
+      <div className="mt-5">
+        <div className="flex justify-between text-sm">
+          <span className="font-semibold text-ocean-900">{trip.confirmedParticipants} of {trip.maxParticipants} going</span>
+          <span className={`font-semibold ${slotsLeft <= 3 ? 'text-coral-600' : 'text-lagoon-700'}`}>{isFull ? 'Full' : `${slotsLeft} spot${slotsLeft === 1 ? '' : 's'} left`}</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-sand-200" aria-hidden="true">
+          <div className={`h-full rounded-full ${slotsLeft <= 3 ? 'bg-coral-500' : 'bg-lagoon-500'}`} style={{ width: `${slotPercent}%` }} />
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Countdown */}
+      {isClosed || isFull ? (
+        <Button size="lg" className="mt-6 w-full" disabled>{isClosed ? 'Trip closed' : 'Fully booked'}</Button>
+      ) : (
+        <Button size="lg" className="mt-6 w-full" onClick={() => { setModalStep('form'); setModalError(''); setModalOpen(true); }}>
+          Request to join
+        </Button>
+      )}
+      {!isClosed && !isFull && (
+        <AddToTripButton item={exp} size="md" full className="mt-3" label="Add to my trip plan" />
+      )}
+      <ul className="mt-5 space-y-2 text-sm text-ocean-900/65">
+        <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-lagoon-600" /> Reserve now, pay after we confirm</li>
+        <li className="flex gap-2"><Users className="size-4 shrink-0 text-lagoon-600" /> Small group, local hosts</li>
+        {trip.balanceDueDate && <li className="flex gap-2"><Clock className="size-4 shrink-0 text-lagoon-600" /> Balance due by {formatDate(trip.balanceDueDate)}</li>}
+      </ul>
+      <button type="button" onClick={share} className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-ocean-900/60 hover:text-ocean-900">
+        <Share2 className="size-4" /> Share with friends
+      </button>
+    </div>
+  );
+
+  return (
+    <>
+      <Seo title={trip.title} description={trip.shortDescription} image={trip.heroImage} type="article" jsonLd={jsonLd} />
+
+      {/* Hero */}
+      <section className="relative">
+        <div className={`relative w-full overflow-hidden bg-ocean-900 ${trip.heroImage ? 'h-[52vh] min-h-80' : 'h-[34vh] min-h-72'}`}>
+          {trip.heroImage ? (
+            <img src={trip.heroImage} alt="" className="size-full object-cover" />
+          ) : (
+            <VibeArt vibe={exp.vibes[0]} className="size-full" label={trip.title} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-ocean-950/85 via-ocean-950/30 to-transparent" />
+        </div>
+        <Container size="wide" className="absolute inset-x-0 bottom-0 pb-10 text-sand-50">
+          <Link to="/group-trips" className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-sand-50/80 hover:text-sand-50">
+            <ArrowLeft className="size-4" /> All group trips
+          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="glass"><Users /> Group trip</Badge>
+            {isFull && <Badge tone="sand">Fully booked</Badge>}
+          </div>
+          <h1 className="mt-3 max-w-4xl font-display text-4xl leading-[1.05] sm:text-6xl">{trip.title}</h1>
+          <p className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sand-50/85">
+            <span className="inline-flex items-center gap-2"><CalendarDays className="size-5" /> {formatDate(trip.startDate)} – {formatDate(trip.endDate)}</span>
+            {trip.meetingPoint && <span className="inline-flex items-center gap-2"><MapPin className="size-5" /> {trip.meetingPoint}</span>}
+          </p>
+        </Container>
+      </section>
+
+      <Container size="wide" className="grid gap-10 py-12 lg:grid-cols-[1fr_22rem] lg:gap-14">
+        <div className="min-w-0 space-y-12">
           {!isFull && !isClosed && countdown.days !== undefined && (
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <p className="text-sm font-semibold text-gray-500 mb-3 text-center">⏰ Trip starts in</p>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                {[['days', countdown.days], ['hours', countdown.hours], ['minutes', countdown.minutes], ['seconds', countdown.seconds]].map(([label, val]) => (
-                  <div key={label}>
-                    <div className="text-3xl font-bold" style={{ color: '#24b3b3' }}>{String(val ?? 0).padStart(2, '0')}</div>
-                    <div className="text-xs text-gray-500 uppercase">{label}</div>
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-4 gap-3 rounded-[var(--radius-card)] bg-ocean-900 p-5 text-center text-sand-50" aria-label="Time until the trip starts">
+              {[['days', countdown.days], ['hours', countdown.hours], ['mins', countdown.minutes], ['secs', countdown.seconds]].map(([label, val]) => (
+                <div key={label}>
+                  <div className="font-display text-4xl tabular-nums">{String(val ?? 0).padStart(2, '0')}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-sand-50/60">{label}</div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Slots progress */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <div className="flex justify-between text-sm font-medium mb-2">
-              <span style={{ color: '#1e7575' }}>{trip.confirmedParticipants} of {trip.maxParticipants} spots filled</span>
-              <span className={`font-bold ${slotsLeft < 3 ? 'text-red-500' : 'text-green-600'}`}>{isFull ? 'FULL' : `${slotsLeft} left`}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full transition-all duration-500"
-                style={{ width: `${slotPercent}%`, backgroundColor: slotsLeft < 3 ? '#ef4444' : '#24b3b3' }}
-              />
-            </div>
-          </div>
+          <div className="lg:hidden">{PriceBox}</div>
 
-          {/* Who is In Carousel */}
+          <section>
+            <p className="eyebrow">The trip</p>
+            <p className="mt-3 font-display text-2xl leading-snug text-ocean-900">{trip.shortDescription}</p>
+            {trip.fullDescription && <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-ocean-900/75">{trip.fullDescription}</p>}
+          </section>
+
           <ParticipantCarousel tripId={trip._id} />
 
-          {/* Description */}
-          {trip.fullDescription && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-3" style={{ color: '#1e7575' }}>About This Trip</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{trip.fullDescription}</p>
-            </div>
-          )}
-
-          {/* Itinerary */}
-          {trip.itinerary && trip.itinerary.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-4" style={{ color: '#1e7575' }}>Itinerary</h2>
-              <div className="space-y-4">
+          {trip.itinerary?.length > 0 && (
+            <section>
+              <h2 className="font-display text-3xl text-ocean-900">Day by day</h2>
+              <ol className="mt-6 space-y-0">
                 {trip.itinerary.map((day, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm shrink-0" style={{ backgroundColor: '#24b3b3' }}>
-                        {day.day}
-                      </div>
-                      {i < trip.itinerary.length - 1 && <div className="w-px flex-1 bg-gray-200 my-1" />}
-                    </div>
-                    <div className="pb-4">
-                      <p className="font-semibold text-gray-800">{day.title}</p>
-                      {day.activities && day.activities.length > 0 && (
-                        <ul className="mt-1 space-y-0.5">
-                          {day.activities.map((act, j) => (
-                            <li key={j} className="text-sm text-gray-500 flex items-start gap-1.5">
-                              <span className="mt-0.5 shrink-0">•</span> {act}
-                            </li>
-                          ))}
+                  <li key={i} className="relative flex gap-5 pb-8 last:pb-0">
+                    {i < trip.itinerary.length - 1 && <span className="absolute left-5 top-11 h-[calc(100%-2.75rem)] w-px bg-sand-300" aria-hidden="true" />}
+                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-ocean-900 font-display text-lg text-sand-50">{day.day}</span>
+                    <div className="pt-1.5">
+                      <p className="font-display text-xl text-ocean-900">{day.title}</p>
+                      {day.activities?.length > 0 && (
+                        <ul className="mt-2 space-y-1 text-ocean-900/70">
+                          {day.activities.map((a, j) => <li key={j}>{a}</li>)}
                         </ul>
                       )}
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ol>
+            </section>
           )}
 
-          {/* Includes / Excludes */}
-          {((trip.includes && trip.includes.length > 0) || (trip.excludes && trip.excludes.length > 0)) && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {trip.includes && trip.includes.length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-green-700 mb-3">✅ Included</h3>
-                    <ul className="space-y-1.5">
-                      {trip.includes.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                          <span className="text-green-500 mt-0.5 shrink-0">✓</span> {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {trip.excludes && trip.excludes.length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-red-600 mb-3">❌ Not Included</h3>
-                    <ul className="space-y-1.5">
-                      {trip.excludes.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                          <span className="text-red-400 mt-0.5 shrink-0">✗</span> {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
+          {(trip.includes?.length > 0 || trip.excludes?.length > 0) && (
+            <section className="grid gap-6 sm:grid-cols-2">
+              {trip.includes?.length > 0 && (
+                <div className="rounded-[var(--radius-card)] bg-mangrove-50 p-6">
+                  <h3 className="font-display text-xl text-ocean-900">Included</h3>
+                  <ul className="mt-3 space-y-2">
+                    {trip.includes.map((x, i) => <li key={i} className="flex gap-2 text-ocean-900/80"><Check className="mt-0.5 size-4 shrink-0 text-mangrove-700" /> {x}</li>)}
+                  </ul>
+                </div>
+              )}
+              {trip.excludes?.length > 0 && (
+                <div className="rounded-[var(--radius-card)] bg-sand-100 p-6">
+                  <h3 className="font-display text-xl text-ocean-900">Not included</h3>
+                  <ul className="mt-3 space-y-2">
+                    {trip.excludes.map((x, i) => <li key={i} className="flex gap-2 text-ocean-900/70"><X className="mt-0.5 size-4 shrink-0 text-coral-500" /> {x}</li>)}
+                  </ul>
+                </div>
+              )}
+            </section>
           )}
 
-          {/* Gallery */}
-          {trip.gallery && trip.gallery.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-4" style={{ color: '#1e7575' }}>Gallery</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {trip.gallery?.length > 0 && (
+            <section>
+              <h2 className="font-display text-3xl text-ocean-900">Gallery</h2>
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {trip.gallery.map((img, i) => (
-                  <img key={i} src={img} alt={`Gallery ${i + 1}`} className="rounded-xl h-36 w-full object-cover" />
+                  <img key={i} src={img} alt={`${trip.title} — photo ${i + 1}`} loading="lazy" className="aspect-[4/3] w-full rounded-2xl object-cover" />
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </div>
 
-        {/* Sticky pricing box */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-md p-6 lg:sticky lg:top-20 space-y-4">
-            {/* Referral Card */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-28 space-y-4">
+            {PriceBox}
             {user && <ReferralCard />}
-
-            {/* Pricing */}
-            <div className="border-t pt-4">
-              <div className="mb-4">
-                <p className="text-xs text-gray-400 mb-0.5">Full Price</p>
-                <p className="text-2xl font-bold" style={{ color: '#1e7575' }}>KES {trip.fullPrice?.toLocaleString()}</p>
-                <p className="text-xs text-gray-400 mt-2 mb-0.5">Deposit to secure your spot</p>
-                <p className="text-xl font-bold" style={{ color: '#ffb347' }}>KES {trip.depositAmount?.toLocaleString()}</p>
-              </div>
-
-              {isClosed ? (
-                <button disabled className="w-full py-3 rounded-xl font-bold text-white bg-gray-400 cursor-not-allowed">Trip Closed</button>
-              ) : isFull ? (
-                <button disabled className="w-full py-3 rounded-xl font-bold text-white bg-gray-400 cursor-not-allowed">Trip Full</button>
-              ) : (
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="w-full py-3 rounded-xl font-bold text-white text-lg transition-opacity hover:opacity-90 active:scale-95"
-                  style={{ backgroundColor: '#ffb347' }}
-                >
-                  Request to Join 🚀
-                </button>
-              )}
-
-              <div className="mt-5 pt-5 border-t border-gray-100 space-y-2 text-sm text-gray-500">
-                <p>📝 Reserve now, pay after we confirm</p>
-                <p>✅ Verified Experience</p>
-                <p>👥 Group Adventure</p>
-              </div>
-
-              {trip.balanceDueDate && (
-                <p className="mt-4 text-xs text-gray-400">Balance due by {formatDate(trip.balanceDueDate)}</p>
-              )}
-            </div>
           </div>
-        </div>
-      </div>
+        </aside>
+      </Container>
 
-      {/* Join Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
+      {/* Join flow (unchanged logic, new look) */}
+      <Dialog.Root open={modalOpen} onOpenChange={setModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-ocean-950/50 backdrop-blur-[2px]" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[1.5rem] bg-sand-50 p-6 shadow-lift focus:outline-none sm:p-8">
+            <Dialog.Description className="sr-only">Request a spot on {trip.title}</Dialog.Description>
             {modalStep === 'form' && (
               <>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Request to Join</h2>
-                  <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+                <div className="mb-6 flex items-center justify-between">
+                  <Dialog.Title className="font-display text-2xl text-ocean-900">Request to join</Dialog.Title>
+                  <Dialog.Close aria-label="Close" className="rounded-full p-2 text-ocean-900/60 hover:bg-ocean-900/5"><X className="size-5" /></Dialog.Close>
                 </div>
-
                 {!user ? (
-                  <div className="text-center py-6">
-                    <p className="text-gray-600 mb-4">You need to be signed in to book a trip.</p>
-                    <div className="flex gap-3 justify-center">
-                      <Link to="/login" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-lg font-semibold text-white text-sm" style={{ backgroundColor: '#24b3b3' }}>Sign In</Link>
-                      <Link to="/register" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-lg font-semibold border text-sm" style={{ borderColor: '#24b3b3', color: '#24b3b3' }}>Create Account</Link>
+                  <div className="py-4 text-center">
+                    <p className="text-ocean-900/70">Sign in so we can keep your spot and show who’s going.</p>
+                    <div className="mt-6 flex justify-center gap-3">
+                      <Button to="/login" onClick={() => setModalOpen(false)}>Sign in</Button>
+                      <Button to="/register" variant="outline" onClick={() => setModalOpen(false)}>Create account</Button>
                     </div>
                   </div>
                 ) : (
                   <form onSubmit={(e) => { e.preventDefault(); setModalStep('vibe'); }} className="space-y-4">
-                    {modalError && (
-                      <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{modalError}</div>
-                    )}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                      <input type="text" name="fullName" value={formData.fullName} onChange={handleFormChange} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleFormChange} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone (WhatsApp / M-Pesa)</label>
-                      <input type="tel" name="phone" value={formData.phone} onChange={handleFormChange} required placeholder="07XXXXXXXX" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">How you'll pay (after we confirm your spot)</label>
+                    {modalError && <p className="rounded-xl bg-coral-50 p-3 text-sm font-semibold text-coral-700">{modalError}</p>}
+                    <label className="block"><span className="mb-1.5 block text-sm font-semibold">Full name</span><input name="fullName" value={formData.fullName} onChange={handleFormChange} required className={inputCls} autoComplete="name" /></label>
+                    <label className="block"><span className="mb-1.5 block text-sm font-semibold">Email</span><input type="email" name="email" value={formData.email} onChange={handleFormChange} required className={inputCls} autoComplete="email" /></label>
+                    <label className="block"><span className="mb-1.5 block text-sm font-semibold">Phone / WhatsApp</span><input type="tel" name="phone" value={formData.phone} onChange={handleFormChange} required placeholder="+254 7XX XXX XXX" className={inputCls} autoComplete="tel" /></label>
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-semibold">How you’ll pay (after we confirm your spot)</legend>
                       <div className="space-y-2">
-                        <label className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50" style={{ borderColor: formData.paymentType === 'deposit' ? '#ffb347' : '#e5e7eb' }}>
-                          <input type="radio" name="paymentType" value="deposit" checked={formData.paymentType === 'deposit'} onChange={handleFormChange} className="radio radio-sm" />
-                          <div>
-                            <p className="font-medium text-sm">Deposit</p>
-                            <p className="text-xs text-gray-500">KES {trip.depositAmount?.toLocaleString()} to secure your spot</p>
-                          </div>
-                        </label>
-                        <label className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50" style={{ borderColor: formData.paymentType === 'full' ? '#ffb347' : '#e5e7eb' }}>
-                          <input type="radio" name="paymentType" value="full" checked={formData.paymentType === 'full'} onChange={handleFormChange} className="radio radio-sm" />
-                          <div>
-                            <p className="font-medium text-sm">Full Amount</p>
-                            <p className="text-xs text-gray-500">KES {trip.fullPrice?.toLocaleString()}</p>
-                          </div>
-                        </label>
+                        {[['deposit', 'Deposit', `${kes(trip.depositAmount)} to secure your spot`], ['full', 'Full amount', kes(trip.fullPrice)]].map(([val, label, sub]) => (
+                          <label key={val} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-4 ${formData.paymentType === val ? 'border-coral-400 bg-white shadow-soft' : 'border-sand-300'}`}>
+                            <input type="radio" name="paymentType" value={val} checked={formData.paymentType === val} onChange={handleFormChange} className="accent-coral-500" />
+                            <span><span className="block font-semibold text-ocean-900">{label}</span><span className="text-sm text-ocean-900/60">{sub}</span></span>
+                          </label>
+                        ))}
                       </div>
-                    </div>
-                    <button type="submit" className="w-full py-3 rounded-xl font-bold text-white text-lg" style={{ backgroundColor: '#ffb347' }}>
-                      Next: Tell Us Your Vibe →
-                    </button>
+                    </fieldset>
+                    <Button type="submit" size="lg" className="w-full">Next: your vibe</Button>
                   </form>
                 )}
               </>
             )}
 
-            {/* Travel Vibe Selector */}
             {modalStep === 'vibe' && (
               <div>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Tell Us Your Vibe</h2>
-                  <button onClick={() => setModalStep('form')} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">←</button>
+                <div className="mb-6 flex items-center justify-between">
+                  <Dialog.Title className="font-display text-2xl text-ocean-900">Tell us your vibe</Dialog.Title>
+                  <button type="button" onClick={() => setModalStep('form')} className="rounded-full p-2 text-ocean-900/60 hover:bg-ocean-900/5" aria-label="Back"><ArrowLeft className="size-5" /></button>
                 </div>
                 <TravelVibeSelector onComplete={handleVibeComplete} />
               </div>
@@ -402,85 +387,54 @@ export default function GroupTripDetail() {
 
             {modalStep === 'review' && (
               <form onSubmit={handleSubmitRequest} className="space-y-4">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold" style={{ color: '#1e7575' }}>Review &amp; Submit</h2>
-                  <button onClick={() => setModalStep('vibe')} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">←</button>
+                <div className="mb-2 flex items-center justify-between">
+                  <Dialog.Title className="font-display text-2xl text-ocean-900">Review &amp; send</Dialog.Title>
+                  <button type="button" onClick={() => setModalStep('vibe')} className="rounded-full p-2 text-ocean-900/60 hover:bg-ocean-900/5" aria-label="Back"><ArrowLeft className="size-5" /></button>
                 </div>
-
-                {modalError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{modalError}</div>
-                )}
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                  <p className="font-semibold mb-2">✓ Your Vibe Profile:</p>
-                  <p className="mb-1"><strong>Personalities:</strong> {formData.travelPersonalities.join(', ')}</p>
-                  <p><strong>Traveling as:</strong> {formData.travelGroup}</p>
+                {modalError && <p className="rounded-xl bg-coral-50 p-3 text-sm font-semibold text-coral-700">{modalError}</p>}
+                <div className="rounded-2xl bg-lagoon-50 p-4 text-sm text-ocean-900">
+                  <p className="font-semibold">Your vibe</p>
+                  <p className="mt-1">{formData.travelPersonalities.join(' · ')}</p>
+                  <p className="text-ocean-900/65">Travelling as: {formData.travelGroup}</p>
                 </div>
-
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
-                  <div className="flex justify-between"><span>Payment option</span><span className="font-medium capitalize">{formData.paymentType}</span></div>
-                  <div className="flex justify-between mt-1"><span>Amount on confirmation</span><span className="font-semibold">KES {amountNow?.toLocaleString()}</span></div>
+                <div className="rounded-2xl bg-white p-4 text-sm">
+                  <div className="flex justify-between"><span>Payment option</span><span className="font-semibold capitalize">{formData.paymentType}</span></div>
+                  <div className="mt-1 flex justify-between"><span>Due once confirmed</span><span className="font-semibold">{kes(amountNow)}</span></div>
                 </div>
-
-                <p className="text-xs text-gray-500">
-                  This sends a booking request. We'll email you a quotation and confirm your spot shortly —
-                  no payment is taken now.
-                </p>
-
-                <button type="submit" className="w-full py-3 rounded-xl font-bold text-white text-lg" style={{ backgroundColor: '#ffb347' }}>
-                  Submit Booking Request
-                </button>
+                <p className="text-xs text-ocean-900/60">This sends a request. We’ll email your quotation and confirm your spot — no payment is taken now.</p>
+                <Button type="submit" size="lg" className="w-full">Send my request</Button>
               </form>
             )}
 
             {modalStep === 'submitting' && (
-              <div className="text-center py-10">
-                <div className="text-5xl mb-4">📨</div>
-                <h2 className="text-xl font-bold mb-2" style={{ color: '#1e7575' }}>Sending your request…</h2>
-                <div className="flex justify-center mt-3">
-                  <span className="loading loading-spinner loading-md" style={{ color: '#24b3b3' }}></span>
-                </div>
+              <div className="py-12 text-center" role="status">
+                <span className="mx-auto block size-8 animate-spin rounded-full border-2 border-sand-300 border-t-coral-500" />
+                <Dialog.Title className="mt-4 font-display text-2xl text-ocean-900">Sending your request…</Dialog.Title>
               </div>
             )}
 
             {modalStep === 'success' && bookingData && (
-              <div className="text-center py-6 space-y-6">
-                <div className="text-5xl mb-4">🎉</div>
-                <div>
-                  <h2 className="text-xl font-bold mb-2 text-green-700">Request received!</h2>
-                  <p className="text-gray-600 text-sm">
-                    Your spot is <strong>pending confirmation</strong>. We've emailed a quotation to
-                    {' '}<strong>{bookingData.email}</strong> and will confirm shortly.
-                  </p>
-                </div>
-
-                {/* E-Card Preview */}
+              <div className="space-y-6 text-center">
+                <Dialog.Title className="font-display text-3xl text-ocean-900">You’re on the list!</Dialog.Title>
+                <p className="text-ocean-900/70">Your spot is <strong>pending confirmation</strong>. We’ve emailed a quotation to <strong>{bookingData.email}</strong>.</p>
                 <ECardPreview booking={bookingData} trip={trip} user={user} />
-
-                <button
-                  onClick={() => { setModalOpen(false); navigate('/my-trips'); }}
-                  className="w-full px-6 py-3 rounded-xl font-bold text-white"
-                  style={{ backgroundColor: '#24b3b3' }}
-                >
-                  View My Trips
-                </button>
+                <Button size="lg" className="w-full" onClick={() => { setModalOpen(false); navigate('/my-trips'); }}>See my bookings</Button>
               </div>
             )}
 
             {modalStep === 'error' && (
-              <div className="text-center py-10">
-                <div className="text-5xl mb-4">❌</div>
-                <h2 className="text-xl font-bold mb-2 text-red-600">Something went wrong</h2>
-                <p className="text-gray-600 text-sm mb-6">{modalError || 'Please try again.'}</p>
-                <div className="flex gap-3 justify-center">
-                  <button onClick={() => { setModalStep('review'); setModalError(''); }} className="px-5 py-2.5 rounded-lg font-semibold text-white" style={{ backgroundColor: '#24b3b3' }}>Try Again</button>
-                  <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-lg font-semibold border border-gray-300 text-gray-600">Close</button>
+              <div className="py-8 text-center">
+                <Dialog.Title className="font-display text-2xl text-ocean-900">Something went wrong</Dialog.Title>
+                <p className="mt-2 text-ocean-900/65">{modalError || 'Please try again.'}</p>
+                <div className="mt-6 flex justify-center gap-3">
+                  <Button onClick={() => { setModalStep('review'); setModalError(''); }}>Try again</Button>
+                  <Button variant="outline" onClick={() => setModalOpen(false)}>Close</Button>
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-    </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
   );
 }

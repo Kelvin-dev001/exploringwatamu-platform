@@ -80,7 +80,7 @@ export default function ECardPreview({ booking, trip, user }) {
         ref={eCardRef}
         className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden shadow-lg"
         style={{
-          background: 'linear-gradient(135deg, #24b3b3 0%, #46c3d6 40%, #fbeec1 100%)',
+          background: 'linear-gradient(135deg, #02a8ab 0%, #1db6b9 40%, #f9e9c4 100%)',
           aspectRatio: '1/1',
           padding: '24px',
           display: 'flex',
@@ -130,7 +130,7 @@ export default function ECardPreview({ booking, trip, user }) {
           onClick={downloadECard}
           disabled={downloading}
           className="w-full py-2.5 rounded-lg font-semibold text-white text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: '#ffb347' }}
+          style={{ backgroundColor: '#e06c31' }}
         >
           {downloading ? '⏳ Downloading...' : '⬇️ Download for Instagram'}
         </button>
@@ -155,7 +155,7 @@ export default function ECardPreview({ booking, trip, user }) {
         <button
           onClick={copyShareLink}
           className="w-full py-2.5 rounded-lg font-semibold border-2 text-sm transition-colors hover:bg-gray-50"
-          style={{ borderColor: '#24b3b3', color: '#24b3b3' }}
+          style={{ borderColor: '#02a8ab', color: '#02a8ab' }}
         >
           🔗 Copy Referral Link
         </button>

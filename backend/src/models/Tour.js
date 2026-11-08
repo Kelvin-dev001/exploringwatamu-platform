@@ -18,4 +18,7 @@ const TourSchema = new mongoose.Schema({
 // Vendor-ready ownership (null = platform-managed).
 TourSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
 
+// Discovery tags for personalised matching (vibes, suits, energy, durationHours).
+TourSchema.plugin(require('./plugins/discovery'));
+
 module.exports = mongoose.model('Tour', TourSchema);

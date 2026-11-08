@@ -17,7 +17,7 @@ export default function ParticipantCarousel({ tripId }) {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <span className="loading loading-spinner loading-sm" style={{ color: '#24b3b3' }}></span>
+        <span className="loading loading-spinner loading-sm" style={{ color: '#02a8ab' }}></span>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function ParticipantCarousel({ tripId }) {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold" style={{ color: '#1e7575' }}>
+        <h3 className="text-lg font-bold" style={{ color: '#215a75' }}>
           👥 Who's Joining ({participants.length})
         </h3>
         {participants.length > 1 && (
@@ -60,13 +60,13 @@ export default function ParticipantCarousel({ tripId }) {
         {/* Avatar */}
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center text-5xl mb-4 shadow-md"
-          style={{ backgroundColor: '#fbeec1' }}
+          style={{ backgroundColor: '#f9e9c4' }}
         >
           😊
         </div>
 
         {/* Name and vibe */}
-        <h4 className="text-lg font-bold text-center" style={{ color: '#1e7575' }}>
+        <h4 className="text-lg font-bold text-center" style={{ color: '#215a75' }}>
           {participant.user?.name || 'Explorer'}
         </h4>
         <p className="text-sm text-gray-600 text-center mb-2">

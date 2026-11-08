@@ -6,11 +6,11 @@ const config = require('../../config/env');
 // the same. Pass a title (optional) and the inner HTML.
 function wrap(title, bodyHtml) {
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;overflow:hidden;">
-  <div style="background:#0b7285;padding:16px 24px;">
+  <div style="background:#0b2642;padding:16px 24px;">
     <h1 style="margin:0;font-size:20px;color:#ffffff;">${config.brand.name}</h1>
   </div>
   <div style="padding:24px;color:#333333;line-height:1.6;font-size:14px;">
-    ${title ? `<h2 style="color:#1e7575;font-size:18px;margin:0 0 12px;">${title}</h2>` : ''}
+    ${title ? `<h2 style="color:#215a75;font-size:18px;margin:0 0 12px;">${title}</h2>` : ''}
     ${bodyHtml}
   </div>
   <div style="padding:16px 24px;color:#888888;font-size:12px;border-top:1px solid #eeeeee;">

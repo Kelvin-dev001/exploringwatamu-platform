@@ -29,6 +29,9 @@ const groupTripSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Virtual: slotsRemaining
+// Discovery tags for personalised matching (vibes, suits, energy, durationHours).
+groupTripSchema.plugin(require('./plugins/discovery'));
+
 groupTripSchema.virtual('slotsRemaining').get(function () {
   return this.maxParticipants - this.confirmedParticipants;
 });

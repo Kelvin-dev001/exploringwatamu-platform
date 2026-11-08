@@ -1,3 +1,166 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/fraunces/opsz-italic.css";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* ------------------------------------------------------------------
+   ExploringWatamu design tokens — "Warm Swahili-coast editorial", tuned to the badge logo
+   Sand for space, deep ocean for ink, coral for action,
+   mangrove for calm, ochre for sun.
+   ------------------------------------------------------------------ */
+@theme {
+  /* Typography */
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Palette sampled from the ExploringWatamu badge logo:
+     cream sky, deep-navy dhow, steel-teal ring, lagoon turquoise,
+     golden sand and the setting sun. */
+
+  /* Sand — the badge's cream sky and golden beach */
+  --color-sand-50: #fffbf2;
+  --color-sand-100: #fcf3dc;
+  --color-sand-200: #f9e9c4;
+  --color-sand-300: #f0d8a6;
+  --color-sand-400: #e3c283;
+  --color-sand-500: #c9a463;
+
+  /* Ocean — deep-navy dhow and lettering, steel-teal outer ring (#215a75) */
+  --color-ocean-50: #eef4f7;
+  --color-ocean-100: #d6e4ec;
+  --color-ocean-200: #a9c6d4;
+  --color-ocean-300: #6f9fb5;
+  --color-ocean-400: #3f7d97;
+  --color-ocean-500: #2a6884;
+  --color-ocean-600: #215a75;
+  --color-ocean-700: #184560;
+  --color-ocean-800: #10344f;
+  --color-ocean-900: #0b2642;
+  --color-ocean-950: #061a30;
+
+  /* Lagoon — the badge's turquoise ring and shallows (#02a8ab) */
+  --color-lagoon-50: #e8f8f8;
+  --color-lagoon-100: #c4eeee;
+  --color-lagoon-200: #8ddedf;
+  --color-lagoon-300: #4fcacc;
+  --color-lagoon-400: #1db6b9;
+  --color-lagoon-500: #02a8ab;
+  --color-lagoon-600: #028a8e;
+  --color-lagoon-700: #066e72;
+
+  /* Coral — the setting sun (#e06c31): action and highlight */
+  --color-coral-50: #fdf2ea;
+  --color-coral-100: #fbdfcc;
+  --color-coral-200: #f6bd96;
+  --color-coral-300: #ef9764;
+  --color-coral-400: #e87f46;
+  --color-coral-500: #e06c31;
+  --color-coral-600: #c05624;
+  --color-coral-700: #96421d;
+
+  /* Mangrove — nature, calm, success */
+  --color-mangrove-50: #f1f5ee;
+  --color-mangrove-100: #dfe8d9;
+  --color-mangrove-300: #a2b894;
+  --color-mangrove-500: #5d7a4e;
+  --color-mangrove-700: #3c5233;
+
+  /* Ochre — the badge's golden sand (#f8b65c): warmth and ratings */
+  --color-ochre-100: #fdecd0;
+  --color-ochre-300: #fbcd8a;
+  --color-ochre-500: #f8b65c;
+  --color-ochre-700: #a86f1f;
+
+  /* Legacy brand names kept so pages not yet redesigned keep working */
+  --color-primary: #02a8ab;
+  --color-primary-dark: #215a75;
+  --color-secondary: #f8b65c;
+  --color-cream: #f9e9c4;
+  --color-accent: #1db6b9;
+
+  /* Shape and depth */
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --shadow-soft: 0 1px 2px rgb(11 38 66 / 0.04), 0 8px 24px -12px rgb(11 38 66 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(11 38 66 / 0.05), 0 22px 44px -18px rgb(11 38 66 / 0.32);
+
+  /* Motion */
+  --ease-tide: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tailwind v4 changed the default border colour to currentColor;
+   keep the v3 behaviour so older pages don't grow dark borders. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-sand-200, currentColor);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-sand-50 font-sans text-ocean-900;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
+  }
+
+  ::selection {
+    background: var(--color-coral-200);
+    color: var(--color-ocean-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-coral-500);
+    outline-offset: 3px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Editorial eyebrow label above headings */
+  .eyebrow {
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-coral-600;
+  }
+
+  /* Paper grain over sand sections (pure CSS, no image) */
+  .grain {
+    background-image: radial-gradient(rgb(11 38 66 / 0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheet-in-bottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

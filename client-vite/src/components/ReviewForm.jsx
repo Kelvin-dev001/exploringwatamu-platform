@@ -31,7 +31,7 @@ export default function ReviewForm({ onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl p-5 shadow-md my-4">
-      <p className="font-bold mb-2" style={{ color: '#24b3b3' }}>Your Rating:</p>
+      <p className="font-bold mb-2" style={{ color: '#02a8ab' }}>Your Rating:</p>
       <div className="flex gap-1 mb-3">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -39,7 +39,7 @@ export default function ReviewForm({ onSubmit }) {
             type="button"
             onClick={() => setRating(star)}
             className="text-3xl"
-            style={{ color: star <= rating ? '#ffb347' : '#ddd' }}
+            style={{ color: star <= rating ? '#e06c31' : '#ddd' }}
           >
             ★
           </button>
@@ -47,7 +47,7 @@ export default function ReviewForm({ onSubmit }) {
       </div>
       <textarea
         className="w-full border border-gray-300 rounded-lg p-3 text-base min-h-[80px] bg-gray-50 mb-2 focus:outline-none focus:ring-2"
-        style={{ focusRingColor: '#24b3b3' }}
+        style={{ focusRingColor: '#02a8ab' }}
         placeholder="Write your review..."
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -56,7 +56,7 @@ export default function ReviewForm({ onSubmit }) {
       <button
         type="submit"
         className="w-full text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity"
-        style={{ backgroundColor: '#24b3b3' }}
+        style={{ backgroundColor: '#02a8ab' }}
       >
         Submit Review
       </button>

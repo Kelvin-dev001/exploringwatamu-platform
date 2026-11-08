@@ -1,3 +1,4 @@
+const { parseDiscovery } = require('../constants/discovery');
 const GroupTrip = require('../models/GroupTrip');
 
 // Helper to parse JSON strings from FormData
@@ -34,6 +35,7 @@ exports.createGroupTrip = async (req, res) => {
       owner: (req.admin && req.admin.id) || null,
       heroImage,
       gallery: galleryUrls,
+      ...parseDiscovery(req.body),
     };
 
     const trip = new GroupTrip(data);
@@ -69,6 +71,7 @@ exports.updateGroupTrip = async (req, res) => {
       depositAmount: Number(req.body.depositAmount),
       balanceDueDate: req.body.balanceDueDate || undefined,
       status: req.body.status,
+      ...parseDiscovery(req.body),
       gallery: [...existingGallery, ...newGalleryUrls],
     };
 

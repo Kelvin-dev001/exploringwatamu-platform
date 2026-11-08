@@ -3,13 +3,15 @@ import axios from "axios";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../api.js";
+import DiscoveryFields, { EMPTY_DISCOVERY, appendDiscovery, discoveryFrom } from "../../components/DiscoveryFields";
 
 export default function NewTour() {
   const [vehicles, setVehicles] = useState([]);
   const [form, setForm] = useState({
     name: "", description: "", recommendedTimes: "", highlights: [], duration: "",
     whatToCarry: [], vehicles: [], priceResidentAdult: "", priceResidentChild: "",
-    priceForeignerAdult: "", priceForeignerChild: "", active: true
+    priceForeignerAdult: "", priceForeignerChild: "", active: true,
+    ...EMPTY_DISCOVERY
   });
   const [highlightInput, setHighlightInput] = useState("");
   const [carryInput, setCarryInput] = useState("");
@@ -47,6 +49,7 @@ export default function NewTour() {
       data.append("priceForeignerAdult", form.priceForeignerAdult);
       data.append("priceForeignerChild", form.priceForeignerChild);
       data.append("active", form.active);
+      appendDiscovery(data, form);
       galleryFiles.forEach(file => data.append("gallery", file));
 
       await axios.post(API_URL + "/tours", data, {
@@ -102,6 +105,7 @@ export default function NewTour() {
       <label className="flex items-center gap-2 mb-3">
         <input type="checkbox" className="checkbox" checked={form.active} onChange={e => handleChange("active", e.target.checked)} /> Active
       </label>
+      <DiscoveryFields value={form} onChange={handleChange} />
       <button type="submit" className={`btn btn-primary w-full ${loading ? "loading" : ""}`} disabled={loading}>Save</button>
     </form>
   );

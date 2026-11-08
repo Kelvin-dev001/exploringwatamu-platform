@@ -1,95 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_URL } from '../api.js';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import ImageGallery from '../components/ImageGallery.jsx';
+import { CalendarDays, Clock } from 'lucide-react';
+import useListing from '@/components/listing/useListing';
+import PageHero from '@/components/listing/PageHero';
+import ListingCard from '@/components/listing/ListingCard';
+import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
+import AddToTripButton from '@/components/trip/AddToTripButton';
+import Seo from '@/components/seo/Seo';
+import { Container } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/button';
+import { snapshotFor } from '@/lib/trip';
+
+const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
 export default function Services() {
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const fetchServices = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API_URL}/services`);
-        if (Array.isArray(res.data)) {
-          setServices(res.data);
-        } else if (res.data && Array.isArray(res.data.data)) {
-          setServices(res.data.data);
-        } else {
-          setServices([]);
-        }
-      } catch (err) {
-        setError('Failed to load services.');
-      }
-      setLoading(false);
-    };
-    fetchServices();
-  }, []);
-
+  const { items, loading, error, retry } = useListing('/services');
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8" style={{ backgroundColor: '#fbeec1', minHeight: '100vh' }}>
-      <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#24b3b3' }}>
-        Services
-      </h1>
-      <p className="text-center mb-6" style={{ color: '#1e7575' }}>
-        Local services in Watamu.
-      </p>
-
-      {loading ? (
-        <LoadingSpinner loading={true} />
-      ) : error ? (
-        <div className="text-center py-16">
-          <p className="text-5xl mb-4">⚠️</p>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      ) : services.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          {services.map((s) => (
-            <div key={s._id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-              <ImageGallery images={s.gallery} alt={s.name} />
-              <div className="p-5">
-                <h3 className="text-xl font-bold" style={{ color: '#24b3b3' }}>{s.name}</h3>
-                <p className="text-gray-600 text-sm mt-1 line-clamp-3">{s.description}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  {s.price != null && (
-                    <span className="font-bold text-lg" style={{ color: '#ffb347' }}>
-                      KES {Number(s.price).toLocaleString()}
-                    </span>
-                  )}
-                  {s.pricingType && (
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {s.pricingType}
-                    </span>
-                  )}
-                </div>
-                {s.availableDays && s.availableDays.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {s.availableDays.map((day, i) => (
-                      <span key={i} className="text-xs px-2 py-0.5 rounded-full border" style={{ borderColor: '#24b3b3', color: '#24b3b3' }}>
-                        {day}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {s.availableHours && (s.availableHours.start || s.availableHours.end) && (
-                  <p className="text-gray-500 text-xs mt-1">
-                    🕐 {s.availableHours.start} – {s.availableHours.end}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <p className="text-5xl mb-4">⭐</p>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No services available yet</h2>
-          <p className="text-gray-500">Check back soon for local service offerings.</p>
-        </div>
-      )}
-    </div>
+    <>
+      <Seo title="Local services in Watamu" description="Private chefs, guides, massage and more from trusted locals in Watamu. Add them to your trip and get one quote." />
+      <PageHero eyebrow="Local services" title="The little extras" lede="Private chefs, guides, massages and more — from people we know and trust in Watamu." />
+      <Container size="wide" className="py-10 lg:py-14">
+        {error ? (
+          <ErrorState what="services" onRetry={retry} />
+        ) : loading ? (
+          <GridSkeleton />
+        ) : items.length === 0 ? (
+          <EmptyState title="Services are arranged on request" text="Need a chef, a guide or a massage? Tell us and we’ll add it to your quote.">
+            <Button href="mailto:hello@exploringwatamu.com?subject=Service%20request">Ask our team</Button>
+          </EmptyState>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((s, i) => (
+              <ListingCard
+                key={s._id}
+                images={s.gallery}
+                art={ART_CYCLE[i % ART_CYCLE.length]}
+                title={s.name}
+                meta={[
+                  s.availableDays?.length && { icon: CalendarDays, text: s.availableDays.length === 7 ? 'Every day' : s.availableDays.join(', ') },
+                  (s.availableHours?.start || s.availableHours?.end) && { icon: Clock, text: `${s.availableHours.start || ''}–${s.availableHours.end || ''}` },
+                ]}
+                description={s.description}
+                price={s.price != null ? { amount: s.price, unit: s.pricingType || '' } : null}
+                actions={<AddToTripButton snapshot={snapshotFor('service', s)} label="Add" />}
+              />
+            ))}
+          </div>
+        )}
+      </Container>
+    </>
   );
 }

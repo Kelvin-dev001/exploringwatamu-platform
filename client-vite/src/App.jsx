@@ -1,43 +1,65 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
 import Home from './pages/Home.jsx';
-import Hotels from './pages/Hotels.jsx';
-import Tours from './pages/Tours.jsx';
-import Transfers from './pages/Transfers.jsx';
-import Services from './pages/Services.jsx';
-import CarHire from './pages/CarHire.jsx';
-import PropertiesForSale from './pages/PropertiesForSale.jsx';
-import GroupTrips from './pages/GroupTrips.jsx';
-import GroupTripDetail from './pages/GroupTripDetail.jsx';
-import MyTrips from './pages/MyTrips.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import ForgotPassword from './pages/ForgotPassword.jsx';
-import ResetPassword from './pages/ResetPassword.jsx';
+
+// Everything except the homepage loads on demand, so first visits stay fast.
+const Hotels = lazy(() => import('./pages/Hotels.jsx'));
+const Experiences = lazy(() => import('./pages/Experiences.jsx'));
+const ExperienceDetail = lazy(() => import('./pages/ExperienceDetail.jsx'));
+const Transfers = lazy(() => import('./pages/Transfers.jsx'));
+const Services = lazy(() => import('./pages/Services.jsx'));
+const CarHire = lazy(() => import('./pages/CarHire.jsx'));
+const PropertiesForSale = lazy(() => import('./pages/PropertiesForSale.jsx'));
+const GroupTrips = lazy(() => import('./pages/GroupTrips.jsx'));
+const GroupTripDetail = lazy(() => import('./pages/GroupTripDetail.jsx'));
+const MyTrips = lazy(() => import('./pages/MyTrips.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
+const StyleGuide = lazy(() => import('./pages/StyleGuide.jsx'));
+const TripPlanner = lazy(() => import('./pages/TripPlanner.jsx'));
+const TripRequested = lazy(() => import('./pages/TripRequested.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+
+function PageFallback() {
+  return (
+    <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+      <span className="size-8 animate-spin rounded-full border-2 border-sand-300 border-t-coral-500" />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/hotels" element={<Hotels />} />
-          <Route path="/tours" element={<Tours />} />
-          <Route path="/transfers" element={<Transfers />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/carhire" element={<CarHire />} />
-          <Route path="/properties-for-sale" element={<PropertiesForSale />} />
-          <Route path="/group-trips" element={<GroupTrips />} />
-          <Route path="/group-trips/:slug" element={<GroupTripDetail />} />
-          <Route path="/my-trips" element={<MyTrips />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <Layout>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/hotels" element={<Hotels />} />
+            <Route path="/experiences" element={<Experiences />} />
+            <Route path="/experiences/:id" element={<ExperienceDetail />} />
+            {/* Old links keep working */}
+            <Route path="/tours" element={<Navigate to="/experiences" replace />} />
+            <Route path="/transfers" element={<Transfers />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/carhire" element={<CarHire />} />
+            <Route path="/properties-for-sale" element={<PropertiesForSale />} />
+            <Route path="/group-trips" element={<GroupTrips />} />
+            <Route path="/group-trips/:slug" element={<GroupTripDetail />} />
+            <Route path="/trip" element={<TripPlanner />} />
+            <Route path="/trip/sent/:reference" element={<TripRequested />} />
+            <Route path="/my-trips" element={<MyTrips />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/style-guide" element={<StyleGuide />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+    </Layout>
   );
 }
 

@@ -69,7 +69,7 @@ export default function TravelVibeSelector({ onComplete }) {
 
   return (
     <div className="space-y-5">
-      <h3 className="text-lg font-bold" style={{ color: '#1e7575' }}>
+      <h3 className="text-lg font-bold" style={{ color: '#215a75' }}>
         Tell Us About Your Vibe
       </h3>
       <p className="text-sm text-gray-600 mb-4">
@@ -91,7 +91,7 @@ export default function TravelVibeSelector({ onComplete }) {
                   : 'border border-gray-200 hover:border-gray-300'
                 }`}
                 style={{
-                  borderColor: selectedPersonalities.includes(p.label) ? '#24b3b3' : undefined,
+                  borderColor: selectedPersonalities.includes(p.label) ? '#02a8ab' : undefined,
                   backgroundColor: selectedPersonalities.includes(p.label) ? '#e0f7f6' : undefined,
                 }}
               >
@@ -113,7 +113,7 @@ export default function TravelVibeSelector({ onComplete }) {
                 key={g.label}
                 className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:bg-gray-50"
                 style={{
-                  borderColor: selectedGroup === g.label ? '#ffb347' : '#e5e7eb',
+                  borderColor: selectedGroup === g.label ? '#e06c31' : '#e5e7eb',
                   backgroundColor: selectedGroup === g.label ? '#fff8f0' : undefined,
                 }}
               >
@@ -148,7 +148,7 @@ export default function TravelVibeSelector({ onComplete }) {
                   : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: '#fbeec1' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: '#f9e9c4' }}>
                   <span className="text-2xl">😊</span>
                 </div>
               </button>
@@ -173,7 +173,7 @@ export default function TravelVibeSelector({ onComplete }) {
             (step === 'group' && !selectedGroup)
           }
           className="ml-auto px-6 py-2.5 rounded-lg font-semibold text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: '#ffb347' }}
+          style={{ backgroundColor: '#e06c31' }}
         >
           {step === 'avatar' ? 'Complete Profile →' : 'Next →'}
         </button>

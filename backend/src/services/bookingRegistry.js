@@ -9,8 +9,26 @@ const TourBooking = require('../models/TourBooking');
 const CarHireBooking = require('../models/CarHireBooking');
 const ServiceBooking = require('../models/ServiceBooking');
 const PropertyViewingBooking = require('../models/PropertyViewingBooking');
+const TripRequest = require('../models/TripRequest');
 
 const registry = {
+  triprequest: {
+    label: 'Trip Request',
+    Model: TripRequest,
+    populate: [],
+    normalize: (r) => ({
+      id: r._id,
+      type: 'triprequest',
+      status: r.status,
+      customerName: r.contact?.name,
+      customerContact: r.contact?.email || r.contact?.phone,
+      item: `${r.reference} · ${r.itemCount} item${r.itemCount === 1 ? '' : 's'}`,
+      date: r.arrival || null,
+      amount: r.quote?.total ?? null,
+      createdAt: r.createdAt,
+    }),
+  },
+
   grouptour: {
     label: 'Group Tour',
     Model: GroupBooking,
