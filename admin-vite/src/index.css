@@ -1,8 +1,49 @@
+@import 'tailwindcss';
 @import '@fontsource-variable/plus-jakarta-sans';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Dark mode follows the .dark class on <html> (set by lib/theme.js). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Admin design tokens. Colours resolve to the RGB variables below, which
+ * switch for dark mode, so every utility (bg-surface, text-muted, border-line,
+ * bg-brand/90 …) themes automatically.
+ */
+@theme {
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: rgb(var(--c-canvas));
+  --color-surface: rgb(var(--c-surface));
+  --color-subtle: rgb(var(--c-subtle));
+  --color-line: rgb(var(--c-line));
+  --color-ink: rgb(var(--c-ink));
+  --color-muted: rgb(var(--c-muted));
+  --color-faint: rgb(var(--c-faint));
+  --color-brand: rgb(var(--c-brand));
+  --color-brand-soft: rgb(var(--c-brand-soft));
+  --color-brand-ink: rgb(var(--c-brand-ink));
+  --color-accent: rgb(var(--c-accent));
+  --color-accent-soft: rgb(var(--c-accent-soft));
+  --color-ok: rgb(var(--c-ok));
+  --color-ok-soft: rgb(var(--c-ok-soft));
+  --color-warn: rgb(var(--c-warn));
+  --color-warn-soft: rgb(var(--c-warn-soft));
+  --color-danger: rgb(var(--c-danger));
+  --color-danger-soft: rgb(var(--c-danger-soft));
+  --color-info: rgb(var(--c-info));
+  --color-info-soft: rgb(var(--c-info-soft));
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.22), 0 4px 8px -4px rgb(16 24 40 / 0.08);
+  --radius-xl2: 1rem;
+
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-slide-up: slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-in: slide-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slide-up { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
+}
 
 /* Semantic colour tokens (RGB triplets). Brand = lagoon turquoise from the
    badge, accent = sunset coral. Dark values are tuned for contrast. */
@@ -54,6 +95,9 @@
 }
 
 @layer base {
+  /* Tailwind v4 defaults borders to currentColor and buttons to the default cursor. */
+  *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-line); }
+  button:not(:disabled), [role='button']:not(:disabled) { cursor: pointer; }
   html { @apply bg-canvas; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
   body { @apply bg-canvas text-ink font-sans; overflow-x: clip; }
   :focus-visible { outline: 2px solid rgb(var(--c-brand)); outline-offset: 2px; }
@@ -63,10 +107,6 @@
 /* Horizontally scrolling chip rows: swipeable without a visible scrollbar. */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
-
-/* Screens not yet redesigned keep their old light styling inside the new shell. */
-.legacy-page { @apply rounded-xl2 bg-white text-gray-900; color-scheme: light; }
-.dark .legacy-page { box-shadow: 0 0 0 1px rgb(var(--c-line)); }
 
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }

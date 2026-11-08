@@ -37,11 +37,4 @@ export const NAV = [
 
 export const ALL_ITEMS = NAV.flatMap((g) => g.items.map((i) => ({ ...i, group: g.group })));
 
-/* Routes rebuilt in the new design; everything else renders in the legacy frame. */
-export const REDESIGNED = [
-  /^\/admin\/dashboard$/, /^\/trip-requests(\/[^/]+)?$/, /^\/team$/, /^\/bookings$/, /^\/notifications$/,
-  /^\/grouptripbookings\/[^/]+$/, /^\/(tours|grouptrips|hotels|transfers|carhire|vehicles|services|properties)$/,
-];
-export const isRedesigned = (path) => REDESIGNED.some((re) => re.test(path));
-
 export const isActive = (path, to) => path === to || (to !== '/admin/dashboard' && path.startsWith(`${to}/`)) || (to === '/grouptrips' && path.startsWith('/grouptripbookings'));
