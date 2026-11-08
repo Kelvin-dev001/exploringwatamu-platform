@@ -47,6 +47,8 @@ import GroupTripBookingList from './pages/grouptrips/GroupTripBookingList';
 // Bookings & Notifications
 import AllBookings from './pages/bookings/AllBookings';
 import NotificationsLog from './pages/notifications/NotificationsLog';
+import TripRequestList from './pages/triprequests/TripRequestList';
+import TripRequestDetail from './pages/triprequests/TripRequestDetail';
 
 // PrivateRoute component to protect authenticated routes
 function PrivateRoute({ children }) {
@@ -78,6 +80,22 @@ function App() {
             element={
               <PrivateRoute>
                 <AllBookings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/trip-requests"
+            element={
+              <PrivateRoute>
+                <TripRequestList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/trip-requests/:id"
+            element={
+              <PrivateRoute>
+                <TripRequestDetail />
               </PrivateRoute>
             }
           />

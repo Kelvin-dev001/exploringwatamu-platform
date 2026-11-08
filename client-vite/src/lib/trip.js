@@ -310,3 +310,42 @@ export function tripSummary(trip, { headline } = {}) {
   if (trip.notes) lines.push('', `Notes: ${trip.notes}`);
   return lines.join('\n');
 }
+
+/* ---------- Quote request payload (POST /api/trip-requests) ---------- */
+
+const KIND = { tour: 'tour', group: 'group', transfer: 'transfer' };
+
+function requestItem(snap, residency) {
+  const p = snap.price || {};
+  const listed = residency === 'resident' ? p.resident ?? p.nonResident : p.nonResident ?? p.resident;
+  return {
+    kind: KIND[snap.kind] || 'other',
+    refId: snap.id ? String(snap.id) : undefined,
+    title: snap.title,
+    hours: snap.hours ?? null,
+    listedPrice: listed ?? null,
+  };
+}
+
+/** Shape the trip for the API. Dates are sent as YYYY-MM-DD strings. */
+export function toRequestPayload(trip, { contact, profile, residency = 'nonResident', website = '' }) {
+  const iso = (d) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : undefined);
+  return {
+    contact,
+    profile: profile ? { vibes: profile.vibes || [], companions: profile.companions || null, stay: profile.stay || null } : undefined,
+    arrival: trip.arrival || undefined,
+    departure: trip.departure || undefined,
+    adults: trip.adults,
+    children: trip.children,
+    residency,
+    days: trip.days.map((d, i) => ({
+      label: dayLabel(trip, i),
+      date: iso(dateOfDay(trip, i)),
+      items: d.items.map((k) => trip.items[k]).filter(Boolean).map((s) => requestItem(s, residency)),
+    })),
+    ideas: trip.ideas.map((k) => trip.items[k]).filter(Boolean).map((s) => requestItem(s, residency)),
+    notes: trip.notes || undefined,
+    estimate: estimate(trip, residency),
+    website,
+  };
+}

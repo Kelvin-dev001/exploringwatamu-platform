@@ -11,6 +11,7 @@ const navLinks = [
   { name: "Properties", to: "/properties" },
   { name: "Vehicles", to: "/vehicles" },
   { name: "Group Trips", to: "/grouptrips" },
+  { name: "Trip Requests", to: "/trip-requests" },
   { name: "All Bookings", to: "/bookings" },
   { name: "Notifications", to: "/notifications" },
 ];

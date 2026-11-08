@@ -73,7 +73,75 @@ function renderDoc({ kind, booking, trip }) {
   });
 }
 
+// Custom-itinerary quote (trip planner requests).
+function buildTripQuotePdf(request) {
+  return new Promise((resolve, reject) => {
+    try {
+      const PDFDocument = require('pdfkit');
+      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+      const chunks = [];
+      doc.on('data', (c) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const q = request.quote || {};
+      doc.fontSize(20).fillColor('#0b2642').text(config.brand.name);
+      doc.moveDown(0.2);
+      doc.fontSize(14).fillColor('#333').text('Your Watamu trip — quotation');
+      doc.moveDown(0.5);
+      doc.fontSize(9).fillColor('#888')
+        .text(`Reference: ${request.reference}`)
+        .text(`Issued: ${new Date().toLocaleDateString('en-KE')}`)
+        .text(q.validUntil ? `Valid until: ${fmtDate(q.validUntil)}` : '');
+      doc.moveDown();
+
+      doc.fontSize(11).fillColor('#000').text('For', { underline: true });
+      doc.fontSize(10).fillColor('#333')
+        .text(request.contact.name)
+        .text(request.contact.email)
+        .text(`${request.adults} adult(s)${request.children ? `, ${request.children} child(ren)` : ''}`)
+        .text(request.arrival ? `Dates: ${fmtDate(request.arrival)} - ${fmtDate(request.departure)}` : 'Dates: flexible');
+      doc.moveDown();
+
+      doc.fontSize(11).fillColor('#000').text('Itinerary', { underline: true });
+      (request.days || []).forEach((d, i) => {
+        doc.fontSize(10).fillColor('#0b2642').text(d.label || `Day ${i + 1}`);
+        if (!d.items.length) doc.fontSize(9).fillColor('#888').text('   Free day');
+        d.items.forEach((it) => doc.fontSize(9).fillColor('#333').text(`   • ${it.title}`));
+      });
+      if ((request.ideas || []).length) {
+        doc.fontSize(10).fillColor('#0b2642').text('Also requested');
+        request.ideas.forEach((it) => doc.fontSize(9).fillColor('#333').text(`   • ${it.title}`));
+      }
+      doc.moveDown();
+
+      doc.fontSize(11).fillColor('#000').text('Price', { underline: true });
+      (q.lines || []).forEach((l) => {
+        const y = doc.y;
+        doc.fontSize(10).fillColor('#333').text(l.label, 50, y, { width: 360 });
+        doc.text(currency(l.amount), 420, y, { width: 125, align: 'right' });
+      });
+      doc.moveDown(0.5);
+      doc.fontSize(12).fillColor('#000').text(`Total: ${currency(q.total)}`, { align: 'right' });
+      doc.moveDown(1.5);
+
+      if (q.message) {
+        doc.fontSize(10).fillColor('#333').text(q.message);
+        doc.moveDown();
+      }
+      doc.fontSize(9).fillColor('#888').text(
+        'This is a quotation, not an invoice. Reply to accept and our team will confirm your bookings and how to pay.'
+      );
+      doc.moveDown(0.5);
+      doc.fontSize(9).fillColor('#888').text(`Questions? ${config.brand.supportEmail}`);
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 const buildQuotationPdf = (booking, trip) => renderDoc({ kind: 'quotation', booking, trip });
 const buildReceiptPdf = (booking, trip) => renderDoc({ kind: 'receipt', booking, trip });
 
-module.exports = { buildQuotationPdf, buildReceiptPdf };
+module.exports = { buildQuotationPdf, buildReceiptPdf, buildTripQuotePdf };

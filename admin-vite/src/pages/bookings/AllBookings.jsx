@@ -5,6 +5,7 @@ import { API_URL } from "../../api.js";
 
 const TYPES = [
   { value: "", label: "All types" },
+  { value: "triprequest", label: "Trip Request" },
   { value: "grouptour", label: "Group Tour" },
   { value: "tour", label: "Tour" },
   { value: "carhire", label: "Car Hire" },
@@ -17,6 +18,10 @@ const STATUS_BADGE = {
   confirmed: "badge badge-success",
   booked: "badge badge-info",
   cancelled: "badge badge-error",
+  new: "badge badge-warning",
+  quoted: "badge badge-info",
+  accepted: "badge badge-success",
+  declined: "badge badge-ghost",
 };
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "-");
@@ -106,6 +111,10 @@ export default function AllBookings() {
             <option value="confirmed">Confirmed</option>
             <option value="booked">Booked</option>
             <option value="cancelled">Cancelled</option>
+            <option value="new">New (trip requests)</option>
+            <option value="quoted">Quoted</option>
+            <option value="accepted">Accepted</option>
+            <option value="declined">Declined</option>
           </select>
         </div>
       </div>

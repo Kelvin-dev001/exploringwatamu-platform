@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Minus, Plus, Plane, Share2, Sparkles, Trash2, Wand2, Check, Mail, CalendarDays, Users } from 'lucide-react';
+import { Minus, Plus, Plane, Share2, Sparkles, Trash2, Wand2, Check, Send, CalendarDays, Users, Mail } from 'lucide-react';
 import { useTrip } from '@/context/TripContext';
 import { useVibeProfile } from '@/context/VibeProfileContext';
 import { useCatalog, getResidency, setResidency, formatKES } from '@/lib/catalog';
@@ -11,8 +11,8 @@ import { Container, Badge } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import Board from '@/components/trip/Board';
+import RequestQuoteSheet from '@/components/trip/RequestQuoteSheet';
 import { WaveField } from '@/components/brand/Patterns';
-import { cn } from '@/lib/utils';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 const today = () => new Date().toISOString().slice(0, 10);
@@ -101,6 +101,7 @@ export default function TripPlanner() {
   const [residency, setRes] = useState(getResidency);
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(null);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const ranked = useMemo(() => rankExperiences(items, profile), [items, profile]);
   const count = itemCount(trip);
@@ -142,9 +143,8 @@ export default function TripPlanner() {
     }
   };
 
-  const quoteHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Quote request: my Watamu trip')}&body=${encodeURIComponent(
-    `Hi ExploringWatamu team,\n\nPlease price this trip for us.\n\n${tripSummary(trip, { headline })}\n\nPrices shown: ${residency === 'resident' ? 'Kenya resident' : 'visitor'}\n\nThanks!`
-  )}`;
+  // Email fallback, offered only if the quote form can't be reached.
+  const mailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Quote request: my Watamu trip')}&body=${encodeURIComponent(tripSummary(trip, { headline }))}`;
 
   const missingTransfers = count > 0 && !hasItem(trip, TRANSFERS.in.key) && !hasItem(trip, TRANSFERS.out.key);
 
@@ -282,9 +282,14 @@ export default function TripPlanner() {
               {unpriced > 0 && <p className="mt-1 text-xs text-ocean-900/55">+ {unpriced} item{unpriced === 1 ? '' : 's'} priced in your quote</p>}
               <p className="mt-2 text-xs text-ocean-900/50">Indicative only. Your quote confirms availability and the final price.</p>
             </div>
-            <Button className={cn('mt-6 w-full', !count && 'pointer-events-none opacity-50')} size="lg" href={count ? quoteHref : undefined} aria-disabled={!count}>
-              <Mail /> Request my quote
+            <Button className="mt-6 w-full" size="lg" onClick={() => setRequestOpen(true)} disabled={!count}>
+              <Send /> Request my quote
             </Button>
+            {trip.lastRequest && (
+              <p className="mt-3 rounded-xl bg-lagoon-50 p-3 text-xs text-lagoon-700">
+                Sent as <span className="font-mono font-semibold">{trip.lastRequest.reference}</span>. Changed something? Send it again and we’ll use the latest version.
+              </p>
+            )}
             <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ocean-900/55">
               <Check className="size-3.5 text-lagoon-600" /> No payment until you confirm
             </p>
@@ -303,9 +308,16 @@ export default function TripPlanner() {
                 </Button>
               </div>
             )}
+            {count > 0 && (
+              <a href={mailHref} className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ocean-900/45 hover:text-ocean-900">
+                <Mail className="size-3.5" /> Prefer email? Send it from your inbox
+              </a>
+            )}
           </div>
         </aside>
       </Container>
+
+      <RequestQuoteSheet open={requestOpen} onOpenChange={setRequestOpen} residency={residency} />
     </>
   );
 }

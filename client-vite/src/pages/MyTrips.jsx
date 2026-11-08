@@ -1,23 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { API_URL } from '../api.js';
-import { useAuth } from '../context/AuthContext.jsx';
+import { CalendarDays, MapPin, FileText, Users, Luggage } from 'lucide-react';
+import { API_URL } from '@/api.js';
+import { useAuth } from '@/context/AuthContext.jsx';
+import { Container, Badge, SectionHeading } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/button';
+import { formatKES } from '@/lib/catalog';
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
-}
+const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
-const STATUS_STYLES = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+const REQUEST_STATUS = {
+  new: { label: 'With our team', tone: 'ochre' },
+  quoted: { label: 'Quote sent', tone: 'coral' },
+  accepted: { label: 'Confirmed', tone: 'mangrove' },
+  declined: { label: 'Declined', tone: 'sand' },
+  cancelled: { label: 'Cancelled', tone: 'sand' },
+};
+const BOOKING_STATUS = {
+  pending: { label: 'Pending', tone: 'ochre' },
+  confirmed: { label: 'Confirmed', tone: 'mangrove' },
+  cancelled: { label: 'Cancelled', tone: 'sand' },
 };
 
+function Empty({ icon: Icon, title, text, to, cta }) {
+  return (
+    <div className="rounded-[var(--radius-card)] border border-dashed border-sand-300 bg-white/60 p-8 text-center">
+      <Icon className="mx-auto size-8 text-lagoon-600" />
+      <p className="mt-3 font-display text-xl text-ocean-900">{title}</p>
+      <p className="mt-1 text-sm text-ocean-900/60">{text}</p>
+      <Button to={to} className="mt-5" size="sm">
+        {cta}
+      </Button>
+    </div>
+  );
+}
+
+/** Signed-in traveller's trip requests (quotes) and group-trip bookings. */
 export default function MyTrips() {
   const { user, token, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [requests, setRequests] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,107 +50,127 @@ export default function MyTrips() {
       navigate('/login');
       return;
     }
-    if (user && token) {
-      axios.get(`${API_URL}/group-bookings/my-bookings`, {
-        headers: { Authorization: `Bearer ${token}` },
+    if (!user || !token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    Promise.allSettled([axios.get(`${API_URL}/trip-requests/mine`, { headers }), axios.get(`${API_URL}/group-bookings/my-bookings`, { headers })])
+      .then(([r, b]) => {
+        if (r.status === 'fulfilled') setRequests(Array.isArray(r.value.data) ? r.value.data : []);
+        if (b.status === 'fulfilled') setBookings(Array.isArray(b.value.data) ? b.value.data : []);
+        if (r.status === 'rejected' && b.status === 'rejected') setError('We couldn’t load your bookings. Please try again.');
       })
-        .then(res => setBookings(Array.isArray(res.data) ? res.data : []))
-        .catch(() => setError('Failed to load your bookings.'))
-        .finally(() => setLoading(false));
-    }
+      .finally(() => setLoading(false));
   }, [user, token, authLoading, navigate]);
 
   if (authLoading || loading) {
     return (
-      <div className="flex justify-center py-24">
-        <span className="loading loading-spinner loading-lg" style={{ color: '#24b3b3' }}></span>
+      <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+        <span className="size-8 animate-spin rounded-full border-2 border-sand-300 border-t-coral-500" />
       </div>
     );
   }
 
-  if (error) {
-    return <p className="text-center text-gray-500 py-24">{error}</p>;
-  }
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-1" style={{ color: '#24b3b3' }}>My Trips</h1>
-      <p className="text-gray-500 text-sm mb-8">Your group trip bookings</p>
+    <Container size="default" className="py-12 lg:py-16">
+      <p className="eyebrow">Hi {user?.name?.split(' ')[0] || 'there'}</p>
+      <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">My bookings</h1>
+      {error && <p className="mt-6 rounded-xl bg-coral-50 p-4 text-coral-700">{error}</p>}
 
-      {bookings.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
-          <p className="text-4xl mb-4">🏝️</p>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No bookings yet</h2>
-          <p className="text-gray-500 text-sm mb-6">You haven't joined any group trips yet. Find your adventure!</p>
-          <Link to="/group-trips" className="px-6 py-3 rounded-xl font-bold text-white" style={{ backgroundColor: '#24b3b3' }}>
-            Browse Group Trips
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {bookings.map((booking) => {
-            const trip = booking.trip;
-            return (
-              <div key={booking._id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="flex gap-4 p-5">
-                  {trip?.heroImage && (
-                    <img src={trip.heroImage} alt={trip.title} className="w-20 h-20 rounded-xl object-cover shrink-0" />
+      <section className="mt-12">
+        <SectionHeading title="Trip quotes" lede="Itineraries you’ve sent from the trip planner." />
+        <div className="mt-6 space-y-4">
+          {requests.length === 0 ? (
+            <Empty icon={Luggage} title="No trip requests yet" text="Plan your days and send them to us for a tailored price." to="/trip" cta="Open the trip planner" />
+          ) : (
+            requests.map((r) => {
+              const s = REQUEST_STATUS[r.status] || REQUEST_STATUS.new;
+              return (
+                <article key={r.reference} className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-6 shadow-soft">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="font-mono text-lg font-semibold text-ocean-900">{r.reference}</p>
+                    <Badge tone={s.tone}>{s.label}</Badge>
+                  </div>
+                  <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ocean-900/60">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarDays className="size-4" /> {r.arrival ? `${fmt(r.arrival)} – ${fmt(r.departure)}` : `${r.days?.length || 0} days, flexible`}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Users className="size-4" /> {r.adults + (r.children || 0)} travellers
+                    </span>
+                    <span>{r.itemCount} items · sent {fmt(r.createdAt)}</span>
+                  </p>
+                  {r.quote && (
+                    <div className="mt-4 rounded-2xl bg-sand-100 p-4">
+                      <p className="text-sm text-ocean-900/60">Your quote</p>
+                      <p className="font-display text-3xl text-ocean-900">{formatKES(r.quote.total)}</p>
+                      {r.quote.validUntil && <p className="text-xs text-ocean-900/55">Valid until {fmt(r.quote.validUntil)} · full details in your email</p>}
+                    </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <h2 className="font-bold text-lg leading-tight" style={{ color: '#1e7575' }}>
-                        {trip?.title || 'Trip'}
-                      </h2>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[booking.status] || 'bg-gray-100 text-gray-600'}`}>
-                        {booking.status}
-                      </span>
+                </article>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      <section className="mt-16">
+        <SectionHeading title="Group trips" lede="Scheduled adventures you’ve asked to join." />
+        <div className="mt-6 space-y-4">
+          {bookings.length === 0 ? (
+            <Empty icon={Users} title="No group trips yet" text="Join a scheduled adventure and meet other travellers." to="/group-trips" cta="Browse group trips" />
+          ) : (
+            bookings.map((b) => {
+              const trip = b.trip;
+              const s = BOOKING_STATUS[b.status] || BOOKING_STATUS.pending;
+              return (
+                <article key={b._id} className="flex gap-4 rounded-[var(--radius-card)] border border-sand-200 bg-white p-5 shadow-soft">
+                  {trip?.heroImage && <img src={trip.heroImage} alt="" className="size-20 shrink-0 rounded-2xl object-cover" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <h3 className="font-display text-xl text-ocean-900">{trip?.title || 'Group trip'}</h3>
+                      <Badge tone={s.tone}>{s.label}</Badge>
                     </div>
                     {trip && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        📅 {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
-                        {trip.meetingPoint && <span className="ml-3">📍 {trip.meetingPoint}</span>}
+                      <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-ocean-900/60">
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarDays className="size-4" /> {fmt(trip.startDate)} – {fmt(trip.endDate)}
+                        </span>
+                        {trip.meetingPoint && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <MapPin className="size-4" /> {trip.meetingPoint}
+                          </span>
+                        )}
                       </p>
                     )}
-                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                    <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                       <div>
-                        <span className="text-gray-400 text-xs block">Payment</span>
-                        <span className="font-medium capitalize">{booking.paymentType}</span>
+                        <dt className="text-xs text-ocean-900/50">{b.status === 'confirmed' ? 'Amount paid' : 'Due on confirmation'}</dt>
+                        <dd className="font-semibold">{formatKES(b.amountPaid)}</dd>
                       </div>
-                      <div>
-                        <span className="text-gray-400 text-xs block">{booking.status === 'confirmed' ? 'Amount Paid' : 'Amount (on confirmation)'}</span>
-                        <span className={`font-medium ${booking.status === 'confirmed' ? 'text-green-700' : 'text-gray-700'}`}>KES {booking.amountPaid?.toLocaleString()}</span>
-                      </div>
-                      {booking.amountDue > 0 && (
+                      {b.amountDue > 0 && (
                         <div>
-                          <span className="text-gray-400 text-xs block">Balance Due</span>
-                          <span className="font-medium text-orange-600">KES {booking.amountDue?.toLocaleString()}</span>
+                          <dt className="text-xs text-ocean-900/50">Balance</dt>
+                          <dd className="font-semibold text-coral-600">{formatKES(b.amountDue)}</dd>
                         </div>
                       )}
-                      {trip?.balanceDueDate && booking.paymentType === 'deposit' && (
+                      {trip?.balanceDueDate && b.paymentType === 'deposit' && (
                         <div>
-                          <span className="text-gray-400 text-xs block">Due Date</span>
-                          <span className="font-medium">{formatDate(trip.balanceDueDate)}</span>
+                          <dt className="text-xs text-ocean-900/50">Balance due</dt>
+                          <dd className="font-semibold">{fmt(trip.balanceDueDate)}</dd>
                         </div>
                       )}
-                      {booking.mpesaReceiptNumber && (
-                        <div className="col-span-2">
-                          <span className="text-gray-400 text-xs block">M-Pesa Receipt</span>
-                          <span className="font-mono font-medium text-xs">{booking.mpesaReceiptNumber}</span>
-                        </div>
-                      )}
-                    </div>
+                    </dl>
                     {trip?.slug && (
-                      <Link to={`/group-trips/${trip.slug}`} className="mt-3 inline-block text-xs font-medium" style={{ color: '#24b3b3' }}>
-                        View trip details →
+                      <Link to={`/group-trips/${trip.slug}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-lagoon-700 hover:underline">
+                        <FileText className="size-4" /> Trip details
                       </Link>
                     )}
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                </article>
+              );
+            })
+          )}
         </div>
-      )}
-    </div>
+      </section>
+    </Container>
   );
 }

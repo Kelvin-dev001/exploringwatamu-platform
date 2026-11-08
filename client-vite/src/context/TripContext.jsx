@@ -62,6 +62,8 @@ export function TripProvider({ children, initialTrip }) {
       addTransfers: () => setTrip((t) => T.addTransfers(t)),
       autoPlan: (ranked) => setTrip((t) => T.autoPlan(t, ranked)),
       replace: (next) => setTrip(next),
+      /** Remember the reference of the last quote request sent for this trip. */
+      markRequested: (reference) => setTrip((t) => ({ ...t, lastRequest: { reference, at: new Date().toISOString() } })),
       clear: () => setTrip(T.emptyTrip(profile)),
       drawerOpen,
       openDrawer: () => setDrawerOpen(true),
