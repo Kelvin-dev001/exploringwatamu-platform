@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validators/authValidators');
 const { authLimiter } = require('../middleware/rateLimiters');
 const { sendPasswordResetEmail } = require('../services/notifications/authNotifications');
+const logger = require('../services/logger');
 
 // POST /api/auth/register
 router.post('/register', authLimiter, validate(registerSchema), async (req, res, next) => {
@@ -111,7 +112,7 @@ router.post('/google', authLimiter, async (req, res) => {
       user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, avatar: user.avatar },
     });
   } catch (err) {
-    console.error('Google auth error:', err?.response?.data || err.message);
+    logger.warn('Google sign-in failed', { requestId: req.id, googleError: err?.response?.data?.error, ...logger.errorFields(err) });
     res.status(401).json({ error: 'Google authentication failed.' });
   }
 });
@@ -130,7 +131,7 @@ router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), asy
       try {
         await sendPasswordResetEmail(user, resetUrl);
       } catch (mailErr) {
-        console.error('[reset-email]', mailErr.message);
+        logger.error('password reset email failed', { requestId: req.id, ...logger.errorFields(mailErr) });
       }
     }
     res.json({ message: 'If that email exists, a reset link has been sent.' });

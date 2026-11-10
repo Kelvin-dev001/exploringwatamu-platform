@@ -4,9 +4,10 @@ const TripRequest = require('../models/TripRequest');
 const { paginate } = require('../services/bookingService');
 const { notifyTripRequested, notifyQuoteSent, notifyStatus } = require('../services/tripRequestNotifications');
 const { deliveryFor } = require('../services/notifications/delivery');
+const logger = require('../services/logger');
 
 // Fire-and-forget: notifications must never delay or fail the response.
-const later = (fn) => setImmediate(() => fn().catch((err) => console.error('[trip-request]', err.message)));
+const later = (fn) => setImmediate(() => fn().catch((err) => logger.error('trip request notification failed', logger.errorFields(err))));
 
 // Only what the traveller needs to see (no admin notes, no internal ids).
 function publicView(r) {

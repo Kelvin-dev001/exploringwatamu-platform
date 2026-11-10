@@ -1,6 +1,7 @@
 const { parseDiscovery } = require('../constants/discovery');
 const GroupTrip = require('../models/GroupTrip');
 const { nextGallery, uploadedPaths } = require('../services/gallery');
+const logger = require('../services/logger');
 
 // Helper to parse JSON strings from FormData
 const parseJSON = (val, fallback = []) => {
@@ -43,7 +44,7 @@ exports.createGroupTrip = async (req, res) => {
     await trip.save();
     res.status(201).json(trip);
   } catch (err) {
-    console.error('Create group trip error:', err);
+    logger.warn('group trip not created', { requestId: req.id, ...logger.errorFields(err) });
     res.status(400).json({ error: 'Failed to create group trip.', details: err.message });
   }
 };
@@ -92,7 +93,7 @@ exports.updateGroupTrip = async (req, res) => {
     if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
     res.json(trip);
   } catch (err) {
-    console.error('Update group trip error:', err);
+    logger.warn('group trip not updated', { requestId: req.id, ...logger.errorFields(err) });
     res.status(400).json({ error: 'Failed to update group trip.', details: err.message });
   }
 };

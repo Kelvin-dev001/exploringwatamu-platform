@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Referral = require('../models/Referral');
 const GroupBooking = require('../models/GroupBooking');
+const logger = require('../services/logger');
 
 // GET /my-referrals — Get referral stats for current user
 exports.getMyReferrals = async (req, res) => {
@@ -32,7 +33,7 @@ exports.getMyReferrals = async (req, res) => {
       pending,
     });
   } catch (err) {
-    console.error('Get referrals error:', err);
+    logger.error('referral stats failed', { requestId: req.id, ...logger.errorFields(err, { stack: true }) });
     res.status(500).json({ error: 'Failed to fetch referrals.' });
   }
 };
@@ -66,7 +67,7 @@ exports.redeemPoints = async (req, res) => {
       remainingPoints: user.safariPoints,
     });
   } catch (err) {
-    console.error('Redeem points error:', err);
+    logger.error('points redemption failed', { requestId: req.id, ...logger.errorFields(err, { stack: true }) });
     res.status(500).json({ error: 'Failed to redeem points.' });
   }
 };
@@ -88,7 +89,7 @@ exports.applyReferralDiscount = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Apply referral error:', err);
+    logger.error('referral code lookup failed', { requestId: req.id, ...logger.errorFields(err, { stack: true }) });
     res.status(500).json({ error: 'Failed to apply referral code.' });
   }
 };

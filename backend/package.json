@@ -18,6 +18,7 @@
   "license": "ISC",
   "description": "ExploringWatamu backend API",
   "dependencies": {
+    "@sentry/node": "11.9.0",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",

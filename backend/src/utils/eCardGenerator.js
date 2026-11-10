@@ -1,4 +1,4 @@
-const axios = require('axios');
+const logger = require('../services/logger');
 
 /**
  * Generate a shareable e-card image URL for Instagram
@@ -17,7 +17,7 @@ exports.generateECardUrl = async (booking, trip, user) => {
     
     return eCardUrl;
   } catch (err) {
-    console.error('E-card generation error:', err);
+    logger.error('e-card generation failed', logger.errorFields(err));
     return null;
   }
 };

@@ -5,6 +5,7 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 const config = require('../config/env');
+const logger = require('../services/logger');
 
 // Admin image uploads: multipart parsing (multer) streamed to Cloudinary.
 // Upload failures are answered here with a real status and a message the
@@ -105,7 +106,7 @@ function handleUploadErrors(middleware, fields) {
         return res.status(400).json({ error: describeMulterError(err, fields), code: err.code, field: err.field });
       }
       if (err instanceof UploadError) {
-        if (err.status >= 500) console.error(`[upload] ${err.status} ${err.message}`, err.cause || '');
+        if (err.status >= 500) logger.error('upload failed', { requestId: req.id, status: err.status, code: err.code, field: err.field, errMessage: err.message });
         return res.status(err.status).json({ error: err.message, code: err.code, field: err.field });
       }
       // Anything else was raised parsing the multipart body itself (busboy),

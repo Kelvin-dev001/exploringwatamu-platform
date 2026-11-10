@@ -2,6 +2,7 @@ const axios = require('axios');
 const Payment = require('../models/Payment');
 const GroupBooking = require('../models/GroupBooking');
 const GroupTrip = require('../models/GroupTrip');
+const logger = require('../services/logger');
 
 const MPESA_BASE = process.env.MPESA_ENV === 'production'
   ? 'https://api.safaricom.co.ke'
@@ -74,8 +75,8 @@ exports.stkPush = async (req, res) => {
 
     res.json({ success: true, checkoutRequestId: CheckoutRequestID, message: 'STK push sent.' });
   } catch (err) {
-    console.error('STK push error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to initiate M-Pesa payment.', details: err.response?.data || err.message });
+    logger.error('M-Pesa STK push failed', { requestId: req.id, mpesaError: err.response?.data?.errorMessage, ...logger.errorFields(err) });
+    res.status(500).json({ error: 'Failed to initiate M-Pesa payment.', requestId: req.id });
   }
 };
 
@@ -90,7 +91,7 @@ exports.mpesaCallback = async (req, res) => {
 
     const payment = await Payment.findOne({ checkoutRequestId: CheckoutRequestID });
     if (!payment) {
-      console.warn('[mpesa callback] Payment not found for checkoutRequestId:', CheckoutRequestID);
+      logger.warn('M-Pesa callback for an unknown payment', { checkoutRequestId: CheckoutRequestID });
       return res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
     }
 
@@ -124,7 +125,7 @@ exports.mpesaCallback = async (req, res) => {
         );
 
         if (!updatedTrip) {
-          console.warn('[mpesa callback] Trip is full or not found. Booking confirmed but slot not incremented.');
+          logger.warn('M-Pesa callback: trip full or missing, booking confirmed without a seat', { bookingId: String(booking._id), tripId: String(booking.trip) });
         } else {
           // Check if trip is now full after increment
           if (updatedTrip.confirmedParticipants >= updatedTrip.maxParticipants) {
@@ -147,7 +148,7 @@ exports.mpesaCallback = async (req, res) => {
 
     res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
   } catch (err) {
-    console.error('M-Pesa callback error:', err);
+    logger.error('M-Pesa callback failed', { requestId: req.id, ...logger.errorFields(err, { stack: true }) });
     res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
   }
 };
@@ -178,7 +179,7 @@ exports.queryTransaction = async (req, res) => {
 
     res.json(queryRes.data);
   } catch (err) {
-    console.error('M-Pesa query error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to query transaction.', details: err.response?.data || err.message });
+    logger.error('M-Pesa query failed', { requestId: req.id, mpesaError: err.response?.data?.errorMessage, ...logger.errorFields(err) });
+    res.status(500).json({ error: 'Failed to query transaction.', requestId: req.id });
   }
 };

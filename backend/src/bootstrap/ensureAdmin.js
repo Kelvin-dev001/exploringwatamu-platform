@@ -2,6 +2,7 @@
 
 const Admin = require('../models/Admin');
 const config = require('../config/env');
+const logger = require('../services/logger');
 
 // If BOOTSTRAP_ADMIN_EMAIL/PASSWORD are set, make sure that admin exists with
 // that password on startup: creates it if missing, resets the password if it
@@ -17,7 +18,7 @@ async function ensureBootstrapAdmin() {
     const created = new Admin({ email: normalized });
     await created.setPassword(password);
     await created.save();
-    console.log(`[bootstrap] Admin created: ${normalized}`);
+    logger.info('bootstrap admin created', { email: logger.maskEmail(normalized) });
     return;
   }
 
@@ -25,7 +26,8 @@ async function ensureBootstrapAdmin() {
   if (!matches) {
     await admin.setPassword(password);
     await admin.save();
-    console.log(`[bootstrap] Admin password reset from env: ${normalized}`);
+    // Every restart does this while BOOTSTRAP_ADMIN_* are set: remove them after the first sign-in.
+    logger.warn('bootstrap admin password reset from env — remove BOOTSTRAP_ADMIN_* now that the admin exists', { email: logger.maskEmail(normalized) });
   }
 }
 

@@ -11,12 +11,13 @@ const {
   notifyBookingCancelled,
 } = require('../services/bookingNotifications');
 const { deliveryFor } = require('../services/notifications/delivery');
+const logger = require('../services/logger');
 
 // Fire-and-forget email helper: never let an email failure break the request.
 function sendAsync(promiseFactory, label) {
   Promise.resolve()
     .then(promiseFactory)
-    .catch((err) => console.error(`[email] ${label} failed:`, err.message));
+    .catch((err) => logger.error('booking notification failed', { step: label, ...logger.errorFields(err) }));
 }
 
 // POST /join — Create a pending booking with vibe data (authUser required).
