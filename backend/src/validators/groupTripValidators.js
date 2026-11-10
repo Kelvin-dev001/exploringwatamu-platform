@@ -112,8 +112,10 @@ function checkDatesAndPrices(trip, ctx) {
 
 const createGroupTripSchema = z.object(tripFields).superRefine(checkDatesAndPrices);
 
+// existingGallery stays undefined when the form leaves it out, so the stored
+// gallery is kept instead of wiped (see services/gallery.js).
 const updateGroupTripSchema = z
-  .object({ ...tripFields, existingGallery: jsonList('Existing gallery', z.string().trim()) })
+  .object({ ...tripFields, existingGallery: jsonList('Existing gallery', z.string().trim()).optional() })
   .superRefine(checkDatesAndPrices);
 
 module.exports = { createGroupTripSchema, updateGroupTripSchema };

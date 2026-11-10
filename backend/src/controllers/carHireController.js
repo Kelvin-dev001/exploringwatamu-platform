@@ -1,6 +1,7 @@
 const CarHire = require('../models/CarHire');
 const CarHireBooking = require('../models/CarHireBooking');
 const Vehicle = require('../models/Vehicle');
+const { activeFilter, canSee } = require('../services/listingVisibility');
 
 // Helper: check if a car is available for the requested dates
 async function isCarAvailable(carHireId, startDate, endDate) {
@@ -27,7 +28,7 @@ exports.getCarHires = async (req, res) => {
     const vehicles = await Vehicle.find(vehicleQuery);
     const vehicleIds = vehicles.map(v => v._id);
 
-    let hireQuery = { active: true };
+    let hireQuery = activeFilter(req);
     if (vehicleIds.length) hireQuery.vehicle = { $in: vehicleIds };
     if (minPrice) hireQuery.dailyRate = { ...hireQuery.dailyRate, $gte: parseFloat(minPrice) };
     if (maxPrice) hireQuery.dailyRate = { ...hireQuery.dailyRate, $lte: parseFloat(maxPrice) };
@@ -79,7 +80,7 @@ exports.bookCarHire = async (req, res) => {
 exports.getCarHire = async (req, res) => {
   try {
     const carHire = await CarHire.findById(req.params.id).populate('vehicle');
-    if (!carHire) return res.status(404).json({ error: 'Car hire not found' });
+    if (!carHire || !canSee(req, carHire)) return res.status(404).json({ error: 'Car hire not found' });
     res.json(carHire);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch car hire' });

@@ -1,4 +1,6 @@
 const Service = require('../models/Service');
+const { activeFilter, canSee } = require('../services/listingVisibility');
+const { nextGallery, uploadedPaths } = require('../services/gallery');
 
 // Helper to parse JSON strings from FormData
 const parseJSON = (val, fallback = []) => {
@@ -10,11 +12,10 @@ const parseJSON = (val, fallback = []) => {
 // List services with pagination, search, and filter
 exports.getServices = async (req, res) => {
   try {
-    const { name, pricingType, day, active, page = 1, limit = 10 } = req.query;
-    let query = {};
+    const { name, pricingType, day, page = 1, limit = 10 } = req.query;
+    let query = activeFilter(req);
     if (name) query.name = { $regex: name, $options: "i" };
     if (pricingType) query.pricingType = pricingType;
-    if (active !== undefined) query.active = active === "true" || active === true;
     if (day) query.availableDays = day;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const services = await Service.find(query)
@@ -36,7 +37,7 @@ exports.getServices = async (req, res) => {
 exports.getService = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
-    if (!service) return res.status(404).json({ error: 'Not found' });
+    if (!service || !canSee(req, service)) return res.status(404).json({ error: 'Not found' });
     res.json(service);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch service' });
@@ -68,8 +69,9 @@ exports.createService = async (req, res) => {
 // Admin: Update service
 exports.updateService = async (req, res) => {
   try {
-    const newGalleryUrls = req.files ? req.files.map(f => f.path) : [];
-    const existingGallery = parseJSON(req.body.existingGallery);
+    const current = await Service.findById(req.params.id).select('gallery');
+    if (!current) return res.status(404).json({ error: 'Not found' });
+    const gallery = nextGallery(current.gallery, req.body.existingGallery, uploadedPaths(req.files));
     const serviceData = {
       name: req.body.name,
       description: req.body.description,
@@ -77,7 +79,7 @@ exports.updateService = async (req, res) => {
       price: Number(req.body.price),
       availableDays: parseJSON(req.body.availableDays),
       availableHours: parseJSON(req.body.availableHours, { start: '', end: '' }),
-      gallery: [...existingGallery, ...newGalleryUrls],
+      ...(gallery ? { gallery } : {}),
       active: req.body.active === 'true' || req.body.active === true,
     };
     const service = await Service.findByIdAndUpdate(

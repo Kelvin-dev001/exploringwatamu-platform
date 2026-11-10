@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const hotelController = require('../controllers/hotelController');
 const authAdmin = require('../middleware/authAdmin');
+const objectIdParam = require('../middleware/objectIdParam');
 const { uploadArray } = require('../middleware/upload');
+
+router.param('id', objectIdParam);
 
 // List hotels
 router.get('/', hotelController.getHotels);
