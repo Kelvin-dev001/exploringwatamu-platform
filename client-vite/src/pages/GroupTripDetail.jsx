@@ -125,7 +125,7 @@ export default function GroupTripDetail() {
         selectedAvatar: formData.selectedAvatar,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      setBookingData(res.data.booking);
+      setBookingData({ ...res.data.booking, emailed: res.data.delivery?.email === true });
       setModalStep('success');
     } catch (err) {
       const data = err.response?.data;
@@ -436,7 +436,12 @@ export default function GroupTripDetail() {
             {modalStep === 'success' && bookingData && (
               <div className="space-y-6 text-center">
                 <Dialog.Title className="font-display text-3xl text-ocean-900">You’re on the list!</Dialog.Title>
-                <p className="text-ocean-900/70">Your spot is <strong>pending confirmation</strong>. We’ve emailed a quotation to <strong>{bookingData.email}</strong>.</p>
+                <p className="text-ocean-900/70">
+                  Your spot is <strong>pending confirmation</strong>.{' '}
+                  {bookingData.emailed
+                    ? <>We’ve emailed a quotation to <strong>{bookingData.email}</strong>.</>
+                    : <>Our team will contact you at <strong>{bookingData.email}</strong> to confirm.</>}
+                </p>
                 <ECardPreview booking={bookingData} trip={trip} user={user} />
                 <Button size="lg" className="w-full" onClick={() => { setModalOpen(false); navigate('/my-trips'); }}>See my bookings</Button>
               </div>

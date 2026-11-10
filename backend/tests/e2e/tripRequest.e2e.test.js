@@ -48,6 +48,8 @@ describe('Trip request (quote) flow E2E', () => {
     expect(created.body.itemCount).toBe(3);
     expect(created.body.quote).toBeNull();
     expect(created.body.adminNotes).toBeUndefined();
+    // The confirmation page must not promise an email the server can't send.
+    expect(created.body.delivery).toEqual({ email: false, sms: false });
 
     const list = await request(app).get('/api/trip-requests?status=new').set('Authorization', `Bearer ${adminToken}`);
     expect(list.status).toBe(200);

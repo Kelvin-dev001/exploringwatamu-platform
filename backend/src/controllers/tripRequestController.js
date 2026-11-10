@@ -36,7 +36,8 @@ exports.create = async (req, res, next) => {
       history: [{ status: 'new', by: 'traveller' }],
     });
     later(() => notifyTripRequested(request));
-    res.status(201).json(publicView(request));
+    // delivery tells the confirmation page whether to promise an email.
+    res.status(201).json({ ...publicView(request), delivery: deliveryFor(request.contact) });
   } catch (err) {
     next(err);
   }

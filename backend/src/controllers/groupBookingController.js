@@ -74,7 +74,7 @@ exports.joinTrip = async (req, res, next) => {
     // Email the traveller (with quotation) and notify admin — non-blocking.
     sendAsync(() => notifyBookingRequested(booking, trip), 'booking-requested');
 
-    res.status(201).json({ booking, amountPaid });
+    res.status(201).json({ booking, amountPaid, delivery: deliveryFor(booking) });
   } catch (err) {
     next(err);
   }
