@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowLeft, CalendarDays, MapPin, Users, Check, X, ShieldCheck, Clock, Share2 } from 'lucide-react';
@@ -16,11 +16,11 @@ import { Button } from '@/components/ui/button';
 import { VibeArt } from '@/components/experience/ExperienceCard';
 import { normaliseGroupTrip } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/site';
+import { formatDay } from '@/lib/utils';
+import { isNotFound } from '@/lib/http';
+import { ErrorState, SlowNotice } from '@/components/listing/States';
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' });
-}
+const formatDate = (dateStr) => formatDay(dateStr, { day: 'numeric', month: 'long', year: 'numeric' }, 'en-KE');
 
 function useCountdown(targetDate) {
   const [timeLeft, setTimeLeft] = useState({});
@@ -49,10 +49,14 @@ export default function GroupTripDetail() {
   const { slug } = useParams();
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Sign-in from the join dialog brings the traveller back to this trip.
+  const authState = { from: location.pathname };
 
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // '' | 'missing' | 'failed'
+  const [attempt, setAttempt] = useState(0);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -71,11 +75,17 @@ export default function GroupTripDetail() {
   const countdown = useCountdown(trip?.startDate);
 
   useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError('');
     axios.get(`${API_URL}/group-trips/${slug}`)
-      .then(res => setTrip(res.data))
-      .catch(() => setError('Trip not found or no longer available.'))
-      .finally(() => setLoading(false));
-  }, [slug]);
+      .then((res) => alive && setTrip(res.data))
+      .catch((err) => alive && setError(isNotFound(err) ? 'missing' : 'failed'))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [slug, attempt]);
 
   useEffect(() => {
     if (user) {
@@ -133,8 +143,18 @@ export default function GroupTripDetail() {
   if (loading) {
     return (
       <Container size="wide" className="py-16" role="status" aria-label="Loading">
+        <SlowNotice className="mb-6" />
         <div className="aspect-[21/9] w-full animate-pulse rounded-[var(--radius-card)] bg-sand-100" />
         <div className="mt-8 h-10 w-2/3 animate-pulse rounded bg-sand-100" />
+      </Container>
+    );
+  }
+
+  if (error === 'failed') {
+    return (
+      <Container size="narrow" className="py-24">
+        <Seo title="Group trip" noindex />
+        <ErrorState what="this trip" onRetry={() => setAttempt((n) => n + 1)} />
       </Container>
     );
   }
@@ -144,7 +164,7 @@ export default function GroupTripDetail() {
       <Container size="narrow" className="py-24 text-center">
         <Seo title="Group trip not found" noindex />
         <p className="font-display text-3xl text-ocean-900">This trip isn’t available</p>
-        <p className="mt-3 text-ocean-900/60">{error || 'It may be fully booked or finished.'}</p>
+        <p className="mt-3 text-ocean-900/60">It may be fully booked or finished.</p>
         <Button to="/group-trips" className="mt-8">See upcoming group trips</Button>
       </Container>
     );
@@ -348,8 +368,8 @@ export default function GroupTripDetail() {
                   <div className="py-4 text-center">
                     <p className="text-ocean-900/70">Sign in so we can keep your spot and show who’s going.</p>
                     <div className="mt-6 flex justify-center gap-3">
-                      <Button to="/login" onClick={() => setModalOpen(false)}>Sign in</Button>
-                      <Button to="/register" variant="outline" onClick={() => setModalOpen(false)}>Create account</Button>
+                      <Button to="/login" state={authState} onClick={() => setModalOpen(false)}>Sign in</Button>
+                      <Button to="/register" state={authState} variant="outline" onClick={() => setModalOpen(false)}>Create account</Button>
                     </div>
                   </div>
                 ) : (

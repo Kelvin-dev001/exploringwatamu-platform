@@ -11,7 +11,9 @@ import ExperienceCard, { VibeArt } from '@/components/experience/ExperienceCard'
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import AddToTripButton from '@/components/trip/AddToTripButton';
 import Seo from '@/components/seo/Seo';
+import { ErrorState, SlowNotice } from '@/components/listing/States';
 import { absoluteUrl } from '@/lib/site';
+import { isNotFound } from '@/lib/http';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 const ENERGY_LABEL = { easy: 'Easy going', moderate: 'Moderate', active: 'Active' };
@@ -91,6 +93,7 @@ export default function ExperienceDetail() {
   const { profile } = useVibeProfile();
   const { items } = useCatalog();
   const [state, setState] = useState({ item: null, loading: true, error: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -101,7 +104,7 @@ export default function ExperienceDetail() {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, attempt]);
 
   const item = state.item;
   const match = item ? scoreExperience(item, profile) : null;
@@ -116,9 +119,20 @@ export default function ExperienceDetail() {
 
   if (state.loading) {
     return (
-      <Container size="wide" className="py-16">
+      <Container size="wide" className="py-16" role="status" aria-label="Loading">
+        <SlowNotice className="mb-6" />
         <div className="h-8 w-48 animate-pulse rounded bg-sand-100" />
         <div className="mt-6 aspect-[16/10] max-w-4xl animate-pulse rounded-[var(--radius-card)] bg-sand-100" />
+      </Container>
+    );
+  }
+
+  // A network failure or a sleeping server isn't "not found": offer a retry.
+  if (state.error && !isNotFound(state.error)) {
+    return (
+      <Container size="narrow" className="py-24">
+        <Seo title="Experience" noindex />
+        <ErrorState what="this experience" onRetry={() => setAttempt((n) => n + 1)} />
       </Container>
     );
   }

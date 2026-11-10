@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { MapPin, CalendarCheck, Check } from 'lucide-react';
 import { API_URL } from '@/api.js';
-import useListing from '@/components/listing/useListing';
+import useListing, { LIST_PARAMS } from '@/components/listing/useListing';
 import PageHero from '@/components/listing/PageHero';
 import ListingCard from '@/components/listing/ListingCard';
 import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
@@ -10,6 +10,7 @@ import Seo from '@/components/seo/Seo';
 import { Container, Chip, Badge } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { formatDay } from '@/lib/utils';
 
 const ART_CYCLE = ['culture', 'slow', 'ocean', 'romance'];
 
@@ -52,7 +53,7 @@ function ViewingSheet({ property, onClose }) {
           <Check className="mx-auto size-10 rounded-full bg-mangrove-100 p-2 text-mangrove-700" />
           <p className="mt-4 font-display text-2xl text-ocean-900">Viewing booked</p>
           <p className="mt-2 text-ocean-900/65">
-            {new Date(form.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} at {form.time}. We’ll contact you to confirm the meeting point.
+            {formatDay(form.date, { weekday: 'long', day: 'numeric', month: 'long' })} at {form.time}. We’ll contact you to confirm the meeting point.
           </p>
           <Button className="mt-6" onClick={onClose}>Done</Button>
         </div>
@@ -89,7 +90,7 @@ function ViewingSheet({ property, onClose }) {
 }
 
 export default function PropertiesForSale() {
-  const { items, loading, error, retry } = useListing('/properties');
+  const { items, loading, error, retry } = useListing('/properties', LIST_PARAMS);
   const [type, setType] = useState('');
   const [viewing, setViewing] = useState(null);
   const filtered = useMemo(() => items.filter((p) => p.active !== false && (!type || p.type === type)), [items, type]);

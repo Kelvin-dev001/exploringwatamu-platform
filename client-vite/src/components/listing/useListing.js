@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '@/api.js';
 
+// Paginated list endpoints default to 10 rows; listing pages show everything.
+export const LIST_PARAMS = { limit: 100 };
+
 /** Fetch a public list endpoint (array or { data: [] }). Returns { items, loading, error, retry }. */
 export default function useListing(path, params) {
   const [state, setState] = useState({ items: [], loading: true, error: null });

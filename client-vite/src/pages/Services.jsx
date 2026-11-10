@@ -1,5 +1,5 @@
 import { CalendarDays, Clock } from 'lucide-react';
-import useListing from '@/components/listing/useListing';
+import useListing, { LIST_PARAMS } from '@/components/listing/useListing';
 import PageHero from '@/components/listing/PageHero';
 import ListingCard from '@/components/listing/ListingCard';
 import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
@@ -12,7 +12,7 @@ import { snapshotFor } from '@/lib/trip';
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
 export default function Services() {
-  const { items, loading, error, retry } = useListing('/services');
+  const { items, loading, error, retry } = useListing('/services', LIST_PARAMS);
   return (
     <>
       <Seo title="Local services in Watamu" description="Private chefs, guides, massage and more from trusted locals in Watamu. Add them to your trip and get one quote." />

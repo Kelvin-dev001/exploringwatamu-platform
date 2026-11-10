@@ -1,5 +1,5 @@
 import { CarFront, Users, Plane } from 'lucide-react';
-import useListing from '@/components/listing/useListing';
+import useListing, { LIST_PARAMS } from '@/components/listing/useListing';
 import PageHero from '@/components/listing/PageHero';
 import ListingCard from '@/components/listing/ListingCard';
 import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
@@ -12,7 +12,7 @@ import { snapshotFor } from '@/lib/trip';
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
 export default function Transfers() {
-  const { items, loading, error, retry } = useListing('/transfers');
+  const { items, loading, error, retry } = useListing('/transfers', LIST_PARAMS);
   return (
     <>
       <Seo title="Airport & hotel transfers" description="Private transfers from Malindi and Mombasa airports to Watamu, and between hotels. Add one to your trip and it’s included in your quote." />

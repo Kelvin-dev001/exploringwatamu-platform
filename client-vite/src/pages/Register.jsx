@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '@/api.js';
 import { useAuth } from '@/context/AuthContext.jsx';
@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Back to where the traveller was (e.g. the group trip they want to join).
+  const next = location.state?.from || '/my-trips';
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +20,7 @@ export default function Register() {
 
   const finish = (res) => {
     login(res.data.token, res.data.user);
-    navigate('/my-trips', { replace: true });
+    navigate(next, { replace: true });
   };
 
   const onGoogle = async (credential) => {
@@ -49,7 +52,7 @@ export default function Register() {
       title="Create your account"
       seoTitle="Create an account"
       lede="Track your quotes, join group trips and share your referral link with friends."
-      footer={<>Already have an account? <Link to="/login" className="font-semibold text-ocean-900 underline decoration-coral-400 underline-offset-4">Sign in</Link></>}
+      footer={<>Already have an account? <Link to="/login" state={location.state} className="font-semibold text-ocean-900 underline decoration-coral-400 underline-offset-4">Sign in</Link></>}
     >
       <GoogleButton onCredential={onGoogle} text="signup_with" />
       <OrDivider />

@@ -49,7 +49,7 @@ export default function Login() {
       title="Welcome back"
       seoTitle="Sign in"
       lede="Sign in to see your quotes, group trips and referral rewards."
-      footer={<>New here? <Link to="/register" className="font-semibold text-ocean-900 underline decoration-coral-400 underline-offset-4">Create an account</Link></>}
+      footer={<>New here? <Link to="/register" state={location.state} className="font-semibold text-ocean-900 underline decoration-coral-400 underline-offset-4">Create an account</Link></>}
     >
       <GoogleButton onCredential={onGoogle} />
       <OrDivider />
