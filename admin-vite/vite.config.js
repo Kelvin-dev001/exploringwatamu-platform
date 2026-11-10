@@ -6,4 +6,9 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  // Vitest: src/**/*.test.{js,jsx}; component tests opt into jsdom per file.
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.{js,jsx}'],
+  },
 });
