@@ -2,6 +2,7 @@
 
 const { z } = require('zod');
 const { VIBES, SUITS } = require('../constants/discovery');
+const { TRIP_ITEM_KINDS } = require('../constants/tripItems');
 
 // JSON bodies from the website's trip planner and the admin quote builder.
 
@@ -10,7 +11,7 @@ const optionalDate = z.preprocess((v) => (isBlank(v) ? undefined : new Date(v)),
 const text = (max) => z.string().trim().max(max);
 
 const item = z.object({
-  kind: z.enum(['tour', 'group', 'transfer', 'other']).catch('other'),
+  kind: z.enum(TRIP_ITEM_KINDS).catch('other'),
   refId: text(80).optional(),
   title: text(200).min(1, 'Every item needs a title'),
   hours: z.number().min(0).max(24 * 30).nullish().transform((v) => v ?? undefined),

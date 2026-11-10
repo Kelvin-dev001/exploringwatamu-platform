@@ -1,5 +1,5 @@
 import { CarFront, Users } from 'lucide-react';
-import useListing from '@/components/listing/useListing';
+import useListing, { LIST_PARAMS } from '@/components/listing/useListing';
 import PageHero from '@/components/listing/PageHero';
 import ListingCard from '@/components/listing/ListingCard';
 import { GridSkeleton, ErrorState, EmptyState } from '@/components/listing/States';
@@ -12,7 +12,7 @@ import { snapshotFor } from '@/lib/trip';
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
 export default function CarHire() {
-  const { items, loading, error, retry } = useListing('/carhire');
+  const { items, loading, error, retry } = useListing('/carhire', LIST_PARAMS);
   return (
     <>
       <Seo title="Car hire in Watamu" description="Hire a car to explore Watamu, Malindi and the Kenyan coast at your own pace. Add it to your trip for one combined quote." />

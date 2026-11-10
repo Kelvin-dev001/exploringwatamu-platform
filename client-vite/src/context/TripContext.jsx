@@ -12,7 +12,8 @@ const TripContext = createContext(null);
 
 export function TripProvider({ children, initialTrip }) {
   const { profile } = useVibeProfile();
-  const [trip, setTrip] = useState(() => initialTrip ?? safeStorage.get(STORAGE_KEY) ?? T.emptyTrip(profile));
+  // A stored trip from an older or damaged save is repaired, or replaced by a fresh one.
+  const [trip, setTrip] = useState(() => initialTrip ?? T.normalizeTrip(safeStorage.get(STORAGE_KEY)) ?? T.emptyTrip(profile));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);

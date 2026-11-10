@@ -1,18 +1,41 @@
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+/**
+ * Shown while something is still loading after a few seconds — usually the
+ * free-tier API waking up — so the page reads as "on its way", not broken.
+ */
+export function SlowNotice({ delay = 6000, className }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  if (!show) return null;
+  return (
+    <p role="status" className={cn('mx-auto max-w-md rounded-2xl bg-lagoon-50 px-4 py-3 text-center text-sm text-lagoon-700', className)}>
+      Waking up our server — the first visit can take up to a minute. Thanks for your patience.
+    </p>
+  );
+}
 
 export function GridSkeleton({ count = 6 }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Loading">
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="overflow-hidden rounded-[var(--radius-card)] border border-sand-200 bg-white p-2.5">
-          <div className="aspect-[4/3] animate-pulse rounded-[1rem] bg-sand-100" />
-          <div className="space-y-3 p-3">
-            <div className="h-3 w-1/3 animate-pulse rounded bg-sand-100" />
-            <div className="h-6 w-4/5 animate-pulse rounded bg-sand-100" />
-            <div className="h-3 w-full animate-pulse rounded bg-sand-100" />
+    <div role="status" aria-label="Loading">
+      <SlowNotice className="mb-6" />
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: count }, (_, i) => (
+          <div key={i} className="overflow-hidden rounded-[var(--radius-card)] border border-sand-200 bg-white p-2.5">
+            <div className="aspect-[4/3] animate-pulse rounded-[1rem] bg-sand-100" />
+            <div className="space-y-3 p-3">
+              <div className="h-3 w-1/3 animate-pulse rounded bg-sand-100" />
+              <div className="h-6 w-4/5 animate-pulse rounded bg-sand-100" />
+              <div className="h-3 w-full animate-pulse rounded bg-sand-100" />
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { useAdminAuth } from '@/context/AdminAuthContext';
-import { ago, cn, date, dateRange, kes, kesShort } from '@/lib/utils';
+import { ago, cn, date, dateRange, kes, kesShort, notifiedMessage } from '@/lib/utils';
 import { Alert, Badge, Button, Card, CardHeader, Confirm, ContactActions, Empty, PageHeader, Skeleton, StatusBadge, useToast } from '@/ui';
 
 function greeting() {
@@ -94,9 +94,13 @@ export default function Dashboard() {
   const runBookingAction = async () => {
     setBusy(true);
     try {
-      if (action.kind === 'confirm') await api.post('/group-bookings/confirm', { bookingId: action.booking.id });
-      else await api.put(`/group-bookings/admin/${action.booking.id}/cancel`);
-      toast(action.kind === 'confirm' ? `Confirmed ${action.booking.name}. Receipt emailed.` : `Cancelled ${action.booking.name}’s request.`);
+      const res = action.kind === 'confirm'
+        ? await api.post('/group-bookings/confirm', { bookingId: action.booking.id })
+        : await api.put(`/group-bookings/admin/${action.booking.id}/cancel`);
+      const name = action.booking.name;
+      toast(...notifiedMessage(res.data.delivery, action.kind === 'confirm'
+        ? { done: `Confirmed ${name}.`, emailed: `Confirmed ${name}. Receipt emailed.` }
+        : { done: `Cancelled ${name}’s request.`, emailed: `Cancelled ${name}’s request. They’ve been emailed.` }));
       setAction(null);
       load();
     } catch (err) {

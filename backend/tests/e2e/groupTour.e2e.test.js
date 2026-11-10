@@ -78,6 +78,7 @@ describe('Group tour lifecycle E2E', () => {
     expect(join.status).toBe(201);
     const bookingId = join.body.booking._id;
     expect(join.body.booking.status).toBe('pending');
+    expect(join.body.delivery).toEqual({ email: false, sms: false });
 
     // Admin confirms -> claims a seat.
     const confirm = await request(app)

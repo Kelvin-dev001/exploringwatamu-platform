@@ -1,5 +1,6 @@
 const { parseDiscovery } = require('../constants/discovery');
 const GroupTrip = require('../models/GroupTrip');
+const { nextGallery, uploadedPaths } = require('../services/gallery');
 
 // Helper to parse JSON strings from FormData
 const parseJSON = (val, fallback = []) => {
@@ -51,9 +52,18 @@ exports.createGroupTrip = async (req, res) => {
 exports.updateGroupTrip = async (req, res) => {
   try {
     const heroFile = req.files && req.files['heroImage'] ? req.files['heroImage'][0] : null;
-    const galleryFiles = req.files && req.files['gallery'] ? req.files['gallery'] : [];
-    const newGalleryUrls = galleryFiles.map(f => f.path);
-    const existingGallery = parseJSON(req.body.existingGallery);
+    const current = await GroupTrip.findById(req.params.id).select('gallery confirmedParticipants');
+    if (!current) return res.status(404).json({ error: 'Group trip not found.' });
+
+    // Same rule as quick edits: seats can't drop below travellers already confirmed.
+    const seats = Number(req.body.maxParticipants);
+    if (seats < (current.confirmedParticipants || 0)) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        issues: [{ path: 'maxParticipants', message: `There are already ${current.confirmedParticipants} confirmed travellers.` }],
+      });
+    }
+    const gallery = nextGallery(current.gallery, req.body.existingGallery, uploadedPaths(req.files && req.files['gallery']));
 
     const update = {
       title: req.body.title,
@@ -66,13 +76,13 @@ exports.updateGroupTrip = async (req, res) => {
       includes: parseJSON(req.body.includes),
       excludes: parseJSON(req.body.excludes),
       accommodationDetails: req.body.accommodationDetails || '',
-      maxParticipants: Number(req.body.maxParticipants),
+      maxParticipants: seats,
       fullPrice: Number(req.body.fullPrice),
       depositAmount: Number(req.body.depositAmount),
       balanceDueDate: req.body.balanceDueDate || undefined,
       status: req.body.status,
       ...parseDiscovery(req.body),
-      gallery: [...existingGallery, ...newGalleryUrls],
+      ...(gallery ? { gallery } : {}),
     };
 
     if (heroFile) update.heroImage = heroFile.path;

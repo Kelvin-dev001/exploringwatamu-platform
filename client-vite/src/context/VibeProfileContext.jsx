@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { safeStorage } from '@/lib/utils';
+import { readProfileRecord } from '@/lib/vibes';
 
 /*
  * Visitor personalisation profile.
@@ -17,7 +18,7 @@ const VibeProfileContext = createContext(null);
 
 export function VibeProfileProvider({ children, initialRecord }) {
   // `initialRecord` lets previews/tests start in a known state.
-  const [record, setRecord] = useState(() => initialRecord ?? safeStorage.get(STORAGE_KEY));
+  const [record, setRecord] = useState(() => initialRecord ?? readProfileRecord(safeStorage.get(STORAGE_KEY)));
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   useEffect(() => {

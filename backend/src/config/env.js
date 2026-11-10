@@ -36,6 +36,11 @@ function readEnvGroup(label, names) {
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 
+const smtpHost = process.env.SMTP_HOST || '';
+const smtpUser = process.env.SMTP_USER || '';
+const atUsername = process.env.AT_USERNAME || '';
+const atApiKey = process.env.AT_API_KEY || '';
+
 const jwtSecret = readEnv('JWT_SECRET', { required: true, min: 16 });
 if (jwtSecret === 'your_jwt_secret') {
   throw new Error('[config] JWT_SECRET is set to an insecure default value. Set a strong, unique secret.');
@@ -79,11 +84,12 @@ const config = {
   // Outbound email (SMTP). If host/user are unset, the mailer uses a safe
   // dev transport that serializes messages instead of sending them.
   mail: {
+    enabled: Boolean(smtpHost && smtpUser),
     from: process.env.MAIL_FROM || 'ExploringWatamu <no-reply@exploringwatamu.com>',
-    host: process.env.SMTP_HOST || '',
+    host: smtpHost,
     port: Number(process.env.SMTP_PORT) || 587,
     secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
-    user: process.env.SMTP_USER || '',
+    user: smtpUser,
     pass: process.env.SMTP_PASS || '',
   },
 
@@ -94,9 +100,10 @@ const config = {
 
   // SMS via Africa's Talking. A no-op (logged) when username/apiKey are unset.
   sms: {
+    enabled: Boolean(atUsername && atApiKey),
     env: process.env.AT_ENV || 'production', // 'sandbox' | 'production'
-    username: process.env.AT_USERNAME || '',
-    apiKey: process.env.AT_API_KEY || '',
+    username: atUsername,
+    apiKey: atApiKey,
     senderId: process.env.AT_SENDER_ID || '',
   },
 

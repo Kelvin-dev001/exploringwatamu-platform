@@ -9,16 +9,24 @@ import { useAuth } from '@/context/AuthContext.jsx';
 import Seo from '@/components/seo/Seo';
 
 
-const NEXT = [
-  { icon: MailCheck, title: 'Check your inbox', text: 'We’ve emailed a copy of your itinerary with your reference.' },
+// Only promise an email when the API says it can send one (delivery.email);
+// while email isn't set up, the quote is shown in My bookings instead.
+const nextSteps = (emailed) => [
+  emailed
+    ? { icon: MailCheck, title: 'Check your inbox', text: 'We’ve emailed a copy of your itinerary with your reference.' }
+    : { icon: MailCheck, title: 'Keep your reference', text: 'Quote it whenever you contact us — it’s how we find your trip.' },
   { icon: Search, title: 'We check availability', text: 'Our local team confirms boats, guides and transfers for your dates.' },
-  { icon: FileText, title: 'Your quote arrives', text: 'A full price for the whole trip, by email. Reply to accept — nothing to pay until then.' },
+  emailed
+    ? { icon: FileText, title: 'Your quote arrives', text: 'A full price for the whole trip, by email. Reply to accept — nothing to pay until then.' }
+    : { icon: FileText, title: 'Your quote arrives', text: 'A full price for the whole trip, in My bookings — or we’ll contact you directly. Nothing to pay until you accept.' },
 ];
 
 export default function TripRequested() {
   const { reference } = useParams();
   const { state } = useLocation();
   const { user } = useAuth() || {};
+  const emailed = state?.request?.delivery?.email === true;
+  const NEXT = nextSteps(emailed);
 
   return (
     <>
@@ -32,7 +40,13 @@ export default function TripRequested() {
           <p className="eyebrow mt-8 !text-lagoon-300">Request sent</p>
           <h1 className="mt-3 font-display text-4xl leading-tight sm:text-5xl">Asante! Your trip is with our team.</h1>
           <p className="mt-4 text-lg text-sand-50/70">
-            {state?.email ? <>A confirmation is on its way to <strong className="text-sand-50">{state.email}</strong>.</> : 'A confirmation is on its way to your inbox.'}
+            {emailed && state?.email ? (
+              <>A confirmation is on its way to <strong className="text-sand-50">{state.email}</strong>.</>
+            ) : state?.email ? (
+              <>Our local team will get back to you at <strong className="text-sand-50">{state.email}</strong>.</>
+            ) : (
+              'Our local team will be in touch soon.'
+            )}
           </p>
           <div className="mx-auto mt-8 inline-flex flex-col items-center rounded-2xl border border-sand-50/15 bg-sand-50/[0.06] px-8 py-4">
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-sand-50/60">Your reference</span>

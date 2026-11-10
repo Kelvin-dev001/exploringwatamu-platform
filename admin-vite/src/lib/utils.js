@@ -13,7 +13,10 @@ export const kesShort = (n) => {
   return kes(v);
 };
 
-export const date = (d, opts = { day: 'numeric', month: 'short' }) => (d ? new Date(d).toLocaleDateString('en-GB', opts) : '—');
+// Staff see dates in East Africa Time whatever their device is set to. Calendar
+// dates (arrival, trip start) are stored as UTC midnight, which is still the
+// same day in EAT (UTC+3).
+export const date = (d, opts = { day: 'numeric', month: 'short' }) => (d ? new Date(d).toLocaleDateString('en-GB', { timeZone: 'Africa/Nairobi', ...opts }) : '—');
 export const dateRange = (a, b) => (a ? `${date(a)} – ${date(b, { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Flexible dates');
 
 export function ago(d) {
@@ -39,3 +42,14 @@ export function waNumber(phone) {
 }
 
 export const isEmail = (v) => /^\S+@\S+\.\S+$/.test(String(v || ''));
+
+/**
+ * [message, toastTone] after an action that notifies a traveller. The API says
+ * which channels can really deliver (`delivery.email`); while email isn't set
+ * up on the server nothing goes out, and the team has to contact them directly.
+ */
+export function notifiedMessage(delivery, { done, emailed }) {
+  if (!delivery) return [done, 'ok'];
+  if (delivery.email) return [emailed, 'ok'];
+  return [`${done} Email isn’t set up on the server, so the traveller was NOT emailed — contact them directly.`, 'warn'];
+}

@@ -23,6 +23,16 @@ describe('trip request validation', () => {
     expect(r.days[0].items[0].kind).toBe('other');
   });
 
+  it('keeps stays, car hire and services as their own kinds (they used to collapse to "other")', () => {
+    const ideas = [
+      { kind: 'stay', refId: 'h1', title: 'Stay · Hemingways' },
+      { kind: 'carhire', refId: 'c1', title: 'Car hire · RAV4' },
+      { kind: 'service', refId: 's1', title: 'Private chef' },
+    ];
+    const r = createTripRequestSchema.parse({ ...base, ideas });
+    expect(r.ideas.map((i) => i.kind)).toEqual(['stay', 'carhire', 'service']);
+  });
+
   it('rejects an empty trip and backwards dates', () => {
     expect(() => createTripRequestSchema.parse({ ...base, days: [], ideas: [] })).toThrow(/at least one experience/);
     expect(() => createTripRequestSchema.parse({ ...base, arrival: '2027-01-12', departure: '2027-01-10' })).toThrow(/Departure/);

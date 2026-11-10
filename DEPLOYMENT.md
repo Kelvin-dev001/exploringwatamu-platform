@@ -72,7 +72,7 @@ Save (Render redeploys). The apps can now call the API.
 
 ## Step 6 — Turn on the optional integrations (any time)
 Set these on Render and redeploy; each is a safe no-op until configured:
-- **Email:** `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `ADMIN_NOTIFY_EMAIL`.
+- **Email:** `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `ADMIN_NOTIFY_EMAIL`. Email only counts as configured when **both** `SMTP_HOST` and `SMTP_USER` are set. Until then nothing is emailed (the Notifications log shows `skipped`), the admin portal warns after sending a quote or confirming a booking that the traveller was **not** emailed, and travellers can read their priced quote under **My bookings** on the website (signed in with the email they used).
 - **SMS:** `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID` (Africa's Talking).
 - **Image uploads:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — set all three (a partial set stops the API from booting). Until then, saving a listing *with* images answers 503 "Image hosting is not configured"; listings without images still work. `/api/health` reports `"imageUploads": true` once they're picked up.
 - **Google sign-in:** `GOOGLE_CLIENT_ID` (and set `VITE_GOOGLE_CLIENT_ID` on the Vercel apps).
@@ -80,7 +80,12 @@ Set these on Render and redeploy; each is a safe no-op until configured:
 ---
 
 ## Continuous integration
-`.github/workflows/ci.yml` runs the backend test suite automatically on every push and pull request to `main` (unit + end-to-end). Watch it under the repo's **Actions** tab — keep it green before deploying.
+`.github/workflows/ci.yml` runs the backend test suite automatically on every push and pull request to `main` (unit + end-to-end). Watch it under the repo's **Actions** tab — keep it green before deploying. The website also has unit tests (`cd client-vite && npm test`); run them locally until CI covers the frontends.
+
+## After each deploy — quick smoke check
+1. `https://<api>/api/health` answers `{"status":"ok", ...}` (the first request after a quiet spell can take 30–60 s on Render's free plan).
+2. Open the website, click a few links in the menu — pages must keep rendering.
+3. Admin portal: sign in, open Trip requests and the Dashboard.
 
 ## Production readiness checklist
 - [ ] Rotated the leaked Atlas DB password (Step 1) — the old `watamuser` one is compromised.

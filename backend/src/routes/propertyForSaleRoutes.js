@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const propertyForSaleController = require('../controllers/propertyForSaleController');
 const authAdmin = require('../middleware/authAdmin');
+const optionalAdmin = require('../middleware/optionalAdmin');
+const objectIdParam = require('../middleware/objectIdParam');
 const { uploadFields } = require('../middleware/upload');
 
 // Accept both pictures and documents fields
@@ -10,8 +12,11 @@ const cpUpload = uploadFields([
   { name: 'documents', maxCount: 10 }
 ]);
 
-router.get('/', propertyForSaleController.getProperties);
-router.get('/:id', propertyForSaleController.getProperty);
+router.param('id', objectIdParam);
+
+// Public reads show live properties only; admins (optionalAdmin) also see hidden ones.
+router.get('/', optionalAdmin, propertyForSaleController.getProperties);
+router.get('/:id', optionalAdmin, propertyForSaleController.getProperty);
 router.post('/', authAdmin, cpUpload, propertyForSaleController.createProperty);
 router.put('/:id', authAdmin, cpUpload, propertyForSaleController.updateProperty);
 router.delete('/:id', authAdmin, propertyForSaleController.deleteProperty);

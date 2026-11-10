@@ -2,11 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Send, CheckCircle2, XCircle, Ban, RotateCcw, CalendarDays, Users, Globe2, Sparkles, StickyNote, History, ListChecks, Wand2 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
-import { ago, cn, date, dateRange, kes } from '@/lib/utils';
+import { ago, cn, date, dateRange, kes, notifiedMessage } from '@/lib/utils';
 import { Alert, Badge, Button, Card, CardHeader, Confirm, ContactActions, Field, Input, PageHeader, Skeleton, StatusBadge, StickyActions, Textarea, useToast } from '@/ui';
 
 const VIBE = { ocean: 'Ocean & Reef', slow: 'Slow & Soulful', adventure: 'Adventure', culture: 'Culture & History', romance: 'Romance', social: 'Social & Nightlife' };
 const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+
+// What each planner item is (kinds from backend constants/tripItems.js). Stays and
+// cars already say so in their title ("Stay · …"), so only add the tag when it doesn't.
+const KIND = { group: 'Group trip', transfer: 'Transfer', stay: 'Stay', carhire: 'Car hire', service: 'Service' };
+const kindTag = (it) => (KIND[it.kind] && !String(it.title || '').startsWith(KIND[it.kind]) ? KIND[it.kind] : null);
+const KindTag = ({ item }) => (kindTag(item) ? <Badge className="ml-1.5 align-middle">{kindTag(item)}</Badge> : null);
 
 /** Lines pre-filled from the itinerary (listed adult price × adults); the team adjusts before sending. */
 function suggestLines(r) {
@@ -65,7 +71,7 @@ export default function TripRequest() {
       });
       hydrate(res.data);
       setConfirm(null);
-      toast(`Quote sent to ${res.data.contact.email}`);
+      toast(...notifiedMessage(res.data.delivery, { done: 'Quote saved.', emailed: `Quote sent to ${res.data.contact.email}` }));
     } catch (err) {
       setError(errorMessage(err, 'Couldn’t send the quote.'));
       setConfirm(null);
@@ -79,7 +85,7 @@ export default function TripRequest() {
       const res = await api.put(`/trip-requests/${id}/status`, { status, notify });
       hydrate(res.data);
       setConfirm(null);
-      toast(`Marked as ${status}${notify ? ' — traveller emailed' : ''}`);
+      toast(...notifiedMessage(res.data.delivery, { done: `Marked as ${status}.`, emailed: `Marked as ${status} — traveller emailed` }));
     } catch (err) {
       toast(errorMessage(err), 'danger');
     }
@@ -147,7 +153,7 @@ export default function TripRequest() {
                     <ul className="mt-1.5 space-y-1">
                       {d.items.map((it, j) => (
                         <li key={j} className="flex items-baseline justify-between gap-3 text-sm">
-                          <span className="text-ink">{it.title}{it.hours ? <span className="text-faint"> · {it.hours}h</span> : null}</span>
+                          <span className="text-ink">{it.title}{it.hours ? <span className="text-faint"> · {it.hours}h</span> : null}<KindTag item={it} /></span>
                           {it.listedPrice ? <span className="shrink-0 text-xs text-faint">{kes(it.listedPrice)}</span> : null}
                         </li>
                       ))}
@@ -158,7 +164,7 @@ export default function TripRequest() {
               {(r.ideas || []).length > 0 && (
                 <li className="px-4 py-3 sm:px-5">
                   <p className="text-xs font-semibold uppercase tracking-wider text-faint">Stays, extras & unscheduled</p>
-                  <ul className="mt-1.5 space-y-1">{r.ideas.map((it, j) => <li key={j} className="text-sm text-ink">{it.title}</li>)}</ul>
+                  <ul className="mt-1.5 space-y-1">{r.ideas.map((it, j) => <li key={j} className="text-sm text-ink">{it.title}<KindTag item={it} /></li>)}</ul>
                 </li>
               )}
             </ol>

@@ -2,10 +2,15 @@ const express = require('express');
 const router = express.Router();
 const tourController = require('../controllers/tourController');
 const authAdmin = require('../middleware/authAdmin');
+const optionalAdmin = require('../middleware/optionalAdmin');
+const objectIdParam = require('../middleware/objectIdParam');
 const { uploadArray } = require('../middleware/upload');
 
-router.get('/', tourController.getTours);
-router.get('/:id', tourController.getTour);
+router.param('id', objectIdParam);
+
+// Public reads show live tours only; admins (optionalAdmin) also see hidden ones.
+router.get('/', optionalAdmin, tourController.getTours);
+router.get('/:id', optionalAdmin, tourController.getTour);
 router.post('/', authAdmin, uploadArray('gallery', 10), tourController.createTour);
 router.put('/:id', authAdmin, uploadArray('gallery', 10), tourController.updateTour);
 router.delete('/:id', authAdmin, tourController.deleteTour);

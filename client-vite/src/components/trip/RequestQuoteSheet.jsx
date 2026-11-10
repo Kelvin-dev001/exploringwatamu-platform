@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Send, ShieldCheck } from 'lucide-react';
@@ -9,6 +9,7 @@ import { useVibeProfile } from '@/context/VibeProfileContext';
 import { toRequestPayload, itemCount } from '@/lib/trip';
 import { Sheet } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { SlowNotice } from '@/components/listing/States';
 
 const COUNTRIES = ['Kenya', 'United Kingdom', 'Germany', 'Italy', 'United States', 'Netherlands', 'France', 'Switzerland', 'Uganda', 'Tanzania'];
 
@@ -37,6 +38,11 @@ export default function RequestQuoteSheet({ open, onOpenChange, residency }) {
   const [failure, setFailure] = useState('');
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  // The session can finish loading after the planner mounts: fill in what's still empty.
+  useEffect(() => {
+    if (open && user) setForm((f) => ({ ...f, name: f.name || user.name || '', email: f.email || user.email || '' }));
+  }, [open, user]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -108,6 +114,7 @@ export default function RequestQuoteSheet({ open, onOpenChange, residency }) {
             </label>
           </div>
           {failure && <p className="rounded-xl bg-coral-50 p-3 text-sm font-semibold text-coral-700">{failure}</p>}
+          {sending && <SlowNotice />}
         </div>
         <div className="sticky bottom-0 space-y-3 border-t border-sand-200 bg-sand-50 px-6 py-5">
           <Button type="submit" size="lg" className="w-full" disabled={sending}>

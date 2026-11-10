@@ -1,5 +1,7 @@
 const Tour = require('../models/Tour');
 const { parseDiscovery } = require('../constants/discovery');
+const { activeFilter, canSee } = require('../services/listingVisibility');
+const { nextGallery, uploadedPaths } = require('../services/gallery');
 
 // Helper to parse JSON strings from FormData
 const parseJSON = (val, fallback = []) => {
@@ -10,10 +12,9 @@ const parseJSON = (val, fallback = []) => {
 
 exports.getTours = async (req, res) => {
   try {
-    const { name, active, vehicleId, page = 1, limit = 10 } = req.query;
-    let query = {};
+    const { name, vehicleId, page = 1, limit = 10 } = req.query;
+    let query = activeFilter(req);
     if (name) query.name = { $regex: name, $options: "i" };
-    if (active !== undefined) query.active = active === "true" || active === true;
     if (vehicleId) query.vehicles = vehicleId;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const tours = await Tour.find(query).populate('vehicles').skip(skip).limit(parseInt(limit));
@@ -25,7 +26,7 @@ exports.getTours = async (req, res) => {
 exports.getTour = async (req, res) => {
   try {
     const tour = await Tour.findById(req.params.id).populate('vehicles');
-    if (!tour) return res.status(404).json({ error: 'Not found' });
+    if (!tour || !canSee(req, tour)) return res.status(404).json({ error: 'Not found' });
     res.json(tour);
   } catch (err) { res.status(500).json({ error: 'Failed to fetch tour' }); }
 };
@@ -63,8 +64,9 @@ exports.createTour = async (req, res) => {
 
 exports.updateTour = async (req, res) => {
   try {
-    const newGalleryUrls = req.files ? req.files.map(f => f.path) : [];
-    const existingGallery = parseJSON(req.body.existingGallery);
+    const current = await Tour.findById(req.params.id).select('gallery');
+    if (!current) return res.status(404).json({ error: 'Not found' });
+    const gallery = nextGallery(current.gallery, req.body.existingGallery, uploadedPaths(req.files));
 
     // FIX: Same filter for update
     const vehicleIds = parseJSON(req.body.vehicles).filter(id => id && id.trim() !== '');
@@ -77,7 +79,7 @@ exports.updateTour = async (req, res) => {
       highlights: parseJSON(req.body.highlights),
       whatToCarry: parseJSON(req.body.whatToCarry),
       vehicles: vehicleIds,
-      gallery: [...existingGallery, ...newGalleryUrls],
+      ...(gallery ? { gallery } : {}),
       priceResidentAdult: Number(req.body.priceResidentAdult),
       priceResidentChild: Number(req.body.priceResidentChild),
       priceForeignerAdult: Number(req.body.priceForeignerAdult),

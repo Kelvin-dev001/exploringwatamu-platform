@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const vehicleController = require('../controllers/vehicleController');
 const authAdmin = require('../middleware/authAdmin');
+const objectIdParam = require('../middleware/objectIdParam');
 const { uploadSingle } = require('../middleware/upload');
+
+router.param('id', objectIdParam);
 
 router.get('/', vehicleController.getVehicles);
 router.get('/:id', vehicleController.getVehicle);

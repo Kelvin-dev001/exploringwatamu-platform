@@ -72,18 +72,25 @@ router.post('/google', authLimiter, async (req, res) => {
     const { credential } = req.body || {};
     if (!credential) return res.status(400).json({ error: 'Google credential is required.' });
     if (!config.googleClientId) {
-      return res.status(500).json({ error: 'Google Sign-In is not configured.' });
+      return res.status(503).json({ error: 'Google Sign-In is not configured.' });
     }
 
-    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    const googleRes = await axios.get('https://oauth2.googleapis.com/tokeninfo', { params: { id_token: String(credential) }, timeout: 10000 });
     const payload = googleRes.data;
 
     if (payload.aud !== config.googleClientId) {
       return res.status(401).json({ error: 'Invalid Google token audience.' });
     }
 
-    const { sub: googleId, email, name, picture: avatar } = payload;
+    const { sub: googleId, name, picture: avatar } = payload;
+    const email = payload.email ? String(payload.email).toLowerCase().trim() : '';
     if (!email || !googleId) return res.status(400).json({ error: 'Invalid Google token payload.' });
+    // Only trust the email for linking or creating an account when Google has
+    // verified it; otherwise anyone could claim an existing account's address.
+    // tokeninfo returns the flag as the string "true".
+    if (String(payload.email_verified) !== 'true') {
+      return res.status(401).json({ error: 'Your Google email address isn’t verified yet. Verify it with Google, or sign in with email and password.' });
+    }
 
     let user = await User.findOne({ googleId });
     if (!user) {

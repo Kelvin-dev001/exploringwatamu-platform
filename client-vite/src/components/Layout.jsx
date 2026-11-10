@@ -242,7 +242,12 @@ export default function Layout({ children }) {
   useEffect(() => {
     if (onboardingOpen) setOnboardingLoaded(true);
   }, [onboardingOpen]);
-  useEffect(() => window.scrollTo(0, 0), [location.pathname]);
+  // Block body on purpose: newer browsers (Chrome 155+) make scrollTo() return a
+  // Promise, and an effect that returns one hands React a non-function "cleanup"
+  // that throws on the next navigation and blanks the whole page.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="flex min-h-screen flex-col bg-sand-50">

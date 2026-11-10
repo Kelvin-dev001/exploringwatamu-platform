@@ -212,20 +212,26 @@ export function Confirm({ open, onOpenChange, title, children, confirmLabel = 'C
 const ToastCtx = createContext(() => {});
 export const useToast = () => useContext(ToastCtx);
 
+const TOAST_TONES = {
+  ok: 'bg-ink text-canvas',
+  warn: 'border border-warn/30 bg-warn-soft text-warn', // something the team must act on — stays up longer
+  danger: 'bg-danger text-white',
+};
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const push = useCallback((message, tone = 'ok') => {
     const id = Math.random().toString(36).slice(2);
     setToasts((t) => [...t, { id, message, tone }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), tone === 'warn' ? 9000 : 4000);
   }, []);
   return (
     <ToastCtx.Provider value={push}>
       {children}
       <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:items-end lg:pr-6" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={cn('pointer-events-auto flex max-w-sm items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-pop animate-slide-up', t.tone === 'danger' ? 'bg-danger text-white' : 'bg-ink text-canvas')}>
-            {t.tone === 'danger' ? <AlertTriangle className="size-4" /> : <CheckCircle2 className="size-4" />}
+          <div key={t.id} className={cn('pointer-events-auto flex max-w-sm items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-pop animate-slide-up', TOAST_TONES[t.tone] || TOAST_TONES.ok)}>
+            {t.tone === 'ok' ? <CheckCircle2 className="size-4 shrink-0" /> : <AlertTriangle className="size-4 shrink-0" />}
             {t.message}
           </div>
         ))}

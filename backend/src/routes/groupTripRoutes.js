@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const groupTripController = require('../controllers/groupTripController');
 const authAdmin = require('../middleware/authAdmin');
 const validate = require('../middleware/validate');
+const objectIdParam = require('../middleware/objectIdParam');
 const { uploadFields } = require('../middleware/upload');
 const { createGroupTripSchema, updateGroupTripSchema } = require('../validators/groupTripValidators');
 
@@ -28,6 +29,8 @@ const tripImages = uploadFields([
   { name: 'heroImage', maxCount: 1 },
   { name: 'gallery', maxCount: 10 },
 ]);
+
+router.param('id', objectIdParam);
 
 // Public routes
 router.get('/', publicLimiter, groupTripController.getPublishedGroupTrips);

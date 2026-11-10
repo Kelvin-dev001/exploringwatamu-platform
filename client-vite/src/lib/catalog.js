@@ -121,6 +121,8 @@ export function loadCatalog({ force = false } = {}) {
       cache = null;
       throw new Error('Could not load experiences');
     }
+    // Show what arrived, but don't keep a half catalogue for the whole visit.
+    if (tours.status === 'rejected' || trips.status === 'rejected') cache = null;
     const tourList = tours.status === 'fulfilled' ? tours.value.data?.data ?? tours.value.data ?? [] : [];
     const tripList = trips.status === 'fulfilled' ? trips.value.data ?? [] : [];
     return [
@@ -160,9 +162,12 @@ export async function loadExperience(id) {
 /* ---------- Pricing ---------- */
 
 const RESIDENCY_KEY = 'ew.residency.v1';
-/** International-first: show non-resident prices unless the visitor says otherwise. */
+/**
+ * International-first: show non-resident prices unless the visitor says otherwise.
+ * Anything else in storage counts as non-resident — the quote API only accepts these two.
+ */
 export function getResidency() {
-  return safeStorage.get(RESIDENCY_KEY, 'nonResident');
+  return safeStorage.get(RESIDENCY_KEY) === 'resident' ? 'resident' : 'nonResident';
 }
 export function setResidency(value) {
   safeStorage.set(RESIDENCY_KEY, value);

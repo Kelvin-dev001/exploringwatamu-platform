@@ -3,6 +3,7 @@
 const TripRequest = require('../models/TripRequest');
 const { paginate } = require('../services/bookingService');
 const { notifyTripRequested, notifyQuoteSent, notifyStatus } = require('../services/tripRequestNotifications');
+const { deliveryFor } = require('../services/notifications/delivery');
 
 // Fire-and-forget: notifications must never delay or fail the response.
 const later = (fn) => setImmediate(() => fn().catch((err) => console.error('[trip-request]', err.message)));
@@ -35,16 +36,19 @@ exports.create = async (req, res, next) => {
       history: [{ status: 'new', by: 'traveller' }],
     });
     later(() => notifyTripRequested(request));
-    res.status(201).json(publicView(request));
+    // delivery tells the confirmation page whether to promise an email.
+    res.status(201).json({ ...publicView(request), delivery: deliveryFor(request.contact) });
   } catch (err) {
     next(err);
   }
 };
 
-// GET /api/trip-requests/mine — signed-in traveller's requests
+// GET /api/trip-requests/mine — signed-in traveller's requests, plus requests
+// they sent as a guest with the same email (so creating an account afterwards
+// shows them). A request made while signed in to another account stays there.
 exports.listMine = async (req, res, next) => {
   try {
-    const list = await TripRequest.find({ $or: [{ user: req.user._id }, { 'contact.email': req.user.email }] })
+    const list = await TripRequest.find({ $or: [{ user: req.user._id }, { user: null, 'contact.email': req.user.email }] })
       .sort({ createdAt: -1 })
       .limit(50);
     res.json(list.map(publicView));
@@ -98,7 +102,7 @@ exports.sendQuote = async (req, res, next) => {
     await r.save();
 
     later(() => notifyQuoteSent(r));
-    res.json(r);
+    res.json({ ...r.toJSON(), delivery: deliveryFor(r.contact) });
   } catch (err) {
     next(err);
   }
@@ -117,8 +121,10 @@ exports.updateStatus = async (req, res, next) => {
     r.status = status;
     r.history.push({ status, by: 'admin', note });
     await r.save();
-    if (notify) later(() => notifyStatus(r, status));
-    res.json(r);
+    // Only accepted/declined/cancelled send a status email (see notifyStatus).
+    const emails = notify && ['accepted', 'declined', 'cancelled'].includes(status);
+    if (emails) later(() => notifyStatus(r, status));
+    res.json({ ...r.toJSON(), delivery: emails ? deliveryFor({ email: r.contact.email }) : null });
   } catch (err) {
     next(err);
   }

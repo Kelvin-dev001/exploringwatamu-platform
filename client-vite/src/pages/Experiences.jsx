@@ -11,6 +11,7 @@ import { Sheet } from '@/components/ui/sheet';
 import ExperienceCard from '@/components/experience/ExperienceCard';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import Seo from '@/components/seo/Seo';
+import { SlowNotice } from '@/components/listing/States';
 
 import { ArchBand } from '@/components/brand/Patterns';
 import { cn } from '@/lib/utils';
@@ -261,10 +262,13 @@ export default function Experiences() {
               </Button>
             </div>
           ) : loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }, (_, i) => (
-                <CardSkeleton key={i} />
-              ))}
+            <div role="status" aria-label="Loading experiences">
+              <SlowNotice className="mb-6" />
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <CardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           ) : results.length === 0 ? (
             <div className="rounded-[var(--radius-card)] border border-dashed border-sand-300 bg-sand-100/60 p-10 text-center">

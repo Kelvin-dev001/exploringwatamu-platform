@@ -10,6 +10,7 @@ const {
   notifyBookingConfirmed,
   notifyBookingCancelled,
 } = require('../services/bookingNotifications');
+const { deliveryFor } = require('../services/notifications/delivery');
 
 // Fire-and-forget email helper: never let an email failure break the request.
 function sendAsync(promiseFactory, label) {
@@ -73,7 +74,7 @@ exports.joinTrip = async (req, res, next) => {
     // Email the traveller (with quotation) and notify admin — non-blocking.
     sendAsync(() => notifyBookingRequested(booking, trip), 'booking-requested');
 
-    res.status(201).json({ booking, amountPaid });
+    res.status(201).json({ booking, amountPaid, delivery: deliveryFor(booking) });
   } catch (err) {
     next(err);
   }
@@ -86,27 +87,39 @@ exports.confirmBooking = async (req, res, next) => {
     const { bookingId, mpesaReceiptNumber } = req.body || {};
     if (!bookingId) return res.status(400).json({ error: 'bookingId is required.' });
 
-    const booking = await GroupBooking.findById(bookingId);
-    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
-    if (booking.status === 'confirmed') return res.status(400).json({ error: 'Booking already confirmed.' });
-    if (booking.status === 'cancelled') return res.status(400).json({ error: 'Cannot confirm a cancelled booking.' });
+    // Move pending -> confirmed atomically first, so a double tap (or two admins)
+    // can only confirm — and take a seat for — a booking once.
+    const booking = await GroupBooking.findOneAndUpdate(
+      { _id: bookingId, status: 'pending' },
+      { $set: { status: 'confirmed' } },
+      { new: true }
+    );
+    if (!booking) {
+      const current = await GroupBooking.findById(bookingId).select('status');
+      if (!current) return res.status(404).json({ error: 'Booking not found.' });
+      return res.status(400).json({ error: current.status === 'cancelled' ? 'Cannot confirm a cancelled booking.' : 'Booking already confirmed.' });
+    }
 
-    // Atomically claim a slot only if capacity remains.
+    // Atomically claim a slot only if capacity remains; otherwise undo the confirm.
     const trip = await GroupTrip.findOneAndUpdate(
       { _id: booking.trip, $expr: { $lt: ['$confirmedParticipants', '$maxParticipants'] } },
       { $inc: { confirmedParticipants: 1 } },
       { new: true }
     );
-    if (!trip) return res.status(400).json({ error: 'This trip is full.' });
+    if (!trip) {
+      await GroupBooking.updateOne({ _id: booking._id, status: 'confirmed' }, { $set: { status: 'pending' } });
+      return res.status(400).json({ error: 'This trip is full.' });
+    }
 
     if (trip.confirmedParticipants >= trip.maxParticipants && trip.status !== 'full') {
       trip.status = 'full';
       await trip.save();
     }
 
-    booking.status = 'confirmed';
-    if (mpesaReceiptNumber) booking.mpesaReceiptNumber = mpesaReceiptNumber;
-    await booking.save();
+    if (mpesaReceiptNumber) {
+      booking.mpesaReceiptNumber = mpesaReceiptNumber;
+      await booking.save();
+    }
 
     // Award referral points to the referrer, if any.
     if (booking.referredBy) {
@@ -134,7 +147,7 @@ exports.confirmBooking = async (req, res, next) => {
     // Email the traveller a confirmation + receipt — non-blocking.
     sendAsync(() => notifyBookingConfirmed(booking, trip), 'booking-confirmed');
 
-    res.json({ booking });
+    res.json({ booking, delivery: deliveryFor(booking) });
   } catch (err) {
     next(err);
   }
@@ -145,17 +158,22 @@ exports.confirmBooking = async (req, res, next) => {
 exports.cancelBookingAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const booking = await GroupBooking.findById(id).populate('trip');
-    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
-    if (booking.status === 'cancelled') {
+    // Cancel atomically and read the status it had, so two cancels of one
+    // confirmed booking can't release its seat twice.
+    const before = await GroupBooking.findOneAndUpdate(
+      { _id: id, status: { $ne: 'cancelled' } },
+      { $set: { status: 'cancelled' } },
+      { new: false }
+    );
+    if (!before) {
+      const exists = await GroupBooking.exists({ _id: id });
+      if (!exists) return res.status(404).json({ error: 'Booking not found.' });
       return res.status(400).json({ error: 'Booking is already cancelled.' });
     }
 
+    const booking = await GroupBooking.findById(id).populate('trip');
     const tripDoc = booking.trip; // populated document (for the email)
-    const wasConfirmed = booking.status === 'confirmed';
-
-    booking.status = 'cancelled';
-    await booking.save();
+    const wasConfirmed = before.status === 'confirmed';
 
     // Release the seat and re-open a full trip if it was confirmed.
     if (wasConfirmed && tripDoc) {
@@ -172,7 +190,7 @@ exports.cancelBookingAdmin = async (req, res, next) => {
 
     sendAsync(() => notifyBookingCancelled(booking, tripDoc), 'booking-cancelled');
 
-    res.json({ booking });
+    res.json({ booking, delivery: deliveryFor(booking) });
   } catch (err) {
     next(err);
   }

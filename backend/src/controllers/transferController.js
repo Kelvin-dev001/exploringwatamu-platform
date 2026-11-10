@@ -1,10 +1,10 @@
 const Transfer = require('../models/Transfer');
-const Vehicle = require('../models/Vehicle');
+const { activeFilter, canSee } = require('../services/listingVisibility');
 
 exports.getTransfers = async (req, res) => {
   try {
     const { search, route, vehicleId, page = 1, limit = 10 } = req.query;
-    const query = { active: true };
+    const query = activeFilter(req);
 
     if (search) {
       query.$or = [
@@ -33,7 +33,7 @@ exports.getTransfers = async (req, res) => {
 exports.getTransfer = async (req, res) => {
   try {
     const transfer = await Transfer.findById(req.params.id).populate('vehicle');
-    if (!transfer) return res.status(404).json({ error: 'Not found' });
+    if (!transfer || !canSee(req, transfer)) return res.status(404).json({ error: 'Not found' });
     res.json(transfer);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch transfer' });

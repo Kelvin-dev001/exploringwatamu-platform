@@ -1,21 +1,15 @@
 const PropertyForSale = require('../models/PropertyForSale');
-
-// Helper to parse JSON strings from FormData
-const parseJSON = (val, fallback = []) => {
-  if (Array.isArray(val)) return val;
-  if (typeof val === 'string') { try { return JSON.parse(val); } catch { return fallback; } }
-  return fallback;
-};
+const { activeFilter, canSee } = require('../services/listingVisibility');
+const { nextGallery } = require('../services/gallery');
 
 // List properties with filter, pagination, and type
 exports.getProperties = async (req, res) => {
   try {
-    const { type, name, location, active, page = 1, limit = 10 } = req.query;
-    let query = {};
+    const { type, name, location, page = 1, limit = 10 } = req.query;
+    let query = activeFilter(req);
     if (type) query.type = type;
     if (name) query.name = { $regex: name, $options: "i" };
     if (location) query.location = { $regex: location, $options: "i" };
-    if (active !== undefined) query.active = active === "true" || active === true;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const properties = await PropertyForSale.find(query)
       .skip(skip)
@@ -36,7 +30,7 @@ exports.getProperties = async (req, res) => {
 exports.getProperty = async (req, res) => {
   try {
     const property = await PropertyForSale.findById(req.params.id);
-    if (!property) return res.status(404).json({ error: 'Not found' });
+    if (!property || !canSee(req, property)) return res.status(404).json({ error: 'Not found' });
     res.json(property);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch property' });
@@ -81,8 +75,10 @@ exports.updateProperty = async (req, res) => {
     const newDocumentUrls = req.files && req.files.documents
       ? req.files.documents.map(f => f.path)
       : [];
-    const existingPictures = parseJSON(req.body.existingPictures);
-    const existingDocuments = parseJSON(req.body.existingDocuments);
+    const current = await PropertyForSale.findById(req.params.id).select('pictures documents');
+    if (!current) return res.status(404).json({ error: 'Not found' });
+    const pictures = nextGallery(current.pictures, req.body.existingPictures, newPictureUrls);
+    const documents = nextGallery(current.documents, req.body.existingDocuments, newDocumentUrls);
 
     const propertyData = {
       type: req.body.type,
@@ -90,8 +86,8 @@ exports.updateProperty = async (req, res) => {
       description: req.body.description,
       location: req.body.location,
       price: Number(req.body.price),
-      pictures: [...existingPictures, ...newPictureUrls],
-      documents: [...existingDocuments, ...newDocumentUrls],
+      ...(pictures ? { pictures } : {}),
+      ...(documents ? { documents } : {}),
       active: req.body.active === 'true' || req.body.active === true,
     };
     const property = await PropertyForSale.findByIdAndUpdate(
