@@ -115,7 +115,7 @@ function SortableItem({ itemKey }) {
 
 /* ---------- Lanes ---------- */
 
-function Lane({ id, children, className, empty }) {
+function Lane({ id, className, empty }) {
   const { trip } = useTrip();
   const { setNodeRef, isOver } = useDroppable({ id });
   const keys = laneItems(trip, id);

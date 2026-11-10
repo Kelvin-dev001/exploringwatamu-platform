@@ -14,7 +14,6 @@ import Seo from '@/components/seo/Seo';
 import { SlowNotice } from '@/components/listing/States';
 
 import { ArchBand } from '@/components/brand/Patterns';
-import { cn } from '@/lib/utils';
 
 const SORTS = [
   { id: 'match', label: 'Best match' },
