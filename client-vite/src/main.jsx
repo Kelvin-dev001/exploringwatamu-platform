@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import axios from 'axios';
 import App from './App.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { installRetry } from './lib/http.js';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { VibeProfileProvider } from './context/VibeProfileContext.jsx';
@@ -19,16 +20,18 @@ installRetry(axios);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <VibeProfileProvider>
-        <TripProvider>
-          <BrowserRouter>
-            <MotionConfig reducedMotion="user">
-              <App />
-            </MotionConfig>
-          </BrowserRouter>
-        </TripProvider>
-      </VibeProfileProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <VibeProfileProvider>
+          <TripProvider>
+            <BrowserRouter>
+              <MotionConfig reducedMotion="user">
+                <App />
+              </MotionConfig>
+            </BrowserRouter>
+          </TripProvider>
+        </VibeProfileProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
