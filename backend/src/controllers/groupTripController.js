@@ -11,7 +11,7 @@ const parseJSON = (val, fallback = []) => {
 };
 
 // POST / — Create group trip (admin)
-exports.createGroupTrip = async (req, res) => {
+exports.createGroupTrip = async (req, res, next) => {
   try {
     const heroFile = req.files && req.files['heroImage'] ? req.files['heroImage'][0] : null;
     const galleryFiles = req.files && req.files['gallery'] ? req.files['gallery'] : [];
@@ -50,7 +50,7 @@ exports.createGroupTrip = async (req, res) => {
 };
 
 // PUT /:id — Update group trip (admin)
-exports.updateGroupTrip = async (req, res) => {
+exports.updateGroupTrip = async (req, res, next) => {
   try {
     const heroFile = req.files && req.files['heroImage'] ? req.files['heroImage'][0] : null;
     const current = await GroupTrip.findById(req.params.id).select('gallery confirmedParticipants');
@@ -99,65 +99,65 @@ exports.updateGroupTrip = async (req, res) => {
 };
 
 // PUT /:id/publish — Set status to 'published' (admin)
-exports.publishGroupTrip = async (req, res) => {
+exports.publishGroupTrip = async (req, res, next) => {
   try {
     const trip = await GroupTrip.findByIdAndUpdate(req.params.id, { status: 'published' }, { new: true });
     if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
     res.json(trip);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to publish group trip.' });
+    next(err);
   }
 };
 
 // PUT /:id/close — Set status to 'closed' (admin)
-exports.closeGroupTrip = async (req, res) => {
+exports.closeGroupTrip = async (req, res, next) => {
   try {
     const trip = await GroupTrip.findByIdAndUpdate(req.params.id, { status: 'closed' }, { new: true });
     if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
     res.json(trip);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to close group trip.' });
+    next(err);
   }
 };
 
 // DELETE /:id (admin)
-exports.deleteGroupTrip = async (req, res) => {
+exports.deleteGroupTrip = async (req, res, next) => {
   try {
     const trip = await GroupTrip.findByIdAndDelete(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
     res.json({ message: 'Group trip deleted.' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete group trip.' });
+    next(err);
   }
 };
 
 // GET /admin/all — All trips for admin
-exports.getAllGroupTripsAdmin = async (req, res) => {
+exports.getAllGroupTripsAdmin = async (req, res, next) => {
   try {
     const trips = await GroupTrip.find().sort({ createdAt: -1 });
     res.json(trips);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch group trips.' });
+    next(err);
   }
 };
 
 // GET / — Published group trips (public)
-exports.getPublishedGroupTrips = async (req, res) => {
+exports.getPublishedGroupTrips = async (req, res, next) => {
   try {
     const trips = await GroupTrip.find({ status: { $in: ['published', 'full'] } }).sort({ startDate: 1 });
     res.json(trips);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch group trips.' });
+    next(err);
   }
 };
 
 // GET /:slug — Single trip by slug (public, must be published or full)
-exports.getGroupTripBySlug = async (req, res) => {
+exports.getGroupTripBySlug = async (req, res, next) => {
   try {
     const trip = await GroupTrip.findOne({ slug: req.params.slug, status: { $in: ['published', 'full'] } });
     if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
     res.json(trip);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch group trip.' });
+    next(err);
   }
 };

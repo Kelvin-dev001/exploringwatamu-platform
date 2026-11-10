@@ -123,11 +123,28 @@ describe('Admin group trip create (multipart, Cloudinary configured)', () => {
   });
 
   it('returns 400 when Cloudinary rejects the file', async () => {
+    // Named and typed as a PNG, so it passes our check; Cloudinary looks at the
+    // real content (a GIF) and refuses it.
     const res = await createTrip()
-      .attach('gallery', PNG, { filename: 'cloudinary-400.gif', contentType: 'image/gif' });
+      .attach('gallery', PNG, { filename: 'cloudinary-400.png', contentType: 'image/png' });
     expect(res.status).toBe(400);
     expect(res.body).toMatchObject({ code: 'UPLOAD_REJECTED', field: 'gallery' });
     expect(res.body.error).toMatch(/was rejected: Image file format gif not allowed/);
+  });
+
+  it('refuses a file that is not a supported image before uploading it', async () => {
+    for (const [filename, contentType] of [['animation.gif', 'image/gif'], ['logo.svg', 'image/svg+xml'], ['notes.pdf', 'application/pdf']]) {
+      const res = await createTrip().attach('gallery', PNG, { filename, contentType });
+      expect(res.status).toBe(400);
+      expect(res.body).toMatchObject({ code: 'UPLOAD_TYPE', field: 'gallery' });
+      expect(res.body.error).toMatch(/not a supported image/);
+    }
+    expect(await GroupTrip.countDocuments()).toBe(0);
+  });
+
+  it('accepts a phone photo whose type the browser did not recognise (HEIC as octet-stream)', async () => {
+    const res = await createTrip().attach('gallery', PNG, { filename: 'IMG_0042.HEIC', contentType: 'application/octet-stream' });
+    expect(res.status).toBe(201);
   });
 
   it('returns 400 naming the field when an image is over the size limit', async () => {

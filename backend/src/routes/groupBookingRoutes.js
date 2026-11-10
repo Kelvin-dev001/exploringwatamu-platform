@@ -7,20 +7,20 @@ const authUser = require('../middleware/authUser');
 const authAdmin = require('../middleware/authAdmin');
 const validate = require('../middleware/validate');
 const { joinTripSchema } = require('../validators/groupBookingValidators');
-const { bookingLimiter, adminLimiter, publicReadLimiter } = require('../middleware/rateLimiters');
+const { bookingLimiter, sessionLimiter, adminLimiter, adminWriteLimiter, publicReadLimiter } = require('../middleware/rateLimiters');
 
 // Public
 router.get('/trip/:tripId/participants', publicReadLimiter, groupBookingController.getTripParticipants);
 
 // User (traveller submits a booking request + vibe data)
 router.post('/join', bookingLimiter, authUser, validate(joinTripSchema), groupBookingController.joinTrip);
-router.get('/my-bookings', bookingLimiter, authUser, groupBookingController.getMyBookings);
+router.get('/my-bookings', sessionLimiter, authUser, groupBookingController.getMyBookings);
 
 // Admin — confirming a booking is an admin action in the admin-approve flow
 // (payments are disabled). This also closes the prior hole where any user
 // could confirm any booking.
-router.post('/confirm', adminLimiter, authAdmin, groupBookingController.confirmBooking);
-router.put('/admin/:id/cancel', adminLimiter, authAdmin, groupBookingController.cancelBookingAdmin);
+router.post('/confirm', adminWriteLimiter, authAdmin, groupBookingController.confirmBooking);
+router.put('/admin/:id/cancel', adminWriteLimiter, authAdmin, groupBookingController.cancelBookingAdmin);
 router.get('/admin/all', adminLimiter, authAdmin, groupBookingController.getAllBookingsAdmin);
 router.get('/admin/trip/:tripId', adminLimiter, authAdmin, groupBookingController.getBookingsByTripAdmin);
 

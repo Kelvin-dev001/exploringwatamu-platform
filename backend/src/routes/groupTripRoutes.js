@@ -7,18 +7,11 @@ const validate = require('../middleware/validate');
 const objectIdParam = require('../middleware/objectIdParam');
 const { uploadFields } = require('../middleware/upload');
 const { createGroupTripSchema, updateGroupTripSchema } = require('../validators/groupTripValidators');
+const { adminLimiter, adminWriteLimiter } = require('../middleware/rateLimiters');
 
 const publicLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { error: 'Too many requests. Please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
   message: { error: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -38,10 +31,10 @@ router.get('/admin/all', adminLimiter, authAdmin, groupTripController.getAllGrou
 router.get('/:slug', publicLimiter, groupTripController.getGroupTripBySlug);
 
 // Admin routes (uploads run before validation: they parse the multipart body)
-router.post('/', adminLimiter, authAdmin, tripImages, validate(createGroupTripSchema), groupTripController.createGroupTrip);
-router.put('/:id/publish', adminLimiter, authAdmin, groupTripController.publishGroupTrip);
-router.put('/:id/close', adminLimiter, authAdmin, groupTripController.closeGroupTrip);
-router.put('/:id', adminLimiter, authAdmin, tripImages, validate(updateGroupTripSchema), groupTripController.updateGroupTrip);
-router.delete('/:id', adminLimiter, authAdmin, groupTripController.deleteGroupTrip);
+router.post('/', adminWriteLimiter, authAdmin, tripImages, validate(createGroupTripSchema), groupTripController.createGroupTrip);
+router.put('/:id/publish', adminWriteLimiter, authAdmin, groupTripController.publishGroupTrip);
+router.put('/:id/close', adminWriteLimiter, authAdmin, groupTripController.closeGroupTrip);
+router.put('/:id', adminWriteLimiter, authAdmin, tripImages, validate(updateGroupTripSchema), groupTripController.updateGroupTrip);
+router.delete('/:id', adminWriteLimiter, authAdmin, groupTripController.deleteGroupTrip);
 
 module.exports = router;

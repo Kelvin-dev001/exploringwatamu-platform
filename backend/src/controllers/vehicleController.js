@@ -1,25 +1,25 @@
 const Vehicle = require('../models/Vehicle');
 
-exports.getVehicles = async (req, res) => {
+exports.getVehicles = async (req, res, next) => {
   try {
     const vehicles = await Vehicle.find();
     res.json(vehicles);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch vehicles' });
+    next(err);
   }
 };
 
-exports.getVehicle = async (req, res) => {
+exports.getVehicle = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.findById(req.params.id);
     if (!vehicle) return res.status(404).json({ error: 'Not found' });
     res.json(vehicle);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch vehicle' });
+    next(err);
   }
 };
 
-exports.createVehicle = async (req, res) => {
+exports.createVehicle = async (req, res, next) => {
   try {
     // If multer processed a file, use its Cloudinary URL
     const imageUrl = req.file ? req.file.path : (req.body.image || '');
@@ -36,7 +36,7 @@ exports.createVehicle = async (req, res) => {
   }
 };
 
-exports.updateVehicle = async (req, res) => {
+exports.updateVehicle = async (req, res, next) => {
   try {
     const updateData = {
       name: req.body.name,
@@ -58,12 +58,12 @@ exports.updateVehicle = async (req, res) => {
   }
 };
 
-exports.deleteVehicle = async (req, res) => {
+exports.deleteVehicle = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.findByIdAndDelete(req.params.id);
     if (!vehicle) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Vehicle deleted' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete vehicle' });
+    next(err);
   }
 };

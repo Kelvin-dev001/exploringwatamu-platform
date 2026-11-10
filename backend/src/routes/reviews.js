@@ -11,17 +11,17 @@ const reviewLimiter = rateLimit({
 });
 
 // Get all reviews for an accommodation (public)
-router.get('/:accommodationId', reviewLimiter, async (req, res) => {
+router.get('/:accommodationId', reviewLimiter, async (req, res, next) => {
   try {
     const reviews = await Review.find({ accommodationId: req.params.accommodationId }).sort({ createdAt: -1 });
     res.json(reviews);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch reviews.' });
+    next(err);
   }
 });
 
 // Add a review (Authenticated user)
-router.post('/', reviewLimiter, authUser, async (req, res) => {
+router.post('/', reviewLimiter, authUser, async (req, res, next) => {
   const { accommodationId, rating, text } = req.body;
   if (!accommodationId || !rating || !text || rating < 1 || rating > 5 || text.trim().length === 0) {
     return res.status(400).json({ error: 'Accommodation ID, rating (1-5), and non-empty text required.' });
@@ -37,12 +37,12 @@ router.post('/', reviewLimiter, authUser, async (req, res) => {
     await review.save();
     res.status(201).json(review);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to save review.' });
+    next(err);
   }
 });
 
 // Edit review (Authenticated user, Own Review Only)
-router.put('/:id', reviewLimiter, authUser, async (req, res) => {
+router.put('/:id', reviewLimiter, authUser, async (req, res, next) => {
   try {
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Review not found.' });
@@ -61,12 +61,12 @@ router.put('/:id', reviewLimiter, authUser, async (req, res) => {
     await review.save();
     res.json(review);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update review.' });
+    next(err);
   }
 });
 
 // Delete review (Authenticated user, Own Review Only)
-router.delete('/:id', reviewLimiter, authUser, async (req, res) => {
+router.delete('/:id', reviewLimiter, authUser, async (req, res, next) => {
   try {
     const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ error: 'Review not found.' });
@@ -76,7 +76,7 @@ router.delete('/:id', reviewLimiter, authUser, async (req, res) => {
     await review.deleteOne();
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete review.' });
+    next(err);
   }
 });
 

@@ -5,6 +5,7 @@ const { paginate } = require('../services/bookingService');
 const { notifyTripRequested, notifyQuoteSent, notifyStatus } = require('../services/tripRequestNotifications');
 const { deliveryFor } = require('../services/notifications/delivery');
 const logger = require('../services/logger');
+const { contains } = require('../services/listQuery');
 
 // Fire-and-forget: notifications must never delay or fail the response.
 const later = (fn) => setImmediate(() => fn().catch((err) => logger.error('trip request notification failed', logger.errorFields(err))));
@@ -64,10 +65,8 @@ exports.adminList = async (req, res, next) => {
     const { status, q, page = 1, limit = 20 } = req.query;
     const query = {};
     if (status && TripRequest.STATUSES.includes(status)) query.status = status;
-    if (q && typeof q === 'string') {
-      const safe = q.trim().slice(0, 80).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.$or = [{ reference: new RegExp(safe, 'i') }, { 'contact.name': new RegExp(safe, 'i') }, { 'contact.email': new RegExp(safe, 'i') }];
-    }
+    const match = contains(q);
+    if (match) query.$or = [{ reference: match }, { 'contact.name': match }, { 'contact.email': match }];
     const result = await paginate(TripRequest, query, { page, limit });
     const counts = await TripRequest.aggregate([{ $group: { _id: '$status', n: { $sum: 1 } } }]);
     res.json({ ...result, counts: Object.fromEntries(counts.map((c) => [c._id, c.n])) });
@@ -134,8 +133,7 @@ exports.updateStatus = async (req, res, next) => {
 // PUT /api/trip-requests/:id/notes — admin-only internal notes
 exports.updateNotes = async (req, res, next) => {
   try {
-    const adminNotes = typeof req.body.adminNotes === 'string' ? req.body.adminNotes.slice(0, 4000) : '';
-    const r = await TripRequest.findByIdAndUpdate(req.params.id, { adminNotes }, { new: true });
+    const r = await TripRequest.findByIdAndUpdate(req.params.id, { adminNotes: req.body.adminNotes }, { new: true });
     if (!r) return res.status(404).json({ error: 'Trip request not found' });
     res.json(r);
   } catch (err) {

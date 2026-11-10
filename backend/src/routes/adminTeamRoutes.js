@@ -4,6 +4,7 @@ const express = require('express');
 const { z } = require('zod');
 const Admin = require('../models/Admin');
 const validate = require('../middleware/validate');
+const { signAdminToken } = require('../services/tokens');
 
 const router = express.Router();
 
@@ -51,14 +52,17 @@ router.post('/', validate(createSchema), async (req, res, next) => {
   }
 });
 
-// PUT /api/admin/team/:id/password — set a new password (yours or a colleague's)
+// PUT /api/admin/team/:id/password — set a new password (yours or a colleague's).
+// Ends that admin's other sessions (tokenVersion). Changing your own returns a
+// fresh token so this session carries on.
 router.put('/:id/password', validate(passwordSchema), async (req, res, next) => {
   try {
     const admin = await Admin.findById(req.params.id);
     if (!admin) return res.status(404).json({ error: 'Admin not found.' });
     await admin.setPassword(req.body.password);
     await admin.save();
-    res.json({ ok: true });
+    const isYou = String(admin._id) === String(req.admin.id);
+    res.json({ ok: true, ...(isYou ? { token: signAdminToken(admin) } : {}) });
   } catch (err) {
     next(err);
   }
@@ -80,10 +84,15 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const admin = await Admin.findById(req.params.id);
     if (!admin) return res.status(404).json({ error: 'Admin not found.' });
-    if ((await Admin.countDocuments()) <= 1) {
-      return res.status(409).json({ error: 'You can’t remove the last admin. Add someone else first.' });
-    }
+    const lastAdmin = { error: 'You can’t remove the last admin. Add someone else first.' };
+    if ((await Admin.countDocuments()) <= 1) return res.status(409).json(lastAdmin);
     await admin.deleteOne();
+    // Two admins removing each other at the same moment would both pass the
+    // check above: if that just removed the last one, put it back.
+    if ((await Admin.countDocuments()) === 0) {
+      await Admin.collection.insertOne(admin.toObject({ depopulate: true }));
+      return res.status(409).json(lastAdmin);
+    }
     res.json({ ok: true, removedYourself: String(admin._id) === String(req.admin.id) });
   } catch (err) {
     next(err);

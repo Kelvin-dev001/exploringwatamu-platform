@@ -1,46 +1,39 @@
 const Transfer = require('../models/Transfer');
 const { activeFilter, canSee } = require('../services/listingVisibility');
+const { contains, pageParams, pageOf } = require('../services/listQuery');
 
-exports.getTransfers = async (req, res) => {
+exports.getTransfers = async (req, res, next) => {
   try {
-    const { search, route, vehicleId, page = 1, limit = 10 } = req.query;
+    const { search, route, vehicleId } = req.query;
+    const paging = pageParams(req.query);
     const query = activeFilter(req);
 
-    if (search) {
-      query.$or = [
-        { route: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
-    }
+    const match = contains(search);
+    if (match) query.$or = [{ route: match }, { description: match }];
     if (route) query.route = route;
     if (vehicleId) query.vehicle = vehicleId;
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const transfers = await Transfer.find(query).populate('vehicle').skip(skip).limit(parseInt(limit));
-    const total = await Transfer.countDocuments(query);
-
-    res.json({
-      data: transfers,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      total
-    });
+    const [transfers, total] = await Promise.all([
+      Transfer.find(query).populate('vehicle').skip(paging.skip).limit(paging.limit),
+      Transfer.countDocuments(query),
+    ]);
+    res.json(pageOf(transfers, total, paging));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch transfers' });
+    next(err);
   }
 };
 
-exports.getTransfer = async (req, res) => {
+exports.getTransfer = async (req, res, next) => {
   try {
     const transfer = await Transfer.findById(req.params.id).populate('vehicle');
     if (!transfer || !canSee(req, transfer)) return res.status(404).json({ error: 'Not found' });
     res.json(transfer);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch transfer' });
+    next(err);
   }
 };
 
-exports.createTransfer = async (req, res) => {
+exports.createTransfer = async (req, res, next) => {
   try {
     const transfer = new Transfer(req.body);
     await transfer.save();
@@ -50,7 +43,7 @@ exports.createTransfer = async (req, res) => {
   }
 };
 
-exports.updateTransfer = async (req, res) => {
+exports.updateTransfer = async (req, res, next) => {
   try {
     const transfer = await Transfer.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate('vehicle');
     if (!transfer) return res.status(404).json({ error: 'Not found' });
@@ -60,12 +53,12 @@ exports.updateTransfer = async (req, res) => {
   }
 };
 
-exports.deleteTransfer = async (req, res) => {
+exports.deleteTransfer = async (req, res, next) => {
   try {
     const transfer = await Transfer.findByIdAndDelete(req.params.id);
     if (!transfer) return res.status(404).json({ error: 'Not found' });
     res.json({ message: "Transfer deleted" });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete transfer' });
+    next(err);
   }
 };

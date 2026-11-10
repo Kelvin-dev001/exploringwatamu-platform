@@ -64,6 +64,13 @@ export const AdminAuthProvider = ({ children, initialAdmin, initialToken }) => {
 
   const logout = () => clear();
 
+  // The server signs a new token when you change your own password (the old
+  // one stops working at once): keep this session going with it.
+  const replaceToken = (next) => {
+    setToken(next);
+    localStorage.setItem('admin_token', next);
+  };
+
   // Any 401 from the API client means the session expired: sign out cleanly.
   useEffect(() => {
     const onExpired = () => {
@@ -75,7 +82,7 @@ export const AdminAuthProvider = ({ children, initialAdmin, initialToken }) => {
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ admin, setAdmin, token, loading, login, logout, expired, isAuthenticated: !!admin && !!token }}>
+    <AdminAuthContext.Provider value={{ admin, setAdmin, token, replaceToken, loading, login, logout, expired, isAuthenticated: !!admin && !!token }}>
       {children}
     </AdminAuthContext.Provider>
   );
