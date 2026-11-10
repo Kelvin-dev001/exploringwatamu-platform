@@ -16,12 +16,30 @@ function describeError(err) {
   return util.inspect(err);
 }
 
+// Mongoose errors carry no HTTP status. These are caused by the request (a
+// malformed id, a value the schema refuses, a duplicate), so they are 4xx with
+// a safe message rather than a 500.
+function clientError(err) {
+  if (!err || typeof err !== 'object') return null;
+  if (err.name === 'CastError') return { status: 400, body: { error: `Invalid ${err.path === '_id' ? 'id' : err.path}` } };
+  if (err.name === 'ValidationError' && err.errors) {
+    const issues = Object.values(err.errors).map((e) => ({ path: e.path, message: e.message }));
+    return { status: 400, body: { error: 'Validation failed', issues } };
+  }
+  if (err.code === 11000) return { status: 409, body: { error: 'That record already exists.' } };
+  return null;
+}
+
 // Centralized error handler. Never leaks internal error details for 5xx in
 // production; client (4xx) messages are passed through. The server log always
 // gets the real message and stack.
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
-  const status = err.status || err.statusCode || 500;
+  const explicit = err && (err.status || err.statusCode);
+  const mapped = explicit ? null : clientError(err);
+  if (mapped) return res.status(mapped.status).json(mapped.body);
+
+  const status = explicit || 500;
   const isServerError = status >= 500;
   const message = describeError(err);
 
