@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import { formatDay } from '@/lib/utils';
 
 export default function ECardPreview({ booking, trip, user }) {
   const [downloading, setDownloading] = useState(false);
@@ -25,15 +26,8 @@ export default function ECardPreview({ booking, trip, user }) {
     ?.map(p => `${personalityEmojis[p] || '✨'} ${p}`)
     .join('\n') || 'Travel Lover';
 
-  const startDate = new Date(trip.startDate).toLocaleDateString('en-KE', {
-    month: 'short',
-    day: 'numeric',
-  });
-  const endDate = new Date(trip.endDate).toLocaleDateString('en-KE', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const startDate = formatDay(trip.startDate, { month: 'short', day: 'numeric' }, 'en-KE');
+  const endDate = formatDay(trip.endDate, { month: 'short', day: 'numeric', year: 'numeric' }, 'en-KE');
 
   const downloadECard = async () => {
     setDownloading(true);

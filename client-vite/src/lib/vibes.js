@@ -75,6 +75,35 @@ export const STAYS = [
 
 export const byId = (list, id) => list.find((x) => x.id === id);
 
+/**
+ * A profile read back from storage, keeping only ids this version knows. A
+ * renamed or retired vibe must never break matching, block the onboarding
+ * (it would count towards MAX_VIBES with no tile to untick) or be sent to the
+ * quote API, which rejects unknown vibes. Null when no vibe survives.
+ */
+export function normalizeProfile(profile) {
+  if (!profile || typeof profile !== 'object') return null;
+  const vibes = Array.isArray(profile.vibes) ? [...new Set(profile.vibes)].filter((id) => byId(VIBES, id)).slice(0, MAX_VIBES) : [];
+  if (!vibes.length) return null;
+  return {
+    vibes,
+    companions: byId(COMPANIONS, profile.companions) ? profile.companions : null,
+    stay: byId(STAYS, profile.stay) ? profile.stay : null,
+  };
+}
+
+/**
+ * The stored personalisation record ({ version, status, profile }), cleaned up.
+ * Anything unreadable, or a saved profile none of whose vibes this version
+ * still knows, counts as a first visit — so we simply ask again.
+ */
+export function readProfileRecord(raw) {
+  if (!raw || typeof raw !== 'object' || raw.version !== 1) return null;
+  if (raw.status === 'skipped') return { ...raw, profile: null };
+  const profile = normalizeProfile(raw.profile);
+  return profile ? { ...raw, status: 'set', profile } : null;
+}
+
 function joinNatural(parts) {
   if (parts.length <= 1) return parts[0] || '';
   return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;

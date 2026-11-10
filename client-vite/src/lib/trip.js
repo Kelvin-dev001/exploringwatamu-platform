@@ -1,4 +1,4 @@
-import { STAYS, byId } from '@/lib/vibes';
+import { STAYS, byId, normalizeProfile } from '@/lib/vibes';
 
 /*
  * The visitor's trip ("cart"), as pure functions so it is easy to test and to
@@ -39,6 +39,65 @@ export function emptyTrip(profile) {
     items: {},
     notes: '',
   };
+}
+
+const MAX_DAYS = 30;
+const NOTES_MAX = 2000; // the quote API's limit
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * A trip read back from localStorage or a share link, repaired so the planner
+ * can't crash on it and the quote API won't refuse it. Another version or a
+ * shape we can't use gives null (the caller starts a fresh trip). Otherwise
+ * keys without a snapshot and duplicate placements are dropped, numbers and
+ * dates are clamped, and snapshots placed nowhere are kept in Ideas.
+ */
+export function normalizeTrip(raw) {
+  if (!raw || typeof raw !== 'object' || raw.version !== 1 || !Array.isArray(raw.days)) return null;
+  if (!raw.items || typeof raw.items !== 'object' || Array.isArray(raw.items)) return null;
+
+  const items = {};
+  for (const [key, snap] of Object.entries(raw.items)) {
+    if (snap && typeof snap === 'object' && typeof snap.title === 'string' && snap.title.trim()) {
+      items[key] = { ...snap, key, price: snap.price && typeof snap.price === 'object' ? snap.price : {} };
+    }
+  }
+
+  const placed = new Set();
+  const lane = (list) => {
+    const keys = [];
+    for (const k of Array.isArray(list) ? list : []) {
+      if (typeof k === 'string' && items[k] && !placed.has(k)) {
+        placed.add(k);
+        keys.push(k);
+      }
+    }
+    return keys;
+  };
+  const days = raw.days.slice(0, MAX_DAYS).map((d) => ({ items: lane(d?.items) }));
+  if (!days.length) days.push({ items: [] });
+  const ideas = lane(raw.ideas);
+  Object.keys(items).forEach((k) => !placed.has(k) && ideas.push(k));
+
+  const day = (d) => (typeof d === 'string' && ISO_DAY.test(d) ? d : '');
+  let arrival = day(raw.arrival);
+  let departure = day(raw.departure);
+  if (arrival && departure && departure < arrival) arrival = departure = '';
+  const count = (n, min, max, fallback) => (Number.isInteger(n) ? Math.max(min, Math.min(max, n)) : fallback);
+
+  const trip = {
+    version: 1,
+    arrival,
+    departure,
+    adults: count(raw.adults, 1, 30, 2),
+    children: count(raw.children, 0, 30, 0),
+    days,
+    ideas,
+    items,
+    notes: typeof raw.notes === 'string' ? raw.notes.slice(0, NOTES_MAX) : '',
+  };
+  if (typeof raw.lastRequest?.reference === 'string') trip.lastRequest = { reference: raw.lastRequest.reference, at: raw.lastRequest.at };
+  return trip;
 }
 
 /** Shape an experience from the catalogue (lib/catalog.js) into a trip snapshot. */
@@ -106,7 +165,7 @@ export function dayCountFromDates(arrival, departure) {
   const a = parse(arrival);
   const b = parse(departure);
   if (!a || !b || b < a) return null;
-  return Math.min(30, Math.round((b - a) / DAY_MS) + 1);
+  return Math.min(MAX_DAYS, Math.round((b - a) / DAY_MS) + 1);
 }
 
 /** Date of a given day, or null when no dates are set. */
@@ -123,7 +182,7 @@ export function dayLabel(trip, index) {
 
 /** Resize the stay; items on removed days go back to Ideas (never lost). */
 export function setDayCount(trip, count) {
-  const n = Math.max(1, Math.min(30, count));
+  const n = Math.max(1, Math.min(MAX_DAYS, count));
   if (n === trip.days.length) return trip;
   if (n > trip.days.length) {
     return { ...trip, days: [...trip.days, ...Array.from({ length: n - trip.days.length }, () => ({ items: [] }))] };
@@ -156,8 +215,10 @@ export function dayHours(trip, index) {
 function dayForStartDate(trip, startDate) {
   const a = parse(trip.arrival);
   if (!a || !startDate) return null;
+  // The start date is a calendar day stored as UTC midnight: read its UTC parts,
+  // or a visitor west of Greenwich would get the trip placed a day early.
   const s = new Date(startDate);
-  const idx = Math.round((new Date(s.getFullYear(), s.getMonth(), s.getDate()) - a) / DAY_MS);
+  const idx = Math.round((new Date(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate()) - a) / DAY_MS);
   return idx >= 0 && idx < trip.days.length ? idx : null;
 }
 
@@ -306,9 +367,7 @@ export function encodeTrip(trip) {
 
 export function decodeTrip(code) {
   try {
-    const t = JSON.parse(fromB64(code));
-    if (!t || t.version !== 1 || !Array.isArray(t.days) || typeof t.items !== 'object') return null;
-    return t;
+    return normalizeTrip(JSON.parse(fromB64(code)));
   } catch {
     return null;
   }
@@ -339,13 +398,14 @@ export function tripSummary(trip, { headline } = {}) {
 
 /* ---------- Quote request payload (POST /api/trip-requests) ---------- */
 
-const KIND = { tour: 'tour', group: 'group', transfer: 'transfer' };
+// Matches TRIP_ITEM_KINDS in backend/src/constants/tripItems.js.
+const KINDS = ['tour', 'group', 'transfer', 'stay', 'carhire', 'service'];
 
 function requestItem(snap, residency) {
   const p = snap.price || {};
   const listed = residency === 'resident' ? p.resident ?? p.nonResident : p.nonResident ?? p.resident;
   return {
-    kind: KIND[snap.kind] || 'other',
+    kind: KINDS.includes(snap.kind) ? snap.kind : 'other',
     refId: snap.id ? String(snap.id) : undefined,
     title: snap.rateLabel ? `${snap.title} (listed ${snap.rateLabel})`.slice(0, 200) : snap.title,
     hours: snap.hours ?? null,
@@ -358,7 +418,7 @@ export function toRequestPayload(trip, { contact, profile, residency = 'nonResid
   const iso = (d) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : undefined);
   return {
     contact,
-    profile: profile ? { vibes: profile.vibes || [], companions: profile.companions || null, stay: profile.stay || null } : undefined,
+    profile: normalizeProfile(profile) || undefined,
     arrival: trip.arrival || undefined,
     departure: trip.departure || undefined,
     adults: trip.adults,

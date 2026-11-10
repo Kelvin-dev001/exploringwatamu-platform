@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/primitives';
 import { WaveField, Rosette, ArchBand, Weave, ChainBand } from '@/components/brand/Patterns';
 import { VIBES, byId } from '@/lib/vibes';
 import { priceFor, formatKES } from '@/lib/catalog';
-import { cn } from '@/lib/utils';
+import { cn, formatDay } from '@/lib/utils';
 
 /*
  * Illustrated stand-in used whenever a listing has no photo yet, keyed to its
@@ -50,10 +50,7 @@ export function VibeArt({ vibe, className, label }) {
   );
 }
 
-function formatStart(date) {
-  if (!date) return null;
-  return new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-}
+const formatStart = (date) => formatDay(date, { day: 'numeric', month: 'short' }) || null;
 
 /**
  * Product card for the store. `match` comes from scoreExperience().

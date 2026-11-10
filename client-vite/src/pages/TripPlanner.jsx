@@ -247,6 +247,7 @@ export default function TripPlanner() {
                 <span className="mb-1.5 block text-sm font-semibold text-ocean-900">Anything we should know?</span>
                 <textarea
                   rows={3}
+                  maxLength={2000}
                   value={trip.notes}
                   onChange={(e) => t.setNotes(e.target.value)}
                   placeholder="Where you’re staying, dietary needs, celebrations, accessibility…"
