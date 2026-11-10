@@ -31,18 +31,20 @@ when unconfigured. While email isn't configured, the admin warns that travellers
 
 ## Tests and checks
 
+Run with Node 20, after `npm ci` in each folder:
+
 ```bash
-cd backend && npm test            # unit + E2E (in-memory MongoDB; nothing is sent externally)
-cd backend && npm run test:e2e    # E2E only
-cd client-vite && npm test        # Vitest
-cd client-vite && npm run build
-cd admin-vite && npm run build && npm run lint
+cd backend && npm test                                   # unit + E2E (in-memory MongoDB; nothing is sent externally)
+cd client-vite && npm run lint && npm test && npm run build
+cd admin-vite && npm run lint && npm test && npm run build
+cd e2e && npx playwright install chromium && npx playwright test   # browser smoke test of the quote journey
 ```
 
-See [`backend/TESTING.md`](backend/TESTING.md) for what each suite covers.
+CI runs the same checks on every pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)). See [`TESTING.md`](TESTING.md) for what each suite covers, and for the GitHub billing lock that currently stops Actions from running.
 
 ## Docs
 
 - [`DEPLOYMENT.md`](DEPLOYMENT.md) — Render, Vercel and MongoDB Atlas setup, environment variables.
+- [`TESTING.md`](TESTING.md) — the test suites, the browser smoke test and CI.
 - [`backend/CLAUDE.md`](backend/CLAUDE.md) — backend architecture and conventions.
 - [`docs/SECTION-8-INTEGRATION-AUDIT.md`](docs/SECTION-8-INTEGRATION-AUDIT.md) — end-to-end audit (November 2026): defects found, fixes, open recommendations.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api, errorMessage } from '@/lib/api';
+import { errorMessage } from '@/lib/api';
 import { useToast } from '@/ui';
 import { apiFieldErrors } from '@/forms/kit';
 

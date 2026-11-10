@@ -1,0 +1,11 @@
+{
+  "name": "ew-smoke",
+  "private": true,
+  "description": "Browser smoke tests: the website, admin portal and API together, on a throwaway in-memory database.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

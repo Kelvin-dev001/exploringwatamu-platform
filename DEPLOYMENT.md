@@ -80,7 +80,9 @@ Set these on Render and redeploy; each is a safe no-op until configured:
 ---
 
 ## Continuous integration
-`.github/workflows/ci.yml` runs the backend test suite automatically on every push and pull request to `main` (unit + end-to-end). Watch it under the repo's **Actions** tab — keep it green before deploying. The website also has unit tests (`cd client-vite && npm test`); run them locally until CI covers the frontends.
+`.github/workflows/ci.yml` runs on every push and pull request to `main`: backend unit + E2E tests, lint/tests/build for the website and the admin, then a browser smoke test of the quote journey. Watch it under the repo's **Actions** tab — keep it green before merging, because Render and Vercel deploy `main` automatically. **Actions is currently blocked by a billing lock on the GitHub account**; until that is cleared, run the checks locally (see [`TESTING.md`](TESTING.md#restoring-ci)).
+
+Every app installs from its committed lockfile (`npm ci`). After changing dependencies, commit the updated `package-lock.json`, or CI will refuse to install.
 
 ## After each deploy — quick smoke check
 1. `https://<api>/api/health` answers `{"status":"ok", ...}` (the first request after a quiet spell can take 30–60 s on Render's free plan).

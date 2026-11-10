@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_VIBES, normalizeProfile, readProfileRecord } from '@/lib/vibes';
+import { COMPANIONS, MAX_VIBES, STAYS, VIBES, normalizeProfile, personalHeadline, profileSummary, readProfileRecord } from '@/lib/vibes';
+
+describe('the vocabulary', () => {
+  it('has unique ids and a label and icon for every vibe', () => {
+    for (const list of [VIBES, COMPANIONS, STAYS]) expect(new Set(list.map((x) => x.id)).size).toBe(list.length);
+    for (const v of VIBES) expect(v.label && v.icon && v.phrase).toBeTruthy();
+  });
+});
+
+describe('personal copy', () => {
+  it('writes the hero headline from the profile', () => {
+    expect(personalHeadline({ vibes: ['ocean', 'romance'], companions: 'couple', stay: 'short' })).toBe('A few days of turquoise reefs and sunsets, for two.');
+    expect(personalHeadline({ vibes: ['ocean', 'slow', 'culture'] })).toBe('Days of turquoise reefs, slow mornings and old stories.');
+    expect(personalHeadline({ vibes: [] })).toBeNull();
+  });
+
+  it('summarises the profile for the header pill', () => {
+    expect(profileSummary({ vibes: ['ocean', 'romance'], companions: 'couple', stay: 'short' })).toBe('Ocean +1 · Two of us · 3–4 days');
+    expect(profileSummary({ vibes: ['adventure'] })).toBe('Adventure');
+    expect(profileSummary(null)).toBeNull();
+  });
+});
 
 describe('normalizeProfile', () => {
   it('keeps known ids and drops retired or misspelt ones', () => {

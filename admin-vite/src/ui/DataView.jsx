@@ -78,6 +78,9 @@ export default function DataView({
   const pages = Math.max(1, Math.ceil(visible.length / PAGE));
   const slice = visible.slice((page - 1) * PAGE, page * PAGE);
   const activeFilters = filters.filter((f) => params.get(f.key)).length + (q ? 1 : 0);
+  const total = (rows || []).length;
+  // "1 item", "3 items", "1 of 3 items": the noun follows the last number.
+  const count = visible.length !== total ? `${visible.length} of ${total} ${total === 1 ? 'item' : 'items'}` : `${total} ${total === 1 ? 'item' : 'items'}`;
 
   const toggleSort = (key) => setSort((s) => (s?.key === key ? (s.dir === 'asc' ? { key, dir: 'desc' } : null) : { key, dir: 'asc' }));
   const open = (row) => rowLink && navigate(rowLink(row));
@@ -106,7 +109,7 @@ export default function DataView({
           )}
         </div>
         <p className="text-sm text-faint sm:ml-auto" aria-live="polite">
-          {loading && !rows ? 'Loading…' : `${visible.length}${visible.length !== (rows || []).length ? ` of ${(rows || []).length}` : ''} ${visible.length === 1 ? 'item' : 'items'}`}
+          {loading && !rows ? 'Loading…' : count}
           {summary ? ` · ${summary(visible)}` : ''}
         </p>
       </div>
