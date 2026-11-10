@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Ban, Users, Pencil } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
-import { ago, cn, date, dateRange, kes } from '@/lib/utils';
+import { ago, cn, date, dateRange, kes, notifiedMessage } from '@/lib/utils';
 import { Badge, Button, Card, Confirm, ContactActions, StatusBadge, useToast } from '@/ui';
 import DataView from '@/ui/DataView';
 
@@ -35,9 +35,13 @@ export default function GroupTripBookings() {
   const run = async () => {
     setBusy(true);
     try {
-      if (action.kind === 'confirm') await api.post('/group-bookings/confirm', { bookingId: action.row._id });
-      else await api.put(`/group-bookings/admin/${action.row._id}/cancel`);
-      toast(action.kind === 'confirm' ? `${action.row.fullName} confirmed — receipt emailed` : `${action.row.fullName} cancelled — seat released`);
+      const res = action.kind === 'confirm'
+        ? await api.post('/group-bookings/confirm', { bookingId: action.row._id })
+        : await api.put(`/group-bookings/admin/${action.row._id}/cancel`);
+      const name = action.row.fullName;
+      toast(...notifiedMessage(res.data.delivery, action.kind === 'confirm'
+        ? { done: `${name} confirmed.`, emailed: `${name} confirmed — receipt emailed` }
+        : { done: `${name} cancelled — seat released.`, emailed: `${name} cancelled — seat released` }));
       setAction(null);
       reload();
     } catch (err) {

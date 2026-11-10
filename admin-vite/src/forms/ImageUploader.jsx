@@ -4,7 +4,10 @@ import { cn } from '@/lib/utils';
 
 // Must match backend/src/middleware/upload.js
 const MAX_MB = 8;
-const OK_TYPES = /^image\/(jpe?g|png|webp|heic|heif)$/i;
+const OK_TYPES = /^image\/(jpe?g|png|webp|heic|heif|avif)$/i;
+// Some browsers (Chrome on Windows/Android) give HEIC photos an empty type, so fall back to the extension.
+const OK_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif|avif)$/i;
+const isPhoto = (f) => OK_TYPES.test(f.type) || (!f.type && OK_EXTENSIONS.test(f.name || ''));
 
 /*
  * Photos: existing URLs (already uploaded) + new File objects (uploaded on save).
@@ -25,7 +28,7 @@ export default function ImageUploader({ existing = [], onExistingChange, files =
   const take = (list) => {
     setProblem('');
     const incoming = Array.from(list || []);
-    const bad = incoming.filter((f) => !docs && !OK_TYPES.test(f.type));
+    const bad = incoming.filter((f) => !docs && !isPhoto(f));
     const big = incoming.filter((f) => f.size > MAX_MB * 1024 * 1024);
     const good = incoming.filter((f) => !bad.includes(f) && !big.includes(f));
     if (bad.length) setProblem(`${bad.length} file${bad.length === 1 ? ' isn’t' : 's aren’t'} a supported photo (JPG, PNG, WebP or HEIC).`);

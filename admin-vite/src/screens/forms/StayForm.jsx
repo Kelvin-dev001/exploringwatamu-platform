@@ -44,7 +44,8 @@ export default function StayForm() {
       fd.append('faqs', JSON.stringify(v.faqs.filter((q) => q.question.trim())));
       fd.append('houseRules', JSON.stringify(v.houseRules));
       fd.append('contact', JSON.stringify(v.contact));
-      if (id) v.images.forEach((url) => fd.append('images', url)); // kept photos (as text), then new uploads
+      // Kept photos as a JSON list (an empty list removes them all), then new uploads as files.
+      if (id) fd.append('existingImages', JSON.stringify(v.images));
       v.files.forEach((file) => fd.append('images', file));
       return id ? api.put(`/hotels/${id}`, fd) : api.post('/hotels', fd);
     },
