@@ -3,6 +3,7 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { VIBES, SUITS } = require('../constants/discovery');
+const { TRIP_ITEM_KINDS } = require('../constants/tripItems');
 
 /*
  * A custom itinerary sent from the website's trip planner. The traveller
@@ -15,8 +16,8 @@ const STATUSES = ['new', 'quoted', 'accepted', 'declined', 'cancelled'];
 
 const itemSchema = new mongoose.Schema(
   {
-    kind: { type: String, enum: ['tour', 'group', 'transfer', 'other'], default: 'other' },
-    refId: { type: String }, // listing id on our side (tour/group trip), if any
+    kind: { type: String, enum: TRIP_ITEM_KINDS, default: 'other' },
+    refId: { type: String }, // listing id on our side (tour, group trip, stay...), if any
     title: { type: String, required: true, trim: true, maxlength: 200 },
     hours: { type: Number, min: 0 },
     // Price the traveller saw when they planned (indicative only).

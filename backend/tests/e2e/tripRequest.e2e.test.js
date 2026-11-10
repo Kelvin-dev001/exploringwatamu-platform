@@ -66,6 +66,8 @@ describe('Trip request (quote) flow E2E', () => {
     expect(quoted.status).toBe(200);
     expect(quoted.body.status).toBe('quoted');
     expect(quoted.body.quote.total).toBe(19000);
+    // No SMTP/SMS in tests: the admin UI must be told nothing was actually sent.
+    expect(quoted.body.delivery).toEqual({ email: false, sms: false });
 
     const accepted = await request(app)
       .put(`/api/trip-requests/${id}/status`)
@@ -73,6 +75,7 @@ describe('Trip request (quote) flow E2E', () => {
       .send({ status: 'accepted', notify: false });
     expect(accepted.status).toBe(200);
     expect(accepted.body.history.map((h) => h.status)).toEqual(['new', 'quoted', 'accepted']);
+    expect(accepted.body.delivery).toBeNull();
 
     const unified = await request(app).get('/api/bookings?type=triprequest').set('Authorization', `Bearer ${adminToken}`);
     expect(unified.status).toBe(200);
@@ -93,6 +96,36 @@ describe('Trip request (quote) flow E2E', () => {
     expect(list.status).toBe(200);
     expect(list.body).toHaveLength(1);
     expect(list.body[0].reference).toBe(mine.body.reference);
+  });
+
+  it('keeps the kind of every item, so the admin can tell stays, cars and services apart', async () => {
+    const created = await request(app).post('/api/trip-requests').send(trip({
+      ideas: [
+        { kind: 'stay', refId: '64b000000000000000000001', title: 'Stay · Turtle Bay (listed KES 18,000 / night)' },
+        { kind: 'carhire', refId: '64b000000000000000000002', title: 'Car hire · RAV4' },
+        { kind: 'service', refId: '64b000000000000000000003', title: 'Private chef' },
+      ],
+    }));
+    expect(created.status).toBe(201);
+    expect(created.body.ideas.map((i) => i.kind)).toEqual(['stay', 'carhire', 'service']);
+  });
+
+  it("does not show a signed-in account's request to another account that owns the contact email", async () => {
+    const owner = (await request(app).post('/api/auth/register').send({ name: 'Email Owner', email: 'owner@test.com', password: 'password123' })).body.token;
+    const other = (await request(app).post('/api/auth/register').send({ name: 'Other', email: 'other@test.com', password: 'password123' })).body.token;
+
+    // Sent while signed in as "other", but typed the owner's address as contact.
+    await request(app).post('/api/trip-requests').set('Authorization', `Bearer ${other}`).send(trip({ contact: { name: 'Other', email: 'owner@test.com' } }));
+    // Sent as a guest with the owner's address: this one is theirs to see.
+    const guest = await request(app).post('/api/trip-requests').send(trip({ contact: { name: 'Email Owner', email: 'owner@test.com' } }));
+
+    const mine = await request(app).get('/api/trip-requests/mine').set('Authorization', `Bearer ${owner}`);
+    expect(mine.body.map((r) => r.reference)).toEqual([guest.body.reference]);
+    expect((await request(app).get('/api/trip-requests/mine').set('Authorization', `Bearer ${other}`)).body).toHaveLength(1);
+  });
+
+  it('answers 404 for a malformed request id', async () => {
+    expect((await request(app).get('/api/trip-requests/nope').set('Authorization', `Bearer ${adminToken}`)).status).toBe(404);
   });
 
   it('rejects empty trips, bad emails, bots and non-admins', async () => {

@@ -6,9 +6,12 @@ const authAdmin = require('../middleware/authAdmin');
 const authUser = require('../middleware/authUser');
 const optionalUser = require('../middleware/optionalUser');
 const validate = require('../middleware/validate');
+const objectIdParam = require('../middleware/objectIdParam');
 const { bookingLimiter, adminLimiter } = require('../middleware/rateLimiters');
 const c = require('../controllers/tripRequestController');
 const { createTripRequestSchema, sendQuoteSchema, updateStatusSchema } = require('../validators/tripRequestValidators');
+
+router.param('id', objectIdParam);
 
 // Traveller
 router.post('/', bookingLimiter, optionalUser, validate(createTripRequestSchema), c.create);
