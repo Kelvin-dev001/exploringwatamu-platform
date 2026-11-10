@@ -44,6 +44,9 @@ uploads answer 503. Upload routes use `uploadFields`/`uploadArray`/`uploadSingle
 - Money and capacity changes must be atomic (see `confirmBooking` / `cancelBookingAdmin`).
 - Emails are sent fire-and-forget (see `sendAsync`): a mail failure must never break a booking.
 - Every listing carries an `owner` ref (null = platform-managed) so vendor self-service needs no migration later. Set `owner` on create.
+- Listing visibility: use `activeFilter(req)` / `canSee(req, doc)` from `services/listingVisibility.js` with `optionalAdmin` on public reads — the public only ever sees `active !== false`; admins see everything.
+- Photo lists on update: use `nextGallery()` from `services/gallery.js` — an omitted kept-photos field keeps the stored photos; a sent list (even `[]`) replaces them.
+- Anything that notifies a traveller returns `delivery: deliveryFor(...)` so the UIs only say "emailed" when `config.mail.enabled`.
 
 ## Working rules
 - Plan first; no production code until the plan is approved.
