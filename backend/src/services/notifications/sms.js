@@ -12,7 +12,7 @@ async function sendSms({ to, message, user = null, event = null } = {}) {
   const { username, apiKey, senderId, env } = config.sms;
   const subject = message.slice(0, 60);
 
-  if (!username || !apiKey) {
+  if (!config.sms.enabled) {
     console.log(`[sms] not configured — SMS NOT sent. to=${to}`);
     await record({ user, channel: 'sms', event, to, subject, status: 'skipped' });
     return { skipped: true };

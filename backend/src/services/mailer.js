@@ -12,7 +12,7 @@ function getTransporter() {
   if (transporter) return transporter;
   const nodemailer = require('nodemailer');
 
-  if (config.mail.host && config.mail.user) {
+  if (config.mail.enabled) {
     transporter = nodemailer.createTransport({
       host: config.mail.host,
       port: config.mail.port,
@@ -36,10 +36,12 @@ async function sendMail({ to, subject, html, text, attachments, event = null, us
       text,
       attachments,
     });
-    if (!config.mail.host) {
+    // Same test as the transport choice above, so the audit log never says
+    // "sent" for a message the dev transport only serialized.
+    if (!config.mail.enabled) {
       console.log(`[mailer] SMTP not configured — email NOT sent. to=${to} subject="${subject}"`);
     }
-    await record({ user, channel: 'email', event, to, subject, status: config.mail.host ? 'sent' : 'skipped' });
+    await record({ user, channel: 'email', event, to, subject, status: config.mail.enabled ? 'sent' : 'skipped' });
     return info;
   } catch (err) {
     await record({ user, channel: 'email', event, to, subject, status: 'failed', error: err.message });
