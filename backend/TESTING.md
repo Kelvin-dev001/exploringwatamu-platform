@@ -1,21 +1,30 @@
-# Testing
+# Backend testing
+
+The guide for the whole repository (website, admin, browser smoke test, CI) is
+[`../TESTING.md`](../TESTING.md). This page covers the API.
 
 ## Unit + E2E (Jest + Supertest)
 
 Install once (adds jest, supertest, mongodb-memory-server):
 ```
-npm install
+npm ci
 ```
 
-- Run everything: `npm test`
+- Everything: `npm test`
+- Unit only (no database): `npm run test:unit`
 - E2E only: `npm run test:e2e`
 
 Unit tests (`tests/*.test.js`) need no database. **E2E tests** (`tests/e2e/*.e2e.test.js`) spin up an **in-memory MongoDB** automatically — no external DB, no config. Nothing is ever emailed, texted or uploaded: SMTP and Africa's Talking are unset, so sends are logged as `skipped`; Cloudinary's storage engine is mocked (`tests/e2e/cloudinaryMock.js`) and Google's tokeninfo endpoint is mocked with `jest.mock('axios')`. The first run downloads a MongoDB binary (cached afterwards). Hooks get a 30 s timeout (`jest.config.js`) because starting MongoDB and hashing passwords can be slow on a busy CI runner.
 
+What the unit suites cover: config validation, the error handler (Mongoose errors → 400/409), validators, discovery tags, listing visibility and photo-list rules, the notification channel flags, the dashboard's EAT month boundary, and **notification content** (`notifications`): who gets which email/SMS, real PDF attachments for quotes, quotations and receipts, and that anything a traveller typed is HTML-escaped.
+
 What the E2E suites cover:
 
-- **Auth** — register, login, wrong password, safe forgot/reset-password; Google sign-in only links or creates accounts for a Google-verified email (`googleAuth`).
+- **Auth** — register, login, wrong password; the full **password-reset** journey (link works once, old password stops working, expired links refused, no email for unknown or Google-only accounts) (`passwordReset`); Google sign-in only links or creates accounts for a Google-verified email (`googleAuth`).
+- **Authorisation** — every admin-only endpoint answers 401 to the public and 403 to travellers; traveller endpoints refuse admin tokens; travellers only see their own bookings and quote requests (`authorization`).
 - **Admin sessions** — a removed admin's token stops working at once; user tokens are refused on admin routes (`adminSession`).
+- **Listing CRUD** — create, read, update and delete for every listing type, as the admin forms send them (`listingCrud`).
+- **Notification log** — attempts are recorded as `skipped` while email/SMS are unconfigured, and the admin can list them (`notificationLog`).
 - **Group tour lifecycle** — admin create → publish → user join (pending) → admin confirm → public participants feed → unified `/api/bookings` → admin cancel (seat released).
 - **Group-trip seats** — double-tapped confirm/cancel take or release exactly one seat, the capacity guard never oversells, a full trip reopens when a seat frees up, and the edit form can't cut seats below confirmed travellers (`groupBookingSeats`).
 - **Admin group-trip create/update** — multipart with and without images, field-level 400s from zod, and upload failures mapped to real codes (400 too large / unexpected field / rejected format, 502 Cloudinary failure, 503 image hosting not configured).
@@ -23,10 +32,6 @@ What the E2E suites cover:
 - **Listing visibility** — hidden listings never reach the public (lists or by id), admins see and can filter them, malformed ids are 404 (`listingVisibility`).
 - **Trip requests (quotes)** — guest submit → admin list/search → quote → accept → unified bookings; item kinds kept; My Trips scoping; delivery hints tell the UI when nothing was emailed.
 - **Admin overview, team and quick edits** — dashboard shape, add/rename/reset/remove teammates (never the last admin), whitelisted quick edits, generic cancel.
-
-## Website unit tests (Vitest)
-
-In `client-vite/`: `npm test` runs `src/**/*.test.{js,jsx}` — the pure libraries (`lib/trip`, `lib/vibes`, `lib/http`, dates and storage) in Node, and `components/Layout.test.jsx` in jsdom (it guards against the Chrome 155 `scrollTo()` navigation crash). Time-zone tests switch `process.env.TZ` to American zones to catch off-by-one-day bugs that don't show in East Africa.
 
 ## Load test (no dependencies)
 

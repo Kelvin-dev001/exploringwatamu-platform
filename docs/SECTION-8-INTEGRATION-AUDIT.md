@@ -144,3 +144,17 @@ or are low risk:
 4. A real photo upload + save on the stay form and on an experience edit (Cloudinary in production was not exercised).
 5. Google sign-in on production (the client ID isn't authorised for `localhost`, so it couldn't be exercised here).
 6. Check a Render log line for `req.ip` / rate-limit keys (section 6).
+
+Item 1 was checked after PR #18 was deployed (10 Nov 2026, read-only): on the live
+site, Home → Experiences → Stays keeps rendering. D0 is fixed in production.
+
+## 9. Found during Phase 2 (tests and CI)
+
+Writing the tests surfaced four more defects, fixed in the Phase 2 PR:
+
+| Sev | Defect | Fix |
+|---|---|---|
+| Medium (security) | Group-booking emails (to the traveller and to the team) and the password-reset email put traveller-typed text — name, contact details, vibe answers — into HTML unescaped, so HTML typed into a name was rendered in emails sent from our address. The trip-request emails were already escaped. | `escapeHtml` in `bookingNotifications.js` and `authNotifications.js`; `tests/notifications.test.js` (3 of its tests fail on the old code). |
+| Medium | `backend/package-lock.json` had not been updated since the early MVP: it lacked `helmet`, `zod`, `jest`, `mongodb-memory-server` and others, so `npm ci` refused to install and every `npm install` (CI and Render) resolved versions afresh. | Regenerated from the current `package.json` (same ranges; Express and Mongoose unchanged). Render still builds with `npm install` — switching it to `npm ci` is a Phase 3 item. |
+| Low | Filtered admin lists said "1 of 3 item". | Count agrees with the total ("1 of 3 items"); covered by `DataView.test.jsx`. |
+| Low | `react-toastify` was installed in the admin but never used. | Removed. |
