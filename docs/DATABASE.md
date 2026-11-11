@@ -28,6 +28,12 @@ the background and never block requests.
 | `users` | `{email}` unique, `{googleId}` / `{referralCode}` unique sparse, `{resetTokenHash}` sparse | Sign-in; Google; referrals; every reset attempt |
 | `admins` | `{email}` unique | Admin sign-in |
 | `payments` | `{checkoutRequestId}` | M-Pesa callbacks (payments are off) |
+| `listingreviews` | `{listingType, listingId, status, createdAt -1}` | A listing's approved reviews (website) and its rating |
+| | `{user, createdAt -1}`, `{status, createdAt -1}`, `{booking.type, booking.id}` | A traveller's reviews; the moderation queue; a booking's reviews (eligibility, invitations) |
+| | `{booking.type, booking.id, listingType, listingId}` **unique** (partial: with a booking) | One review per listing per booking, enforced by the database |
+| | `{legacy.source, legacy.id}` **unique** (partial) | Each legacy review imported once |
+| `reviewinvites` | `{bookingType, bookingId}` **unique** | One post-trip invitation per booking |
+| `reviews` | (legacy, not written any more) | The old stay-only reviews, kept as they were; see [REVIEWS.md](REVIEWS.md#legacy-reviews-what-exists-and-the-migration) |
 | listings (`tours`, `hotels`, ...) | `{vibes}` on tours | Small curated collections: no other index pays for itself yet |
 
 **Measured** (`backend/tests/e2e/indexes.e2e.test.js`, 400 documents per collection):

@@ -45,8 +45,10 @@ adds it, sends a quote request and gets an `EW-` reference; the admin signs in, 
 that request, sends the pre-filled quote and is warned that nothing was emailed. A
 second spec (`whatsapp.spec.js`) checks the WhatsApp links — menu, footer, a stay card,
 an experience page, the planner's review step and the admin's "Reply on WhatsApp" —
-with a placeholder business number; the links are checked, never followed. It
-never touches production data. A failing run leaves a trace in `e2e/test-results/`
+with a placeholder business number; the links are checked, never followed. A third
+(`reviews.spec.js`) follows a verified review: a traveller with a finished, accepted
+trip writes one, the admin approves it, and it appears with its rating on the
+experience page. It never touches production data. A failing run leaves a trace in `e2e/test-results/`
 (open with `npx playwright show-trace`).
 
 If you already have something on ports 5055, 4173 or 4174, stop it first (locally,

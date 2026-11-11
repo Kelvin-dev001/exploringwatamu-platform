@@ -78,6 +78,19 @@ rough order of importance; tick them off as you go.
   move to Node 22 LTS (Render setting / `NODE_VERSION`, and the CI workflow) in a
   dedicated change, with the full test suite run on 22.
 
+## Reviews
+
+- [ ] **Copy the legacy stay reviews** into the new review system (production had none
+  on 11 November 2026, but hidden or deleted stays can't be checked from outside):
+  `npm run reviews:migrate -- --dry-run`, then `-- --confirm-db=<database name>`, with
+  production's `MONGODB_URI`. It never changes or deletes the originals. Copies wait
+  in Admin → **Reviews**.
+- [ ] **Schedule the post-trip invitations:** a daily Render Cron Job (a billed
+  service) running `npm run reviews:invite -- --send` — settings in
+  [`REVIEWS.md`](REVIEWS.md#scheduling-it-on-render). Needs SMTP to send anything.
+- [ ] Decide who checks **Admin → Reviews** and how often (the nav badge counts the
+  reviews waiting). Nothing is published until someone approves it.
+
 ## Content
 
 - [ ] **Add genuine partner listings** (experiences, stays, transfers, car hire) with

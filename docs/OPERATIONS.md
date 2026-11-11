@@ -234,6 +234,23 @@ admin says "the API may be waking up".
   access list, or Atlas down); a `[config]` message names a missing or invalid
   variable.
 
+## Reviews
+
+Travellers review listings after their trip; the team approves them in the admin
+(**Reviews**). Details, rules and the API: [REVIEWS.md](REVIEWS.md).
+
+```bash
+cd backend
+npm run reviews:migrate -- --dry-run                    # legacy stay reviews: what would be copied
+npm run reviews:migrate -- --confirm-db=<database name> # copy them (never changes the originals)
+npm run reviews:invite                                  # post-trip invitations: dry run
+NODE_ENV=production npm run reviews:invite -- --send    # send (normally the Render Cron Job)
+npm run reviews:recompute -- --confirm-db=<database name> # repair every listing's rating
+```
+
+The invitation job needs a scheduler: a daily Render Cron Job (settings in
+[REVIEWS.md](REVIEWS.md#scheduling-it-on-render)). It sends nothing while SMTP is off.
+
 ## Demo content (staging and local only)
 
 ```bash
@@ -259,6 +276,9 @@ demo listings must not look like partner inventory.
 | Image upload 400 "not a supported image" | Only JPG, PNG, WebP, HEIC/AVIF are accepted, up to 8 MB |
 | No WhatsApp buttons on the website | `VITE_WHATSAPP_NUMBER` unset or not a usable number, or the site wasn't redeployed after setting it ([WHATSAPP.md](WHATSAPP.md)) |
 | No WhatsApp link in quote emails | `/api/health/ready` → `whatsappLinks`; a bad `WHATSAPP_NUMBER` is logged at startup |
+| A review isn't on the website | It is still **Waiting** (Admin → Reviews) or **Hidden**; only approved reviews show |
+| A traveller can't review a trip | The trip request must be **accepted** with dates in the past (or the group booking confirmed and the trip over); guest requests need the invitation link or a Google sign-in ([REVIEWS.md](REVIEWS.md)) |
+| A rating looks wrong | `npm run reviews:recompute -- --confirm-db=<db>` (ratings count approved reviews only) |
 | Travellers say they got no email | `/api/health/ready` → `email`; Admin → Notifications (`skipped` = SMTP not set, `failed` = provider error) |
 | 429 "Too many requests" | Rate limits (see `SECURITY-REVIEW.md`); they reset after 15 min, or on deploy |
 | Admin signed out unexpectedly | Their password was changed, they were removed, or `JWT_SECRET` changed |
