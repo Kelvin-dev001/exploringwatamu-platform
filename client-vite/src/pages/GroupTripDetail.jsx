@@ -13,6 +13,7 @@ import Seo from '@/components/seo/Seo';
 import AddToTripButton from '@/components/trip/AddToTripButton';
 import { Container, Badge } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
+import Photo from '@/components/ui/Photo';
 import { VibeArt } from '@/components/experience/ExperienceCard';
 import { normaliseGroupTrip } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/site';
@@ -244,7 +245,7 @@ export default function GroupTripDetail() {
       <section className="relative">
         <div className={`relative w-full overflow-hidden bg-ocean-900 ${trip.heroImage ? 'h-[52vh] min-h-80' : 'h-[34vh] min-h-72'}`}>
           {trip.heroImage ? (
-            <img src={trip.heroImage} alt="" className="size-full object-cover" />
+            <Photo src={trip.heroImage} sizes="100vw" priority className="size-full object-cover" fallback={<VibeArt vibe={exp.vibes[0]} className="size-full" label={trip.title} />} />
           ) : (
             <VibeArt vibe={exp.vibes[0]} className="size-full" label={trip.title} />
           )}
@@ -337,7 +338,7 @@ export default function GroupTripDetail() {
               <h2 className="font-display text-3xl text-ocean-900">Gallery</h2>
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {trip.gallery.map((img, i) => (
-                  <img key={i} src={img} alt={`${trip.title} — photo ${i + 1}`} loading="lazy" className="aspect-[4/3] w-full rounded-2xl object-cover" />
+                  <Photo key={i} src={img} alt={`${trip.title} — photo ${i + 1}`} sizes="(min-width: 640px) 33vw, 50vw" max={960} className="aspect-[4/3] w-full rounded-2xl object-cover" />
                 ))}
               </div>
             </section>

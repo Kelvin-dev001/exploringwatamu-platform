@@ -6,6 +6,7 @@ import { API_URL } from '@/api.js';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { Container, Badge, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
+import Photo from '@/components/ui/Photo';
 import { ErrorState, SlowNotice } from '@/components/listing/States';
 import { formatKES } from '@/lib/catalog';
 import { formatDay } from '@/lib/utils';
@@ -182,7 +183,7 @@ export default function MyTrips() {
               const s = BOOKING_STATUS[b.status] || BOOKING_STATUS.pending;
               return (
                 <article key={b._id} className="flex gap-4 rounded-[var(--radius-card)] border border-sand-200 bg-white p-5 shadow-soft">
-                  {trip?.heroImage && <img src={trip.heroImage} alt="" className="size-20 shrink-0 rounded-2xl object-cover" />}
+                  {trip?.heroImage && <Photo src={trip.heroImage} sizes="80px" max={320} className="size-20 shrink-0 rounded-2xl object-cover" />}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <h3 className="font-display text-xl text-ocean-900">{trip?.title || 'Group trip'}</h3>

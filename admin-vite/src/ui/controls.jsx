@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MoreHorizontal, Check, X, Pencil } from 'lucide-react';
 import { cn, kes } from '@/lib/utils';
+import { cloudinaryUrl, isCloudinary } from '@/lib/images';
 
 /** Accessible on/off switch. */
 export function Toggle({ checked, onChange, label, disabled, size = 'md' }) {
@@ -104,12 +105,17 @@ export function RowMenu({ items, label = 'More actions' }) {
   );
 }
 
-/** Thumbnail with a neutral fallback. */
-export function Thumb({ src, alt = '', icon: Icon, className }) {
-  const [broken, setBroken] = useState(false);
-  return src && !broken ? (
-    <img src={src} alt={alt} loading="lazy" onError={() => setBroken(true)} className={cn('size-11 shrink-0 rounded-lg object-cover', className)} />
+function ThumbImage({ src, alt = '', icon: Icon, className }) {
+  // 0: small version, 1: original upload, 2: broken
+  const [stage, setStage] = useState(isCloudinary(src) ? 0 : 1);
+  return src && stage < 2 ? (
+    <img src={stage === 0 ? cloudinaryUrl(src, 160) : src} alt={alt} loading="lazy" decoding="async" onError={() => setStage((s) => s + 1)} className={cn('size-11 shrink-0 rounded-lg object-cover', className)} />
   ) : (
     <span className={cn('grid size-11 shrink-0 place-items-center rounded-lg bg-subtle text-faint', className)}>{Icon && <Icon className="size-5" />}</span>
   );
+}
+
+/** Thumbnail (a small Cloudinary version, not the full upload) with a neutral fallback. */
+export function Thumb(props) {
+  return <ThumbImage key={props.src || 'none'} {...props} />;
 }

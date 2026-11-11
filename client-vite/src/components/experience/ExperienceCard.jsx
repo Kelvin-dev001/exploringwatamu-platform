@@ -6,6 +6,7 @@ import { WaveField, Rosette, ArchBand, Weave, ChainBand } from '@/components/bra
 import { VIBES, byId } from '@/lib/vibes';
 import { priceFor, formatKES } from '@/lib/catalog';
 import { cn, formatDay } from '@/lib/utils';
+import Photo from '@/components/ui/Photo';
 
 /*
  * Illustrated stand-in used whenever a listing has no photo yet, keyed to its
@@ -68,17 +69,14 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
       )}
     >
       <div className="relative m-2.5 mb-0 aspect-[4/3] overflow-hidden rounded-[1rem]">
-        {item.image ? (
-          <img
-            src={item.image}
-            alt={item.title}
-            loading="lazy"
-            decoding="async"
-            className="size-full object-cover transition-transform duration-700 ease-[var(--ease-tide)] group-hover:scale-105"
-          />
-        ) : (
-          <VibeArt vibe={item.vibes[0]} className="size-full" label={item.title} />
-        )}
+        <Photo
+          src={item.image}
+          alt={item.title}
+          sizes="(min-width: 1280px) 400px, (min-width: 640px) 50vw, 100vw"
+          max={960}
+          className="size-full object-cover transition-transform duration-700 ease-[var(--ease-tide)] group-hover:scale-105"
+          fallback={<VibeArt vibe={item.vibes[0]} className="size-full" label={item.title} />}
+        />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {match?.great && (
             <Badge tone="coral" className="shadow-soft">
