@@ -7,6 +7,7 @@ import axios from 'axios';
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { installRetry } from './lib/http.js';
+import { initMonitoring } from './lib/monitoring.js';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { VibeProfileProvider } from './context/VibeProfileContext.jsx';
 import { TripProvider } from './context/TripContext.jsx';
@@ -17,6 +18,9 @@ document.querySelectorAll('head [data-static]').forEach((el) => el.remove());
 
 // Retry GETs a couple of times while the free-tier API wakes up (see lib/http.js).
 installRetry(axios);
+
+// Error monitoring, only when VITE_SENTRY_DSN is set (loads after the page).
+initMonitoring();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
