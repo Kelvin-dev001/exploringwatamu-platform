@@ -5,9 +5,9 @@ services: nothing is emailed, texted, uploaded or written to a real database.
 
 | Where | Tool | Command | What it covers |
 |---|---|---|---|
-| `backend/` | Jest + Supertest + in-memory MongoDB | `npm test` (`test:unit`, `test:e2e`) | The API: auth, authorisation, validation, bookings and seats, quotes, listings, uploads, notifications. Details in [`backend/TESTING.md`](backend/TESTING.md). |
-| `client-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | The website's logic (planner, matching, catalogue, storage, retries, dates) and key components (sign-in session, quote form, add-to-trip, navigation). |
-| `admin-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | Admin helpers, the form kit and unsaved-changes guard, list screens, quick edits, toasts. |
+| `backend/` | Jest + Supertest + in-memory MongoDB | `npm test` (`test:unit`, `test:e2e`) | The API: auth and sessions, authorisation, validation, rate limits, bookings and seats, quotes, listings, uploads, notifications, logging, monitoring, health checks, indexes, demo seed. Details in [`backend/TESTING.md`](backend/TESTING.md). |
+| `client-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | The website's logic (planner, matching, catalogue, storage, retries, dates, image sizes, error monitoring) and key components (sign-in session, quote form, add-to-trip, navigation, photos with fallbacks). |
+| `admin-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | Admin helpers, the form kit and unsaved-changes guard, list screens, quick edits, toasts, the error screen (stale builds after a deploy), session token refresh, error monitoring. |
 | `e2e/` | Playwright (Chromium) | `npx playwright test` | The main journey in a real browser on a phone viewport, with all three apps running (below). |
 
 Use **Node 20**, as CI and Render do (the test tools are pinned to versions that support it).
