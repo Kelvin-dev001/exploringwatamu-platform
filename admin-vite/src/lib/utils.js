@@ -32,14 +32,12 @@ export function ago(d) {
   return date(d);
 }
 
-/** wa.me number from local or international formats (Kenyan 07… / 01… become +254…). */
-export function waNumber(phone) {
-  if (!phone) return null;
-  let d = String(phone).replace(/[^\d+]/g, '');
-  if (d.startsWith('+')) d = d.slice(1);
-  else if (/^0[17]\d{8}$/.test(d)) d = `254${d.slice(1)}`;
-  return d.length >= 8 ? d : null;
-}
+/**
+ * wa.me number (digits) from an international or Kenyan number, or null when
+ * it can't be used safely — e.g. a number without a country code that isn't a
+ * Kenyan 07… / 01… mobile. Rules in lib/whatsapp.js.
+ */
+export { normaliseWhatsAppNumber as waNumber } from './whatsapp';
 
 export const isEmail = (v) => /^\S+@\S+\.\S+$/.test(String(v || ''));
 

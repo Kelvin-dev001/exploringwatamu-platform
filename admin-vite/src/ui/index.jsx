@@ -15,6 +15,8 @@ const BTN = {
     danger: 'bg-danger text-white hover:bg-danger/90 dark:text-canvas',
     'danger-ghost': 'text-danger hover:bg-danger-soft',
     success: 'bg-ok text-white hover:bg-ok/90 dark:text-canvas',
+    // A deep WhatsApp green: white text passes WCAG AA (6.3:1) in both themes.
+    whatsapp: 'bg-[#0b6e3b] text-white hover:bg-[#095c31]',
   },
   size: { sm: 'h-8 px-3 text-sm', md: 'h-10 px-4 text-sm', lg: 'h-12 px-5 text-base', icon: 'size-10', 'icon-sm': 'size-8' },
 };
@@ -242,9 +244,13 @@ export function ToastProvider({ children }) {
 
 /* ---------------- Contact ---------------- */
 
-/** One-tap WhatsApp / call / email. `compact` renders icon buttons for list rows. */
-export function ContactActions({ phone, email, name, context, compact, className }) {
-  const wa = waNumber(phone);
+/**
+ * One-tap WhatsApp / call / email. `compact` renders icon buttons for list rows.
+ * WhatsApp only appears for a number it can use (see lib/whatsapp.js);
+ * `whatsapp={false}` leaves it out (the trip request has "Reply on WhatsApp").
+ */
+export function ContactActions({ phone, email, name, context, compact, className, whatsapp = true }) {
+  const wa = whatsapp ? waNumber(phone) : null;
   const greeting = encodeURIComponent(`Hi ${name ? name.split(' ')[0] : ''}, this is Exploring Watamu${context ? ` about ${context}` : ''}. `);
   const items = [
     wa && { href: `https://wa.me/${wa}?text=${greeting}`, label: 'WhatsApp', icon: MessageCircle, ext: true, cls: 'text-[#128c4b] dark:text-[#4ade80]' },
