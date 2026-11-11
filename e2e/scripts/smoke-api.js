@@ -28,6 +28,7 @@ const PORT = process.env.SMOKE_API_PORT || '5055';
     FRONTEND_URLS: 'http://localhost:4173,http://localhost:4174',
     FRONTEND_URL: 'http://localhost:4173',
     PAYMENTS_ENABLED: 'false',
+    WHATSAPP_NUMBER: '+254700000000', // placeholder: only used in (unsent) email links
     SMTP_HOST: '', SMTP_USER: '', AT_USERNAME: '', AT_API_KEY: '',
     CLOUDINARY_CLOUD_NAME: '', CLOUDINARY_API_KEY: '', CLOUDINARY_API_SECRET: '',
   });
