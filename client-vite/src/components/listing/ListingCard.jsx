@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { VibeArt } from '@/components/experience/ExperienceCard';
 import { cn } from '@/lib/utils';
 import Photo from '@/components/ui/Photo';
+import { normaliseWhatsAppNumber, whatsappLink } from '@/lib/whatsapp';
 
 /** Photo strip with arrows/dots, or the illustrated stand-in when there are no photos. */
 export function CardMedia({ images = [], alt, art = 'ocean', className }) {
@@ -94,10 +95,14 @@ export default function ListingCard({ images, art, title, badge, meta = [], desc
   );
 }
 
-/** WhatsApp / email contact buttons for listings that have them. */
+/**
+ * WhatsApp / email contact buttons for listings that have them. The host's
+ * number goes through the same check as ours (a local "0712 …" used to make a
+ * broken wa.me/0712… link); a number that can't be used is left out.
+ */
 export function ContactLinks({ whatsapp, email, subject }) {
-  if (!whatsapp && !email) return null;
-  const wa = whatsapp && (whatsapp.startsWith('http') ? whatsapp : `https://wa.me/${whatsapp.replace(/[^\d]/g, '')}`);
+  const wa = whatsapp && (whatsapp.startsWith('http') ? whatsapp : whatsappLink(normaliseWhatsAppNumber(whatsapp)));
+  if (!wa && !email) return null;
   return (
     <div className="mt-4 flex flex-wrap gap-2 text-sm">
       {wa && (

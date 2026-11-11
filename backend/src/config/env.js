@@ -5,6 +5,7 @@
 // so the app refuses to boot in an insecure/misconfigured state.
 
 const dotenv = require('dotenv');
+const { normaliseWhatsAppNumber } = require('../utils/whatsappNumber');
 // quiet: dotenv 17 otherwise prints an unstructured banner (with ads) on every boot.
 dotenv.config({ quiet: true });
 
@@ -50,6 +51,12 @@ function readTrustProxy(raw) {
   if (raw === 'true' || raw === 'false') return raw === 'true';
   throw new Error('[config] TRUST_PROXY must be a number of proxy hops, true or false');
 }
+
+// The public business WhatsApp number (click-to-chat links in emails). Optional:
+// unset or unusable means the emails leave the WhatsApp option out — a typo in a
+// contact number must not take the API down. server.js warns about a bad value.
+const whatsappRaw = String(process.env.WHATSAPP_NUMBER || '').trim();
+const whatsappNumber = normaliseWhatsAppNumber(whatsappRaw);
 
 const jwtSecret = readEnv('JWT_SECRET', { required: true, min: 16 });
 if (jwtSecret === 'your_jwt_secret') {
@@ -114,6 +121,12 @@ const config = {
   brand: {
     name: 'ExploringWatamu',
     supportEmail: process.env.SUPPORT_EMAIL || 'hello@exploringwatamu.com',
+  },
+
+  // WhatsApp click-to-chat: digits only (254712345678), or '' when off.
+  whatsapp: {
+    number: whatsappNumber || '',
+    invalid: Boolean(whatsappRaw) && !whatsappNumber,
   },
 
   // SMS via Africa's Talking. A no-op (logged) when username/apiKey are unset.

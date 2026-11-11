@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/button';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import Board from '@/components/trip/Board';
 import RequestQuoteSheet from '@/components/trip/RequestQuoteSheet';
+import WhatsAppPlanSheet from '@/components/trip/WhatsAppPlanSheet';
+import { WhatsAppIcon } from '@/components/contact/WhatsApp';
+import { whatsappEnabled } from '@/lib/whatsapp';
 import Seo from '@/components/seo/Seo';
 
 import { WaveField } from '@/components/brand/Patterns';
@@ -104,6 +107,7 @@ export default function TripPlanner() {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(null);
   const [requestOpen, setRequestOpen] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
 
   const ranked = useMemo(() => rankExperiences(items, profile), [items, profile]);
   const count = itemCount(trip);
@@ -282,6 +286,11 @@ export default function TripPlanner() {
             <Button className="mt-6 w-full" size="lg" onClick={() => setRequestOpen(true)} disabled={!count}>
               <Send /> Request my quote
             </Button>
+            {count > 0 && whatsappEnabled() && (
+              <Button variant="outline" className="mt-3 w-full" onClick={() => setWhatsappOpen(true)}>
+                <WhatsAppIcon className="text-whatsapp-600" /> Send plan on WhatsApp
+              </Button>
+            )}
             {trip.lastRequest && (
               <p className="mt-3 rounded-xl bg-lagoon-50 p-3 text-xs text-lagoon-700">
                 Sent as <span className="font-mono font-semibold">{trip.lastRequest.reference}</span>. Changed something? Send it again and we’ll use the latest version.
@@ -315,6 +324,7 @@ export default function TripPlanner() {
       </Container>
 
       <RequestQuoteSheet open={requestOpen} onOpenChange={setRequestOpen} residency={residency} />
+      <WhatsAppPlanSheet open={whatsappOpen} onOpenChange={setWhatsappOpen} />
     </>
   );
 }

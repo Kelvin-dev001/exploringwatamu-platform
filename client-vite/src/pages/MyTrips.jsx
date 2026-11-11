@@ -11,6 +11,8 @@ import { ErrorState, SlowNotice } from '@/components/listing/States';
 import { formatKES } from '@/lib/catalog';
 import { formatDay } from '@/lib/utils';
 import Seo from '@/components/seo/Seo';
+import { WhatsAppNumberLink } from '@/components/contact/WhatsApp';
+import { referenceMessage, whatsappEnabled } from '@/lib/whatsapp';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 
@@ -43,7 +45,15 @@ function QuoteDetails({ request: r }) {
       {q.message && <p className="mt-4 whitespace-pre-line text-sm text-ocean-900/75">{q.message}</p>}
       {r.status === 'quoted' && (
         <p className="mt-4 text-sm text-ocean-900/70">
-          To go ahead, reply to your quote email or{' '}
+          To go ahead, reply to your quote email{whatsappEnabled() ? ', ' : ' or '}
+          {whatsappEnabled() && (
+            <>
+              <WhatsAppNumberLink message={referenceMessage(r.reference, 'quote')} className="inline-flex items-center gap-1 font-semibold text-lagoon-700 underline [&_svg]:size-3.5">
+                message us on WhatsApp
+              </WhatsAppNumberLink>{' '}
+              or{' '}
+            </>
+          )}
           <a href={`mailto:${SUPPORT_EMAIL}?subject=${subject}`} className="inline-flex items-center gap-1 font-semibold text-lagoon-700 underline">
             <Mail className="size-3.5" /> write to us
           </a>{' '}

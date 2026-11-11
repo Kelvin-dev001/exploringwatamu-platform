@@ -12,6 +12,8 @@ import ExperienceCard from '@/components/experience/ExperienceCard';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import Seo from '@/components/seo/Seo';
 import { SlowNotice } from '@/components/listing/States';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
+import { generalMessage } from '@/lib/whatsapp';
 
 import { ArchBand } from '@/components/brand/Patterns';
 
@@ -280,6 +282,7 @@ export default function Experiences() {
                   </Button>
                 )}
                 <Button href="mailto:hello@exploringwatamu.com?subject=Custom%20experience%20request">Ask our team</Button>
+                <WhatsAppButton message={generalMessage('an experience that isn’t listed')}>Ask on WhatsApp</WhatsAppButton>
               </div>
             </div>
           ) : (

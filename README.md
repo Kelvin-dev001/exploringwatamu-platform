@@ -25,8 +25,8 @@ cd client-vite && npm install && npm run dev                        # http://loc
 cd admin-vite && npm install && npm run dev
 ```
 
-Email, SMS, image uploads, Google sign-in and error monitoring are optional and switch
-themselves off when unconfigured. While email isn't configured, the admin warns that travellers were
+Email, SMS, image uploads, Google sign-in, error monitoring and WhatsApp click-to-chat
+are optional and switch themselves off when unconfigured. While email isn't configured, the admin warns that travellers were
 **not** emailed, and travellers can read their quote under **My bookings**.
 
 ## Tests and checks
@@ -51,6 +51,7 @@ demo content (never run it against production).
 - [`DEPLOYMENT.md`](DEPLOYMENT.md) — Render, Vercel and MongoDB Atlas setup, environment variables.
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — running it: deploys, rollback, secrets, admins, email, photos, monitoring, logs, health checks, cold starts.
 - [`docs/DATABASE.md`](docs/DATABASE.md) — indexes, backups and restores.
+- [`docs/WHATSAPP.md`](docs/WHATSAPP.md) — WhatsApp click-to-chat: setup, where it appears, number rules.
 - [`docs/SECURITY-REVIEW.md`](docs/SECURITY-REVIEW.md) — security review (November 2026): findings and fixes.
 - [`docs/OWNER-ACTIONS.md`](docs/OWNER-ACTIONS.md) — tasks that need the account owner.
 - [`TESTING.md`](TESTING.md) — the test suites, the browser smoke test and CI.

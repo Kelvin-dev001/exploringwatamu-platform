@@ -8,6 +8,8 @@ import Seo from '@/components/seo/Seo';
 import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { snapshotFor } from '@/lib/trip';
+import { listingEnquiry, generalMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
 
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
@@ -25,6 +27,7 @@ export default function CarHire() {
         ) : items.length === 0 ? (
           <EmptyState title="Cars are arranged on request" text="Tell us your dates and what you need — we’ll include a car in your quote.">
             <Button href="mailto:hello@exploringwatamu.com?subject=Car%20hire%20request">Ask our team</Button>
+            <WhatsAppButton message={generalMessage('hiring a car')}>Ask on WhatsApp</WhatsAppButton>
           </EmptyState>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -37,7 +40,12 @@ export default function CarHire() {
                 meta={[c.vehicle?.capacity && { icon: Users, text: `${c.vehicle.capacity} seats` }, c.vehicle?.type && { icon: CarFront, text: c.vehicle.type }]}
                 description={c.description}
                 price={c.dailyRate != null ? { amount: c.dailyRate, unit: 'per day' } : null}
-                actions={<AddToTripButton snapshot={snapshotFor('carhire', c)} label="Add car" />}
+                actions={
+                  <>
+                    <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('carhire', c)} label={`Ask about ${c.vehicle?.name || 'this car'} on WhatsApp`} />
+                    <AddToTripButton snapshot={snapshotFor('carhire', c)} label="Add car" />
+                  </>
+                }
               />
             ))}
           </div>

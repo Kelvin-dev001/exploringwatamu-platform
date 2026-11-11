@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, Send, CheckCircle2, XCircle, Ban, RotateCcw, C
 import { api, errorMessage } from '@/lib/api';
 import { ago, cn, date, dateRange, kes, notifiedMessage } from '@/lib/utils';
 import { Alert, Badge, Button, Card, CardHeader, Confirm, ContactActions, Field, Input, PageHeader, Skeleton, StatusBadge, StickyActions, Textarea, useToast } from '@/ui';
+import WhatsAppReply from './WhatsAppReply';
 
 const VIBE = { ocean: 'Ocean & Reef', slow: 'Slow & Soulful', adventure: 'Adventure', culture: 'Culture & History', romance: 'Romance', social: 'Social & Nightlife' };
 const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
@@ -124,7 +125,8 @@ export default function TripRequest() {
         <div className="space-y-6">
           {/* Traveller */}
           <Card className="p-4 sm:p-5">
-            <ContactActions phone={r.contact.phone} email={r.contact.email} name={r.contact.name} context={`trip request ${r.reference}`} />
+            <WhatsAppReply request={r} />
+            <ContactActions phone={r.contact.phone} email={r.contact.email} name={r.contact.name} context={`trip request ${r.reference}`} whatsapp={false} className="mt-2" />
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div><dt className="flex items-center gap-1 text-xs text-faint"><CalendarDays className="size-3" />Dates</dt><dd className="font-medium text-ink">{dateRange(r.arrival, r.departure)}</dd></div>
               <div><dt className="flex items-center gap-1 text-xs text-faint"><Users className="size-3" />Travellers</dt><dd className="font-medium text-ink">{travellers}</dd></div>

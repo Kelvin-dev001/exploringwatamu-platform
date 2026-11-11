@@ -21,9 +21,9 @@ describe('readiness with a database', () => {
     expect(res.body).toMatchObject({ status: 'ok', database: 'up' });
   });
 
-  it('stays ready when optional services (email, SMS, uploads, monitoring) are off', async () => {
+  it('stays ready when optional services (email, SMS, uploads, monitoring, WhatsApp links) are off', async () => {
     const res = await request(app).get('/api/health/ready');
-    expect(res.body.services).toMatchObject({ email: false, sms: false, errorMonitoring: false });
+    expect(res.body.services).toMatchObject({ email: false, sms: false, errorMonitoring: false, whatsappLinks: false });
     expect(res.status).toBe(200);
   });
 });

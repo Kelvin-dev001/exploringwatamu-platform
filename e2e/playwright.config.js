@@ -40,7 +40,8 @@ module.exports = defineConfig({
     {
       command: build('../e2e/.out/site', 4173),
       cwd: '../client-vite',
-      env: { VITE_API_URL: API },
+      // A placeholder business number, so the WhatsApp buttons render (links are checked, never followed).
+      env: { VITE_API_URL: API, VITE_WHATSAPP_NUMBER: '+254 700 000 000' },
       url: 'http://localhost:4173',
       timeout: 180_000,
       reuseExistingServer: !process.env.CI,

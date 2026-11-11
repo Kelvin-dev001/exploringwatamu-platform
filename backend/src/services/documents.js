@@ -1,6 +1,7 @@
 'use strict';
 
 const config = require('../config/env');
+const whatsapp = require('./whatsapp');
 
 function currency(n) {
   return 'KES ' + Number(n || 0).toLocaleString('en-KE');
@@ -65,6 +66,7 @@ function renderDoc({ kind, booking, trip }) {
       );
       doc.moveDown(0.5);
       doc.fontSize(9).fillColor('#888').text(`Questions? ${config.brand.supportEmail}`);
+      whatsapp.pdfLine(doc, whatsapp.text.groupBooking(booking, trip));
 
       doc.end();
     } catch (err) {
@@ -134,6 +136,7 @@ function buildTripQuotePdf(request) {
       );
       doc.moveDown(0.5);
       doc.fontSize(9).fillColor('#888').text(`Questions? ${config.brand.supportEmail}`);
+      whatsapp.pdfLine(doc, whatsapp.text.tripQuote(request.reference));
       doc.end();
     } catch (err) {
       reject(err);

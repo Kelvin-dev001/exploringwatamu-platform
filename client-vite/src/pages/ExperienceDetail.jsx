@@ -14,6 +14,8 @@ import AddToTripButton from '@/components/trip/AddToTripButton';
 import Seo from '@/components/seo/Seo';
 import { ErrorState, SlowNotice } from '@/components/listing/States';
 import { absoluteUrl } from '@/lib/site';
+import { listingMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
 import { isNotFound } from '@/lib/http';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
@@ -81,6 +83,18 @@ function PricePanel({ item }) {
         <p className="text-sm text-ocean-900/60">per adult{child != null ? ` · children ${formatKES(child)}` : ''}</p>
       </div>
       <AddToTripButton item={item} size="lg" full className="mt-6" />
+      <WhatsAppButton
+        full
+        className="mt-3"
+        message={listingMessage({
+          kind: item.kind,
+          title: item.title,
+          details: [item.lengthLabel, adult != null && `from ${formatKES(adult)} per adult (${residency === 'resident' ? 'Kenya resident' : 'visitor'} price)`],
+          path: item.href,
+        })}
+      >
+        Ask about it on WhatsApp
+      </WhatsAppButton>
       <Button variant="link" className="mt-4 w-full justify-center text-sm" href={`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`}>
         <Mail /> Or just ask about this one
       </Button>

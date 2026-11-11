@@ -53,6 +53,7 @@ git ignores). `.env.example` in each app lists every name.
 | `ADMIN_NOTIFY_EMAIL` | — | Where new-request and booking alerts go |
 | `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID`, `AT_ENV` | — | SMS (Africa's Talking) |
 | `GOOGLE_CLIENT_ID` | — | Google sign-in |
+| `WHATSAPP_NUMBER` | — | Public business WhatsApp number (`+254…`) for "Chat on WhatsApp" links in quote emails and PDFs; empty = no links. See [WHATSAPP.md](WHATSAPP.md) |
 | `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` | — | First admin only — **remove once you can sign in** |
 | `PAYMENTS_ENABLED` | — | Keep `false` |
 
@@ -63,6 +64,7 @@ put a secret in a `VITE_` variable.
 |---|---|
 | `VITE_API_URL` | `https://exploringwatamu-platform.onrender.com/api` |
 | `VITE_GOOGLE_CLIENT_ID` | Website only, for Google sign-in |
+| `VITE_WHATSAPP_NUMBER` | Website only: the public business WhatsApp number (`+254…`) for the WhatsApp buttons; empty = hidden. Same number as `WHATSAPP_NUMBER`; redeploy after changing it |
 | `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT` | Browser error monitoring (a browser DSN is public by design) |
 | `VITE_SITE_URL` | Website only, optional: the canonical URL if it isn't the Vercel production URL |
 
@@ -255,6 +257,8 @@ demo listings must not look like partner inventory.
 | Website/admin: "Can't reach the server" | Cold start (wait a minute); `/api/health`; Render logs |
 | Image upload answers 503 | `CLOUDINARY_*` not set (`/api/health` → `imageUploads: false`) |
 | Image upload 400 "not a supported image" | Only JPG, PNG, WebP, HEIC/AVIF are accepted, up to 8 MB |
+| No WhatsApp buttons on the website | `VITE_WHATSAPP_NUMBER` unset or not a usable number, or the site wasn't redeployed after setting it ([WHATSAPP.md](WHATSAPP.md)) |
+| No WhatsApp link in quote emails | `/api/health/ready` → `whatsappLinks`; a bad `WHATSAPP_NUMBER` is logged at startup |
 | Travellers say they got no email | `/api/health/ready` → `email`; Admin → Notifications (`skipped` = SMTP not set, `failed` = provider error) |
 | 429 "Too many requests" | Rate limits (see `SECURITY-REVIEW.md`); they reset after 15 min, or on deploy |
 | Admin signed out unexpectedly | Their password was changed, they were removed, or `JWT_SECRET` changed |

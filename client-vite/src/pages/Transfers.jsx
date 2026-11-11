@@ -8,6 +8,8 @@ import Seo from '@/components/seo/Seo';
 import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { snapshotFor } from '@/lib/trip';
+import { listingEnquiry, generalMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
 
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
@@ -25,6 +27,7 @@ export default function Transfers() {
         ) : items.length === 0 ? (
           <EmptyState title="Transfers are arranged on request" text="Tell us your flight and where you’re staying — we’ll arrange the ride and include it in your quote.">
             <Button to="/trip">Add pick-up to my trip</Button>
+            <WhatsAppButton message={generalMessage('an airport or hotel transfer')}>Ask on WhatsApp</WhatsAppButton>
           </EmptyState>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -37,7 +40,12 @@ export default function Transfers() {
                 meta={[t.vehicle?.name && { icon: CarFront, text: t.vehicle.name }, t.vehicle?.capacity && { icon: Users, text: `${t.vehicle.capacity} seats` }, { icon: Plane, text: 'Private transfer' }]}
                 description={t.description}
                 price={t.price != null ? { amount: t.price, unit: 'per vehicle', prefix: '' } : null}
-                actions={<AddToTripButton snapshot={snapshotFor('transfer', t)} label="Add transfer" />}
+                actions={
+                  <>
+                    <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('transfer', t)} label={`Ask about ${t.route || 'this transfer'} on WhatsApp`} />
+                    <AddToTripButton snapshot={snapshotFor('transfer', t)} label="Add transfer" />
+                  </>
+                }
               />
             ))}
           </div>

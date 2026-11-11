@@ -13,6 +13,8 @@ import { useVibeProfile } from '@/context/VibeProfileContext';
 // Only loaded when the question is actually shown (first visit or the pill).
 const VibeOnboarding = lazy(() => import('@/components/personalise/VibeOnboarding'));
 import TripDrawer, { TripToast, TripButton } from '@/components/trip/TripDrawer';
+import { WhatsAppButton, WhatsAppNumberLink } from '@/components/contact/WhatsApp';
+import { generalMessage, whatsappEnabled } from '@/lib/whatsapp';
 import { cn } from '@/lib/utils';
 
 const PRIMARY = [
@@ -119,6 +121,7 @@ function Header() {
 
         <div className="ml-auto flex items-center gap-2">
           <ProfilePill className="hidden md:inline-flex" />
+          <WhatsAppButton iconOnly variant="ghost" message={generalMessage()} label="Chat with us on WhatsApp" className="hidden lg:inline-flex" />
           <TripButton />
           {user ? (
             <Button variant="ghost" size="icon" aria-label="Sign out" onClick={signOut} className="hidden lg:inline-flex">
@@ -164,6 +167,9 @@ function Header() {
             <Button to="/my-trips" variant="outline" className="w-full">
               My bookings
             </Button>
+            <WhatsAppButton full message={generalMessage()}>
+              Chat with us on WhatsApp
+            </WhatsAppButton>
             {user ? (
               <Button variant="ghost" className="w-full" onClick={signOut}>
                 <LogOut /> Sign out
@@ -216,6 +222,11 @@ function Footer() {
         <div>
           <p className="eyebrow !text-lagoon-300">Talk to us</p>
           <ul className="mt-4 space-y-2.5 text-sand-50/75">
+            {whatsappEnabled() && (
+              <li>
+                <WhatsAppNumberLink message={generalMessage()} className="inline-flex items-center gap-2 transition hover:text-sand-50" />
+              </li>
+            )}
             <li>
               <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 transition hover:text-sand-50">
                 <Mail className="size-4" /> {SUPPORT_EMAIL}

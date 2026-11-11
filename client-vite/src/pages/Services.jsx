@@ -8,6 +8,8 @@ import Seo from '@/components/seo/Seo';
 import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { snapshotFor } from '@/lib/trip';
+import { listingEnquiry, generalMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
 
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
@@ -25,6 +27,7 @@ export default function Services() {
         ) : items.length === 0 ? (
           <EmptyState title="Services are arranged on request" text="Need a chef, a guide or a massage? Tell us and we’ll add it to your quote.">
             <Button href="mailto:hello@exploringwatamu.com?subject=Service%20request">Ask our team</Button>
+            <WhatsAppButton message={generalMessage('a local service (a chef, a guide, a massage…)')}>Ask on WhatsApp</WhatsAppButton>
           </EmptyState>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -40,7 +43,12 @@ export default function Services() {
                 ]}
                 description={s.description}
                 price={s.price != null ? { amount: s.price, unit: s.pricingType || '' } : null}
-                actions={<AddToTripButton snapshot={snapshotFor('service', s)} label="Add" />}
+                actions={
+                  <>
+                    <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('service', s)} label={`Ask about ${s.name} on WhatsApp`} />
+                    <AddToTripButton snapshot={snapshotFor('service', s)} label="Add" />
+                  </>
+                }
               />
             ))}
           </div>

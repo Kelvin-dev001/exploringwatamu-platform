@@ -37,6 +37,18 @@ rough order of importance; tick them off as you go.
 - *Check:* `/api/health/ready` → `"email": true`; request a password reset for your
   own account; Admin → Notifications shows it as `sent`.
 
+## WhatsApp
+
+- [ ] **Set the business WhatsApp number** (the public number travellers should
+  message, international format, e.g. `+254 7xx xxx xxx`): `VITE_WHATSAPP_NUMBER` on
+  the website's Vercel project **and** `WHATSAPP_NUMBER` on Render. Redeploy the
+  website afterwards (the value is built in). Until then every WhatsApp button is
+  hidden. *Check:* the website footer shows **WhatsApp +254 …**; `/api/health/ready`
+  → `"whatsappLinks": true`. Details in [`WHATSAPP.md`](WHATSAPP.md).
+- [ ] Use a **WhatsApp Business** account on that number (business profile, opening
+  hours, a greeting and an away message), and make sure whoever answers it can use
+  the admin's **Reply on WhatsApp** from the same phone or WhatsApp Web.
+
 ## Monitoring
 
 - [ ] **Uptime monitor** on `https://exploringwatamu-platform.onrender.com/api/health/ready`

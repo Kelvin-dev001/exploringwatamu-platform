@@ -42,7 +42,10 @@ fails a test instead of silently breaking matching or quote requests.
 
 then, on a Pixel 7 viewport: a first-time visitor finds an experience through the menu,
 adds it, sends a quote request and gets an `EW-` reference; the admin signs in, opens
-that request, sends the pre-filled quote and is warned that nothing was emailed. It
+that request, sends the pre-filled quote and is warned that nothing was emailed. A
+second spec (`whatsapp.spec.js`) checks the WhatsApp links — menu, footer, a stay card,
+an experience page, the planner's review step and the admin's "Reply on WhatsApp" —
+with a placeholder business number; the links are checked, never followed. It
 never touches production data. A failing run leaves a trace in `e2e/test-results/`
 (open with `npx playwright show-trace`).
 

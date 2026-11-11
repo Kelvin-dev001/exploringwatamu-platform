@@ -4,6 +4,7 @@ const { sendMail } = require('./mailer');
 const { sendSms } = require('./notifications/sms');
 const { wrap } = require('./notifications/emailLayout');
 const { buildQuotationPdf, buildReceiptPdf } = require('./documents');
+const whatsapp = require('./whatsapp');
 const escapeHtml = require('./escapeHtml');
 const logger = require('./logger');
 const config = require('../config/env');
@@ -47,7 +48,8 @@ async function notifyBookingRequested(booking, trip) {
     html: wrap('Request received', `<p>Hi ${h.name},</p>
       <p>Thanks for requesting a spot on <strong>${h.trip}</strong>. Your request is
       <strong>pending confirmation</strong> — our team will be in touch shortly to finalise it.</p>
-      <p>Your quotation is attached.</p>`),
+      <p>Your quotation is attached.</p>
+      ${whatsapp.emailBlock({ lead: 'Questions about the trip or your quotation? Chat with us on WhatsApp.', text: whatsapp.text.groupBooking(booking, trip) })}`),
     attachments: [attachment],
   });
 
