@@ -8,7 +8,11 @@ const { ZodError } = require('zod');
 module.exports = function validate(schema, source = 'body') {
   return (req, res, next) => {
     try {
-      req[source] = schema.parse(req[source]);
+      const parsed = schema.parse(req[source]);
+      // Express 5 makes req.query a getter: plain assignment is silently
+      // ignored, so the parsed value (coerced numbers, defaults) would be lost.
+      if (source === 'query') Object.defineProperty(req, 'query', { value: parsed, writable: true, configurable: true, enumerable: true });
+      else req[source] = parsed;
       next();
     } catch (err) {
       if (err instanceof ZodError) {

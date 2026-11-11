@@ -19,10 +19,14 @@ function parseJsonFields(data) {
   return null;
 }
 
+// The old embedded Hotel.reviews were never moderated: they stay in the
+// database (see scripts/migrateLegacyReviews.js) but are never sent out.
+const PUBLIC = '-reviews';
+
 // Get all hotels
 exports.getHotels = async (req, res, next) => {
   try {
-    const hotels = await Hotel.find();
+    const hotels = await Hotel.find().select(PUBLIC);
     res.json(hotels);
   } catch (err) {
     next(err);
@@ -32,7 +36,7 @@ exports.getHotels = async (req, res, next) => {
 // Get single hotel by ID
 exports.getHotel = async (req, res, next) => {
   try {
-    const hotel = await Hotel.findById(req.params.id);
+    const hotel = await Hotel.findById(req.params.id).select(PUBLIC);
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
     res.json(hotel);
   } catch (err) {

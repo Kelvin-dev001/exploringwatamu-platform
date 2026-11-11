@@ -21,4 +21,7 @@ const TransferSchema = new mongoose.Schema({
 // Vendor-ready ownership (null = platform-managed).
 TransferSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
 
+// Public rating from approved reviews (written only by services/reviewStats).
+TransferSchema.plugin(require('./plugins/reviewStats'));
+
 module.exports = mongoose.model('Transfer', TransferSchema);

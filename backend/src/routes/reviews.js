@@ -1,83 +1,46 @@
+'use strict';
+
 const express = require('express');
-const router = express.Router();
-const rateLimit = require('express-rate-limit');
-const Review = require('../models/Review');
+const c = require('../controllers/reviewController');
 const authUser = require('../middleware/authUser');
+const authAdmin = require('../middleware/authAdmin');
+const validate = require('../middleware/validate');
+const objectIdParam = require('../middleware/objectIdParam');
+const { uploadArray } = require('../middleware/upload');
+const { publicReadLimiter, sessionLimiter, reviewWriteLimiter, adminLimiter, adminWriteLimiter } = require('../middleware/rateLimiters');
+const { PHOTOS_MAX } = require('../constants/reviews');
+const v = require('../validators/reviewValidators');
 
-const reviewLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  message: { error: 'Too many requests. Please try again later.' },
-});
+/*
+ * Reviews of any listing (see constants/reviews.js, services/reviewEligibility.js).
+ *
+ *   GET  /api/reviews?listingType=&listingId=   public: approved reviews + rating
+ *   GET  /api/reviews/eligible                  traveller: what they can review
+ *   GET  /api/reviews/mine                      traveller: their reviews and status
+ *   POST /api/reviews                           traveller: new review (pending)
+ *   POST /api/reviews/:id/photos                traveller: photos for their pending review
+ *   GET  /api/reviews/admin, /admin/:id         admin: moderation queue, details
+ *   PUT  /api/reviews/admin/:id/status          admin: approve / hide / back to pending
+ *   PUT  /api/reviews/admin/:id/reply           admin: write, edit or remove the reply
+ *
+ * The old stay-only routes (/api/reviews/:accommodationId, PUT/DELETE /:id) are
+ * gone: anyone signed in could post, edit and delete reviews there with no
+ * booking behind them. Nothing on the website used them.
+ */
+const router = express.Router();
+router.param('id', objectIdParam);
 
-// Get all reviews for an accommodation (public)
-router.get('/:accommodationId', reviewLimiter, async (req, res, next) => {
-  try {
-    const reviews = await Review.find({ accommodationId: req.params.accommodationId }).sort({ createdAt: -1 });
-    res.json(reviews);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get('/', publicReadLimiter, validate(v.listReviewsQuery, 'query'), c.listForListing);
 
-// Add a review (Authenticated user)
-router.post('/', reviewLimiter, authUser, async (req, res, next) => {
-  const { accommodationId, rating, text } = req.body;
-  if (!accommodationId || !rating || !text || rating < 1 || rating > 5 || text.trim().length === 0) {
-    return res.status(400).json({ error: 'Accommodation ID, rating (1-5), and non-empty text required.' });
-  }
-  try {
-    const review = new Review({
-      accommodationId,
-      userId: req.user._id,
-      userName: req.user.name,
-      rating,
-      text
-    });
-    await review.save();
-    res.status(201).json(review);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get('/eligible', sessionLimiter, authUser, validate(v.eligibleQuery, 'query'), c.eligible);
+router.get('/mine', sessionLimiter, authUser, c.mine);
+// Writes are limited per account, so authUser comes first.
+router.post('/', authUser, reviewWriteLimiter, validate(v.submitReviewSchema), c.submit);
+router.post('/:id/photos', authUser, reviewWriteLimiter, c.loadOwnPendingReview, uploadArray('photos', PHOTOS_MAX), c.addPhotos);
 
-// Edit review (Authenticated user, Own Review Only)
-router.put('/:id', reviewLimiter, authUser, async (req, res, next) => {
-  try {
-    const review = await Review.findById(req.params.id);
-    if (!review) return res.status(404).json({ error: 'Review not found.' });
-    if (review.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'You do not have permission to edit this review.' });
-    }
-    const { rating, text } = req.body;
-    if (rating !== undefined) {
-      if (rating < 1 || rating > 5) return res.status(400).json({ error: 'Rating must be between 1 and 5.' });
-      review.rating = rating;
-    }
-    if (text !== undefined) {
-      if (text.trim().length === 0) return res.status(400).json({ error: 'Review text cannot be empty.' });
-      review.text = text;
-    }
-    await review.save();
-    res.json(review);
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Delete review (Authenticated user, Own Review Only)
-router.delete('/:id', reviewLimiter, authUser, async (req, res, next) => {
-  try {
-    const review = await Review.findById(req.params.id);
-    if (!review) return res.status(404).json({ error: 'Review not found.' });
-    if (review.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'You do not have permission to delete this review.' });
-    }
-    await review.deleteOne();
-    res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-});
+router.get('/admin', adminLimiter, authAdmin, validate(v.adminListQuery, 'query'), c.adminList);
+router.get('/admin/:id', adminLimiter, authAdmin, c.adminGet);
+router.put('/admin/:id/status', adminWriteLimiter, authAdmin, validate(v.moderateSchema), c.moderate);
+router.put('/admin/:id/reply', adminWriteLimiter, authAdmin, validate(v.replySchema), c.reply);
 
 module.exports = router;

@@ -24,7 +24,7 @@ const CONVERT_TO_JPG = ['heic', 'heif', 'avif'];
 const ALLOWED_FORMATS = ['jpg', 'jpeg', 'png', 'webp', ...CONVERT_TO_JPG];
 
 // Cloudinary folder per router, matched in order against the mount path.
-const FOLDERS = ['hotels', 'vehicles', 'tours', 'services', 'properties', 'carhire', 'transfers', 'group-trips'];
+const FOLDERS = ['hotels', 'vehicles', 'tours', 'services', 'properties', 'carhire', 'transfers', 'group-trips', 'reviews'];
 
 class UploadError extends Error {
   constructor(status, message, { code, field, cause } = {}) {

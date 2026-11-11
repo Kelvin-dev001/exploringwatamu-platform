@@ -30,9 +30,15 @@ function signAdminToken(admin) {
   );
 }
 
-/** Throws (like jwt.verify) when the token is invalid or expired. */
+/**
+ * A sign-in (session) token. Throws (like jwt.verify) when the token is
+ * invalid or expired — or carries an audience: only purpose tokens such as
+ * review invitations have one, and they must never sign anybody in.
+ */
 function verifyToken(token) {
-  return jwt.verify(token, config.jwtSecret, { algorithms: [ALGORITHM] });
+  const decoded = jwt.verify(token, config.jwtSecret, { algorithms: [ALGORITHM] });
+  if (decoded.aud !== undefined) throw new jwt.JsonWebTokenError('not a session token');
+  return decoded;
 }
 
 /** False once the account's password has changed since the token was signed. */
@@ -42,4 +48,33 @@ function isCurrent(decoded, account) {
 
 const bearer = (req) => req.header('Authorization')?.replace('Bearer ', '');
 
-module.exports = { signUserToken, signAdminToken, verifyToken, isCurrent, bearer, ALGORITHM };
+/*
+ * Review invitations. The post-trip email links to the review page with this
+ * token: whoever opens it has shown they read the booking's contact inbox, so a
+ * guest request (made without an account) can be reviewed from whichever
+ * account they sign in with. It carries no `id`, so it can never pass as a
+ * sign-in token, and a sign-in token can't pass as an invitation (audience).
+ */
+const INVITE_AUDIENCE = 'review-invite';
+const INVITE_TTL = '120d';
+
+function signReviewInvite({ bookingType, bookingId, email }) {
+  return jwt.sign({ bt: bookingType, bid: String(bookingId), em: String(email).toLowerCase() }, config.jwtSecret, {
+    algorithm: ALGORITHM,
+    audience: INVITE_AUDIENCE,
+    expiresIn: INVITE_TTL,
+  });
+}
+
+/** { bookingType, bookingId, email } for a valid invitation, otherwise null. */
+function verifyReviewInvite(token) {
+  if (typeof token !== 'string' || !token) return null;
+  try {
+    const d = jwt.verify(token, config.jwtSecret, { algorithms: [ALGORITHM], audience: INVITE_AUDIENCE });
+    return d.bt && d.bid && d.em ? { bookingType: d.bt, bookingId: d.bid, email: d.em } : null;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { signUserToken, signAdminToken, verifyToken, isCurrent, bearer, signReviewInvite, verifyReviewInvite, ALGORITHM };
