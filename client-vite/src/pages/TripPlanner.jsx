@@ -18,22 +18,26 @@ import { whatsappEnabled } from '@/lib/whatsapp';
 import Seo from '@/components/seo/Seo';
 
 import { WaveField } from '@/components/brand/Patterns';
+import { localisePath, translate, useI18n } from '@/i18n';
+import messages from '@/locales/planner';
+import catalogText from '@/locales/catalog';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 const today = () => new Date().toISOString().slice(0, 10);
 
 function Stepper({ label, value, onChange, min = 0, max = 30 }) {
+  const { t } = useI18n(messages);
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm font-semibold text-ocean-900">{label}</span>
       <div className="inline-flex items-center rounded-full border border-sand-300 bg-white">
-        <button type="button" onClick={() => onChange(value - 1)} disabled={value <= min} aria-label={`Fewer ${label.toLowerCase()}`} className="grid size-9 place-items-center rounded-full text-ocean-900 disabled:opacity-30 hover:bg-sand-100">
+        <button type="button" onClick={() => onChange(value - 1)} disabled={value <= min} aria-label={t('fewer', { what: label.toLowerCase() })} className="grid size-9 place-items-center rounded-full text-ocean-900 disabled:opacity-30 hover:bg-sand-100">
           <Minus className="size-4" />
         </button>
         <span className="w-8 text-center font-semibold tabular-nums" aria-live="polite">
           {value}
         </span>
-        <button type="button" onClick={() => onChange(value + 1)} disabled={value >= max} aria-label={`More ${label.toLowerCase()}`} className="grid size-9 place-items-center rounded-full text-ocean-900 disabled:opacity-30 hover:bg-sand-100">
+        <button type="button" onClick={() => onChange(value + 1)} disabled={value >= max} aria-label={t('more', { what: label.toLowerCase() })} className="grid size-9 place-items-center rounded-full text-ocean-900 disabled:opacity-30 hover:bg-sand-100">
           <Plus className="size-4" />
         </button>
       </div>
@@ -43,6 +47,7 @@ function Stepper({ label, value, onChange, min = 0, max = 30 }) {
 
 /** Ready-made starting points, generated from the live catalogue. */
 function Starters({ ranked, items, profile, onStart, openOnboarding }) {
+  const { t } = useI18n(messages);
   const starters = VIBES.map((v) => {
     const vibeProfile = { vibes: [v.id], companions: profile?.companions, stay: profile?.stay || 'short' };
     const count = items.filter((x) => x.vibes.includes(v.id)).length;
@@ -51,28 +56,26 @@ function Starters({ ranked, items, profile, onStart, openOnboarding }) {
 
   return (
     <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-6 shadow-soft sm:p-8">
-      <p className="eyebrow">Start here</p>
-      <h2 className="mt-2 font-display text-3xl text-ocean-900">Your trip is empty — let’s fill it</h2>
-      <p className="mt-2 max-w-2xl text-ocean-900/65">
-        We’ll sketch a plan from the experiences that suit you. Everything stays editable: drag, swap or remove anything.
-      </p>
+      <p className="eyebrow">{t('startHere')}</p>
+      <h2 className="mt-2 font-display text-3xl text-ocean-900">{t('startTitle')}</h2>
+      <p className="mt-2 max-w-2xl text-ocean-900/65">{t('startText')}</p>
       <div className="mt-6 flex flex-wrap gap-3">
         {profile ? (
           <Button size="lg" onClick={() => onStart(ranked)} disabled={!items.length}>
-            <Wand2 /> Start me off
+            <Wand2 /> {t('startMeOff')}
           </Button>
         ) : (
           <Button size="lg" onClick={openOnboarding}>
-            <Sparkles /> Tell us your vibe first
+            <Sparkles /> {t('vibeFirst')}
           </Button>
         )}
         <Button size="lg" variant="outline" to="/experiences">
-          Browse experiences
+          {t('browse')}
         </Button>
       </div>
       {starters.length > 0 && (
         <>
-          <p className="mt-8 text-xs font-bold uppercase tracking-[0.18em] text-ocean-900/60">Or start from a ready-made plan</p>
+          <p className="mt-8 text-xs font-bold uppercase tracking-[0.18em] text-ocean-900/60">{t('readyMade')}</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {starters.map(({ vibe, vibeProfile, count }) => (
               <button
@@ -86,7 +89,7 @@ function Starters({ ranked, items, profile, onStart, openOnboarding }) {
                 </span>
                 <span>
                   <span className="block font-display text-lg text-ocean-900">{vibe.label}</span>
-                  <span className="text-sm text-ocean-900/60">{count} experiences to choose from</span>
+                  <span className="text-sm text-ocean-900/60">{t('toChooseFrom', { count })}</span>
                 </span>
               </button>
             ))}
@@ -98,6 +101,8 @@ function Starters({ ranked, items, profile, onStart, openOnboarding }) {
 }
 
 export default function TripPlanner() {
+  const { t: tr, rich, locale } = useI18n(messages);
+  const tc = (key, vars) => translate(catalogText, locale, key, vars);
   const t = useTrip();
   const { trip } = t;
   const { profile, openOnboarding } = useVibeProfile();
@@ -129,9 +134,9 @@ export default function TripPlanner() {
   const start = (rankedList) => t.autoPlan(rankedList);
 
   const share = async () => {
-    const url = `${window.location.origin}/trip?plan=${encodeTrip(trip)}`;
+    const url = `${window.location.origin}${localisePath('/trip', locale)}?plan=${encodeTrip(trip)}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'My Watamu trip', url });
+      if (navigator.share) await navigator.share({ title: tr('shareTitle'), url });
       else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -143,21 +148,19 @@ export default function TripPlanner() {
   };
 
   // Email fallback, offered only if the quote form can't be reached.
-  const mailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Quote request: my Watamu trip')}&body=${encodeURIComponent(tripSummary(trip, { headline }))}`;
+  const mailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(tr('mailSubject'))}&body=${encodeURIComponent(tripSummary(trip, { headline }))}`;
 
   const missingTransfers = count > 0 && !hasItem(trip, TRANSFERS.in.key) && !hasItem(trip, TRANSFERS.out.key);
 
   return (
     <>
-      <Seo title="Plan your Watamu trip" description="Drag experiences onto days, add stays and transfers, and get one tailored quote from our local team." path="/trip" />
+      <Seo route="/trip" />
       <section className="relative overflow-hidden bg-ocean-900 text-sand-50">
         <WaveField className="absolute inset-0 text-ocean-800" rows={8} gap={18} />
         <Container size="wide" className="relative py-12 lg:py-16">
-          <p className="eyebrow !text-lagoon-300">My Watamu trip</p>
-          <h1 className="mt-3 max-w-4xl font-display text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">{headline || 'Plan your Watamu days'}</h1>
-          <p className="mt-4 max-w-2xl text-lg text-sand-50/70">
-            Drag experiences onto days, keep some days free, and send it to us. Our local team checks availability and prices the whole trip.
-          </p>
+          <p className="eyebrow !text-lagoon-300">{tr('plannerEyebrow')}</p>
+          <h1 className="mt-3 max-w-4xl font-display text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">{headline || tr('plannerTitle')}</h1>
+          <p className="mt-4 max-w-2xl text-lg text-sand-50/70">{tr('plannerLede')}</p>
           {profile && (
             <div className="mt-5 flex flex-wrap gap-2">
               {profile.vibes.map((id) => {
@@ -177,12 +180,12 @@ export default function TripPlanner() {
         <div className="min-w-0 space-y-8">
           {shared && (
             <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-lagoon-50 p-4 text-sm text-lagoon-700">
-              <Share2 className="size-4" /> Someone shared a trip plan with you.
+              <Share2 className="size-4" /> {tr('sharedPlan')}
               <Button size="sm" onClick={() => { t.replace(shared); setShared(null); }}>
-                Use their plan
+                {tr('useTheirs')}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setShared(null)}>
-                Keep mine
+                {tr('keepMine')}
               </Button>
             </div>
           )}
@@ -191,7 +194,7 @@ export default function TripPlanner() {
           <div className="grid gap-4 rounded-[var(--radius-card)] border border-sand-200 bg-white p-5 shadow-soft md:grid-cols-[1fr_1fr_1.1fr]">
             <label className="block">
               <span className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-ocean-900">
-                <CalendarDays className="size-4 text-lagoon-600" /> Arriving
+                <CalendarDays className="size-4 text-lagoon-600" /> {tr('arriving')}
               </span>
               <input
                 type="date"
@@ -203,7 +206,7 @@ export default function TripPlanner() {
             </label>
             <label className="block">
               <span className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-ocean-900">
-                <CalendarDays className="size-4 text-lagoon-600" /> Leaving
+                <CalendarDays className="size-4 text-lagoon-600" /> {tr('leaving')}
               </span>
               <input
                 type="date"
@@ -214,20 +217,20 @@ export default function TripPlanner() {
               />
               {!trip.arrival && (
                 <span className="mt-2 flex items-center justify-between text-xs text-ocean-900/60">
-                  No dates yet? Plan {trip.days.length} day{trip.days.length === 1 ? '' : 's'}
+                  {tr('noDates', { count: trip.days.length })}
                   <span className="inline-flex gap-1">
-                    <button type="button" className="rounded-full border border-sand-300 px-2" onClick={() => t.setDayCount(trip.days.length - 1)} aria-label="One day fewer">−</button>
-                    <button type="button" className="rounded-full border border-sand-300 px-2" onClick={() => t.setDayCount(trip.days.length + 1)} aria-label="One day more">+</button>
+                    <button type="button" className="rounded-full border border-sand-300 px-2" onClick={() => t.setDayCount(trip.days.length - 1)} aria-label={tr('dayFewer')}>−</button>
+                    <button type="button" className="rounded-full border border-sand-300 px-2" onClick={() => t.setDayCount(trip.days.length + 1)} aria-label={tr('dayMore')}>+</button>
                   </span>
                 </span>
               )}
             </label>
             <div className="space-y-2">
               <span className="flex items-center gap-1.5 text-sm font-semibold text-ocean-900">
-                <Users className="size-4 text-lagoon-600" /> Travellers
+                <Users className="size-4 text-lagoon-600" /> {tr('travellers')}
               </span>
-              <Stepper label="Adults" value={trip.adults} min={1} onChange={(n) => t.setTravellers(n, trip.children)} />
-              <Stepper label="Children" value={trip.children} onChange={(n) => t.setTravellers(trip.adults, n)} />
+              <Stepper label={tr('adults')} value={trip.adults} min={1} onChange={(n) => t.setTravellers(n, trip.children)} />
+              <Stepper label={tr('children')} value={trip.children} onChange={(n) => t.setTravellers(trip.adults, n)} />
             </div>
           </div>
 
@@ -239,22 +242,22 @@ export default function TripPlanner() {
                 <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-lagoon-200 bg-lagoon-50 p-4">
                   <Plane className="size-5 text-lagoon-600" />
                   <p className="flex-1 text-sm text-ocean-900">
-                    <span className="font-semibold">Flying into Malindi or Mombasa?</span> Add airport pick-up and drop-off and we’ll include them in your quote.
+                    <span className="font-semibold">{tr('flyingIn')}</span> {tr('flyingInText')}
                   </p>
                   <Button size="sm" variant="ocean" onClick={t.addTransfers}>
-                    <Plus /> Add transfers
+                    <Plus /> {tr('addTransfers')}
                   </Button>
                 </div>
               )}
               <Board />
               <label className="block">
-                <span className="mb-1.5 block text-sm font-semibold text-ocean-900">Anything we should know?</span>
+                <span className="mb-1.5 block text-sm font-semibold text-ocean-900">{tr('anything')}</span>
                 <textarea
                   rows={3}
                   maxLength={2000}
                   value={trip.notes}
                   onChange={(e) => t.setNotes(e.target.value)}
-                  placeholder="Where you’re staying, dietary needs, celebrations, accessibility…"
+                  placeholder={tr('notesPlaceholder')}
                   className="w-full rounded-2xl border border-sand-300 bg-white p-4 text-ocean-900"
                 />
               </label>
@@ -265,9 +268,9 @@ export default function TripPlanner() {
         {/* Summary */}
         <aside className="xl:sticky xl:top-28 xl:self-start">
           <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-6 shadow-soft">
-            <p className="font-display text-2xl text-ocean-900">Your trip</p>
+            <p className="font-display text-2xl text-ocean-900">{tr('yourTrip')}</p>
             <p className="mt-1 text-sm text-ocean-900/60">
-              {count} item{count === 1 ? '' : 's'} · {trip.days.length} day{trip.days.length === 1 ? '' : 's'} · {trip.adults + trip.children} traveller{trip.adults + trip.children === 1 ? '' : 's'}
+              {tr('tripFacts', { items: tr('items', { count }), days: tc('days', { count: trip.days.length }), travellers: tr('travellersCount', { count: trip.adults + trip.children }) })}
             </p>
             <ResidencyToggle
               value={residency}
@@ -278,45 +281,45 @@ export default function TripPlanner() {
               className="mt-5 w-full [&>button]:flex-1"
             />
             <div className="mt-5 border-t border-sand-200 pt-5">
-              <p className="text-sm text-ocean-900/60">Estimated from</p>
+              <p className="text-sm text-ocean-900/60">{tr('estimatedFrom')}</p>
               <p className="font-display text-4xl text-ocean-900">{formatKES(total)}</p>
-              {unpriced > 0 && <p className="mt-1 text-xs text-ocean-900/60">+ {unpriced} item{unpriced === 1 ? '' : 's'} priced in your quote</p>}
-              <p className="mt-2 text-xs text-ocean-900/60">Indicative only. Your quote confirms availability and the final price.</p>
+              {unpriced > 0 && <p className="mt-1 text-xs text-ocean-900/60">{tr('pricedInQuote', { count: unpriced })}</p>}
+              <p className="mt-2 text-xs text-ocean-900/60">{tr('indicative')}</p>
             </div>
             <Button className="mt-6 w-full" size="lg" onClick={() => setRequestOpen(true)} disabled={!count}>
-              <Send /> Request my quote
+              <Send /> {tr('requestQuote')}
             </Button>
             {count > 0 && whatsappEnabled() && (
               <Button variant="outline" className="mt-3 w-full" onClick={() => setWhatsappOpen(true)}>
-                <WhatsAppIcon className="text-whatsapp-600" /> Send plan on WhatsApp
+                <WhatsAppIcon className="text-whatsapp-600" /> {tr('sendWhatsApp')}
               </Button>
             )}
             {trip.lastRequest && (
               <p className="mt-3 rounded-xl bg-lagoon-50 p-3 text-xs text-lagoon-700">
-                Sent as <span className="font-mono font-semibold">{trip.lastRequest.reference}</span>. Changed something? Send it again and we’ll use the latest version.
+                {rich('sentAs', { ref: (text) => <span className="font-mono font-semibold">{text}</span> }, { reference: trip.lastRequest.reference })}
               </p>
             )}
             <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ocean-900/60">
-              <Check className="size-3.5 text-lagoon-600" /> No payment until you confirm
+              <Check className="size-3.5 text-lagoon-600" /> {tr('noPayment')}
             </p>
             {count > 0 && (
               <div className="mt-5 flex gap-2 border-t border-sand-200 pt-5">
                 <Button variant="outline" size="sm" className="flex-1" onClick={share}>
-                  {copied ? <Check /> : <Share2 />} {copied ? 'Link copied' : 'Share plan'}
+                  {copied ? <Check /> : <Share2 />} {copied ? tr('linkCopied') : tr('sharePlan')}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => window.confirm('Clear your whole trip?') && t.clear()}
-                  aria-label="Clear trip"
+                  onClick={() => window.confirm(tr('clearConfirm')) && t.clear()}
+                  aria-label={tr('clearTrip')}
                 >
-                  <Trash2 /> Clear
+                  <Trash2 /> {tr('clear')}
                 </Button>
               </div>
             )}
             {count > 0 && (
               <a href={mailHref} className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ocean-900/60 hover:text-ocean-900">
-                <Mail className="size-3.5" /> Prefer email? Send it from your inbox
+                <Mail className="size-3.5" /> {tr('emailInstead')}
               </a>
             )}
           </div>

@@ -16,17 +16,20 @@ import { WhatsAppButton } from '@/components/contact/WhatsApp';
 import { generalMessage } from '@/lib/whatsapp';
 
 import { ArchBand } from '@/components/brand/Patterns';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/experiences';
 
+// Labels are message keys (locales/experiences.js).
 const SORTS = [
-  { id: 'match', label: 'Best match' },
-  { id: 'price-asc', label: 'Price: low to high' },
-  { id: 'price-desc', label: 'Price: high to low' },
-  { id: 'newest', label: 'Newest' },
+  { id: 'match', label: 'sortMatch' },
+  { id: 'price-asc', label: 'sortPriceAsc' },
+  { id: 'price-desc', label: 'sortPriceDesc' },
+  { id: 'newest', label: 'sortNewest' },
 ];
 const TYPES = [
-  { id: 'all', label: 'Everything' },
-  { id: 'tour', label: 'Experiences' },
-  { id: 'group', label: 'Group trips' },
+  { id: 'all', label: 'typeAll' },
+  { id: 'tour', label: 'typeTour' },
+  { id: 'group', label: 'typeGroup' },
 ];
 
 /* Filters live in the URL so a filtered view can be shared or bookmarked. */
@@ -67,33 +70,34 @@ function FilterGroup({ title, children }) {
 }
 
 function FilterPanel({ filters, toggle, update }) {
+  const { t } = useI18n(messages);
   return (
     <div>
-      <FilterGroup title="Vibe">
+      <FilterGroup title={t('filterVibe')}>
         {VIBES.map((v) => (
           <Chip key={v.id} icon={v.icon} selected={filters.vibes.includes(v.id)} onClick={() => toggle('vibes', v.id)}>
             {v.label}
           </Chip>
         ))}
       </FilterGroup>
-      <FilterGroup title="Great for">
+      <FilterGroup title={t('filterWho')}>
         {COMPANIONS.map((c) => (
           <Chip key={c.id} selected={filters.who === c.id} onClick={() => update({ who: filters.who === c.id ? '' : c.id })}>
             {c.label}
           </Chip>
         ))}
       </FilterGroup>
-      <FilterGroup title="Length">
+      <FilterGroup title={t('filterLength')}>
         {LENGTHS.map((l) => (
           <Chip key={l.id} selected={filters.lengths.includes(l.id)} onClick={() => toggle('lengths', l.id)}>
             {l.label}
           </Chip>
         ))}
       </FilterGroup>
-      <FilterGroup title="Type">
-        {TYPES.map((t) => (
-          <Chip key={t.id} selected={filters.type === t.id} onClick={() => update({ type: t.id })}>
-            {t.label}
+      <FilterGroup title={t('filterType')}>
+        {TYPES.map((type) => (
+          <Chip key={type.id} selected={filters.type === type.id} onClick={() => update({ type: type.id })}>
+            {t(type.label)}
           </Chip>
         ))}
       </FilterGroup>
@@ -115,6 +119,7 @@ function CardSkeleton() {
 }
 
 export default function Experiences() {
+  const { t } = useI18n(messages);
   const { profile, openOnboarding } = useVibeProfile();
   const { items, loading, error, retry } = useCatalog();
   const { filters, update, toggle, activeCount, reset } = useFilters();
@@ -146,17 +151,15 @@ export default function Experiences() {
 
   return (
     <>
-      <Seo title="Experiences in Watamu" description="Snorkelling in the marine park, sunset dhows on Mida Creek, Gede Ruins and more — ranked for how you like to travel. Add them to your trip for one tailored quote." />
+      <Seo route="/experiences" />
       <section className="grain border-b border-sand-200">
         <Container size="wide" className="pb-10 pt-12 lg:pb-14 lg:pt-16">
-          <p className="eyebrow">{profile ? 'Sorted for you' : 'The Watamu store'}</p>
+          <p className="eyebrow">{profile ? t('eyebrowYours') : t('eyebrow')}</p>
           <h1 className="mt-3 max-w-4xl font-display text-4xl leading-[1.05] text-ocean-900 sm:text-5xl lg:text-6xl">
-            {profile ? 'Experiences picked for your Watamu' : 'Experiences in Watamu'}
+            {profile ? t('titleYours') : t('title')}
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-ocean-900/65">
-            {headline
-              ? `${headline} Best matches first — pick what you love and we’ll price the whole trip.`
-              : 'Reef, creek, forest and old Swahili towns. Tell us how you travel and we’ll put the best matches first.'}
+            {headline ? t('ledeYours', { headline }) : t('lede')}
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {profile ? (
@@ -170,12 +173,12 @@ export default function Experiences() {
                   ) : null;
                 })}
                 <Button variant="link" onClick={openOnboarding}>
-                  Change
+                  {t('change')}
                 </Button>
               </>
             ) : (
               <Button variant="outline" onClick={openOnboarding}>
-                <Sparkles /> Personalise my results
+                <Sparkles /> {t('personalise')}
               </Button>
             )}
           </div>
@@ -187,10 +190,10 @@ export default function Experiences() {
         <aside className="hidden lg:block">
           <div className="sticky top-28">
             <div className="mb-5 flex items-center justify-between">
-              <p className="font-display text-2xl text-ocean-900">Filter</p>
+              <p className="font-display text-2xl text-ocean-900">{t('filter')}</p>
               {activeCount > 0 && (
                 <button type="button" onClick={reset} className="inline-flex items-center gap-1 text-sm font-semibold text-coral-600 hover:text-coral-700">
-                  <RotateCcw className="size-3.5" /> Reset
+                  <RotateCcw className="size-3.5" /> {t('reset')}
                 </button>
               )}
             </div>
@@ -202,16 +205,16 @@ export default function Experiences() {
           {/* Toolbar */}
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setSheetOpen(true)}>
-              <SlidersHorizontal /> Filters{activeCount ? ` (${activeCount})` : ''}
+              <SlidersHorizontal /> {activeCount ? t('filtersCount', { count: activeCount }) : t('filters')}
             </Button>
             <p className="text-sm text-ocean-900/60" aria-live="polite">
-              {loading ? 'Loading…' : `${results.length} ${results.length === 1 ? 'result' : 'results'}`}
-              {!loading && profile && greatCount > 0 && <span className="text-lagoon-700"> · {greatCount} great matches</span>}
+              {loading ? t('loadingDots') : t('results', { count: results.length })}
+              {!loading && profile && greatCount > 0 && <span className="text-lagoon-700"> · {t('greatMatches', { count: greatCount })}</span>}
             </p>
             <div className="ml-auto flex flex-wrap items-center gap-3">
               <ResidencyToggle value={residency} onChange={changeResidency} />
               <label className="sr-only" htmlFor="sort">
-                Sort by
+                {t('sortBy')}
               </label>
               <select
                 id="sort"
@@ -221,7 +224,7 @@ export default function Experiences() {
               >
                 {SORTS.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.id === 'match' && !profile ? 'Recommended' : s.label}
+                    {s.id === 'match' && !profile ? t('sortRecommended') : t(s.label)}
                   </option>
                 ))}
               </select>
@@ -248,7 +251,7 @@ export default function Experiences() {
               ))}
               {filters.type !== 'all' && (
                 <button type="button" onClick={() => update({ type: 'all' })} className="inline-flex items-center gap-1 rounded-full bg-ocean-900 px-3 py-1 text-xs font-semibold text-sand-50">
-                  {byId(TYPES, filters.type)?.label} <X className="size-3" />
+                  {t(byId(TYPES, filters.type)?.label)} <X className="size-3" />
                 </button>
               )}
             </div>
@@ -256,14 +259,14 @@ export default function Experiences() {
 
           {error ? (
             <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-10 text-center">
-              <p className="font-display text-2xl text-ocean-900">We couldn’t load experiences</p>
-              <p className="mt-2 text-ocean-900/60">Check your connection and try again.</p>
+              <p className="font-display text-2xl text-ocean-900">{t('loadError')}</p>
+              <p className="mt-2 text-ocean-900/60">{t('checkConnection')}</p>
               <Button className="mt-6" onClick={retry}>
-                Try again
+                {t('tryAgain')}
               </Button>
             </div>
           ) : loading ? (
-            <div role="status" aria-label="Loading experiences">
+            <div role="status" aria-label={t('loadingExperiences')}>
               <SlowNotice className="mb-6" />
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 6 }, (_, i) => (
@@ -273,16 +276,16 @@ export default function Experiences() {
             </div>
           ) : results.length === 0 ? (
             <div className="rounded-[var(--radius-card)] border border-dashed border-sand-300 bg-sand-100/60 p-10 text-center">
-              <p className="font-display text-2xl text-ocean-900">Nothing matches those filters yet</p>
-              <p className="mt-2 text-ocean-900/60">Try removing a filter — or tell us what you’re after and we’ll arrange it.</p>
+              <p className="font-display text-2xl text-ocean-900">{t('emptyTitle')}</p>
+              <p className="mt-2 text-ocean-900/60">{t('emptyText')}</p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 {activeCount > 0 && (
                   <Button variant="outline" onClick={reset}>
-                    <RotateCcw /> Clear filters
+                    <RotateCcw /> {t('clearFilters')}
                   </Button>
                 )}
-                <Button href="mailto:hello@exploringwatamu.com?subject=Custom%20experience%20request">Ask our team</Button>
-                <WhatsAppButton message={generalMessage('an experience that isn’t listed')}>Ask on WhatsApp</WhatsAppButton>
+                <Button href={`mailto:hello@exploringwatamu.com?subject=${encodeURIComponent(t('customSubject'))}`}>{t('askTeam')}</Button>
+                <WhatsAppButton message={generalMessage('unlisted')}>{t('askWhatsAppShort')}</WhatsAppButton>
               </div>
             </div>
           ) : (
@@ -298,16 +301,16 @@ export default function Experiences() {
       <ArchBand className="text-sand-300" />
 
       {/* Mobile filters */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} side="bottom" title="Filter experiences">
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} side="bottom" title={t('sheetTitle')}>
         <div className="px-6 pb-4">
           <FilterPanel filters={filters} toggle={toggle} update={update} />
         </div>
         <div className="sticky bottom-0 flex gap-3 border-t border-sand-200 bg-sand-50 px-6 py-4">
           <Button variant="ghost" onClick={reset} disabled={!activeCount}>
-            Reset
+            {t('reset')}
           </Button>
           <Button className="flex-1" onClick={() => setSheetOpen(false)}>
-            Show {results.length} {results.length === 1 ? 'result' : 'results'}
+            {t('showResults', { count: results.length })}
           </Button>
         </div>
       </Sheet>

@@ -1,6 +1,10 @@
 import { Component } from 'react';
 import { buttonClasses } from '@/components/ui/button';
 import { reportError } from '@/lib/monitoring';
+import { getLocale, localisePath, translator } from '@/i18n';
+
+// Above the router: reads the language directly (no hook).
+const t = translator();
 
 /**
  * Last line of defence: if rendering crashes, show a way back instead of a
@@ -25,13 +29,15 @@ export default class ErrorBoundary extends Component {
     return (
       <main className="grid min-h-screen place-items-center bg-sand-50 px-6 text-center">
         <div className="max-w-md" role="alert">
-          <p className="font-display text-3xl text-ocean-900">Something went wrong on this page</p>
-          <p className="mt-3 text-ocean-900/70">Your trip is saved on this device. Reload the page to carry on.</p>
+          <p className="font-display text-3xl text-ocean-900">{t('errorPageTitle')}</p>
+          <p className="mt-3 text-ocean-900/70">{t('errorPageBody')}</p>
           <button type="button" onClick={() => window.location.reload()} className={buttonClasses({ className: 'mt-6' })}>
-            Reload
+            {t('errorPageReload')}
           </button>
           <p className="mt-4 text-sm">
-            <a href="/" className="font-semibold text-ocean-900 underline">Back to the homepage</a>
+            <a href={localisePath('/', getLocale())} className="font-semibold text-ocean-900 underline">
+              {t('errorPageHome')}
+            </a>
           </p>
         </div>
       </main>

@@ -7,12 +7,16 @@ import { VIBES, COMPANIONS, STAYS, MAX_VIBES, personalHeadline } from '@/lib/vib
 import { Button } from '@/components/ui/button';
 import { WaveField, Rosette } from '@/components/brand/Patterns';
 import { BrandBadge } from '@/components/brand/Logo';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/personalise';
 import { cn } from '@/lib/utils';
 
+// title/hint are message keys.
 const STEPS = [
-  { key: 'vibes', eyebrow: 'Step 1 of 3', title: "What's your Watamu?", hint: `Pick up to ${MAX_VIBES}. We'll put the best matches first.` },
-  { key: 'companions', eyebrow: 'Step 2 of 3', title: "Who's coming along?", hint: 'So we suggest the right pace and places.' },
-  { key: 'stay', eyebrow: 'Step 3 of 3', title: 'How long will you stay?', hint: 'A rough idea is fine — you can change it any time.' },
+  { key: 'vibes', title: 'vibesTitle', hint: 'vibesHint' },
+  { key: 'companions', title: 'companionsTitle', hint: 'companionsHint' },
+  { key: 'stay', title: 'stayTitle', hint: 'stayHint' },
 ];
 
 const EMPTY = { vibes: [], companions: null, stay: null };
@@ -62,6 +66,7 @@ function OptionTile({ selected, onClick, icon: Icon, label, blurb, disabled }) {
 }
 
 export default function VibeOnboarding() {
+  const { t } = useI18n(messages);
   const { onboardingOpen, profile, saveProfile, skip, clearProfile } = useVibeProfile();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(EMPTY);
@@ -108,19 +113,23 @@ export default function VibeOnboarding() {
             {/* Top bar */}
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-3">
-                <BrandBadge priority className="size-12 ring-2 ring-sand-50/10" />
-                <span className="flex flex-col leading-none">
+                <BrandBadge priority className="size-12 shrink-0 ring-2 ring-sand-50/10" />
+                <span className="hidden flex-col leading-none sm:flex">
                   <span className="text-[0.6rem] font-bold uppercase tracking-[0.32em] text-lagoon-300">Exploring</span>
                   <span className="font-display text-xl font-semibold">Watamu</span>
                 </span>
               </span>
-              <button
-                type="button"
-                onClick={skip}
-                className="text-sm font-semibold text-sand-50/70 underline decoration-sand-50/30 underline-offset-4 transition hover:text-sand-50 hover:decoration-coral-400"
-              >
-                {editing ? 'Close' : 'Just let me browse'}
-              </button>
+              <span className="flex items-center gap-4">
+                {/* First visit: an Italian visitor on an English link can switch before answering. */}
+                <LanguageSwitcher tone="dark" />
+                <button
+                  type="button"
+                  onClick={skip}
+                  className="whitespace-nowrap text-sm font-semibold text-sand-50/70 underline decoration-sand-50/30 underline-offset-4 transition hover:text-sand-50 hover:decoration-coral-400"
+                >
+                  {editing ? t('close') : t('justBrowse')}
+                </button>
+              </span>
             </div>
 
             <div className="grid flex-1 gap-10 py-10 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-16 lg:py-16">
@@ -142,12 +151,12 @@ export default function VibeOnboarding() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <p className="eyebrow !text-coral-300">{current.eyebrow}</p>
+                    <p className="eyebrow !text-coral-300">{t('stepOf', { n: step + 1, total: STEPS.length })}</p>
                     <Dialog.Title className="mt-3 font-display text-4xl leading-[1.04] sm:text-5xl lg:text-6xl">
-                      {current.title}
+                      {t(current.title)}
                     </Dialog.Title>
                     <p id="vibe-onboarding-hint" className="mt-4 max-w-md text-lg text-sand-50/70">
-                      {current.hint}
+                      {t(current.hint, { max: MAX_VIBES })}
                     </p>
                   </m.div>
                 </AnimatePresence>
@@ -160,7 +169,7 @@ export default function VibeOnboarding() {
                     className="mt-8 hidden max-w-md rounded-2xl border border-sand-50/10 bg-sand-50/[0.05] p-5 lg:block"
                   >
                     <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-sand-50/50">
-                      <Sparkles className="size-3.5 text-ochre-300" /> Your Watamu so far
+                      <Sparkles className="size-3.5 text-ochre-300" /> {t('soFar')}
                     </p>
                     <p className="mt-2 font-display text-2xl italic leading-snug text-sand-50">{preview}</p>
                   </m.div>
@@ -218,18 +227,18 @@ export default function VibeOnboarding() {
               <div className="flex items-center gap-2">
                 {step > 0 ? (
                   <Button variant="ghost" className="text-sand-50 hover:bg-sand-50/10" onClick={() => setStep((s) => s - 1)}>
-                    <ArrowLeft /> Back
+                    <ArrowLeft /> {t('back')}
                   </Button>
                 ) : editing ? (
                   <Button variant="ghost" className="text-sand-50/70 hover:bg-sand-50/10" onClick={clearProfile}>
-                    Clear my preferences
+                    {t('clear')}
                   </Button>
                 ) : (
                   <span />
                 )}
               </div>
               <Button size="lg" onClick={next} disabled={!canContinue}>
-                {isLast ? (editing ? 'Update my Watamu' : 'Show me my Watamu') : 'Continue'} <ArrowRight />
+                {isLast ? (editing ? t('update') : t('show')) : t('continue')} <ArrowRight />
               </Button>
             </div>
           </div>

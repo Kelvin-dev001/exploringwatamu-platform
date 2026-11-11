@@ -1,11 +1,14 @@
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAverage, ratingOf, reviewsLabel, starFill } from '@/lib/reviews';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/ratings';
 
 /** Five stars for a rating (to the nearest half star), labelled for screen readers. */
 export function RatingStars({ value, className, starClassName }) {
+  const { t } = useI18n(messages);
   return (
-    <span role="img" aria-label={`Rated ${formatAverage(value)} out of 5`} className={cn('inline-flex items-center gap-0.5', className)}>
+    <span role="img" aria-label={t('rated', { average: formatAverage(value) })} className={cn('inline-flex items-center gap-0.5', className)}>
       {[1, 2, 3, 4, 5].map((n) => {
         const fill = starFill(value, n);
         return (
@@ -28,6 +31,7 @@ export function RatingStars({ value, className, starClassName }) {
  * reviews. Pass onClick to make it open the reviews.
  */
 export function RatingBadge({ stats, onClick, className }) {
+  const { t } = useI18n(messages);
   const r = ratingOf(stats);
   if (!r) return null;
   const content = (
@@ -40,7 +44,7 @@ export function RatingBadge({ stats, onClick, className }) {
   const cls = cn('inline-flex items-center gap-1 text-sm', className);
   if (!onClick) {
     return (
-      <span className={cls} aria-label={`Rated ${formatAverage(r.average)} out of 5 from ${reviewsLabel(r.count)}`}>
+      <span className={cls} aria-label={t('ratedFrom', { average: formatAverage(r.average), reviews: reviewsLabel(r.count) })}>
         {content}
       </span>
     );
@@ -53,7 +57,7 @@ export function RatingBadge({ stats, onClick, className }) {
         e.stopPropagation();
         onClick();
       }}
-      aria-label={`Rated ${formatAverage(r.average)} out of 5 from ${reviewsLabel(r.count)}. Read the reviews`}
+      aria-label={t('ratedOpen', { average: formatAverage(r.average), reviews: reviewsLabel(r.count) })}
       className={cn(cls, 'relative z-10 rounded-full underline decoration-sand-300 underline-offset-4 hover:decoration-ocean-900')}
     >
       {content}

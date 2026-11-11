@@ -1,4 +1,8 @@
 import { VIBES, COMPANIONS, byId } from '@/lib/vibes';
+import { translator } from '@/i18n';
+import messages from '@/locales/cards';
+
+const t = translator(messages);
 
 /*
  * Personal matching: a transparent overlap score, no AI.
@@ -12,7 +16,7 @@ import { VIBES, COMPANIONS, byId } from '@/lib/vibes';
  * Untagged listings score 0 and simply sort after tagged ones.
  */
 
-const SUITS_LABEL = { solo: 'solo travellers', couple: 'couples', friends: 'friends', family: 'families' };
+const SUITS_LABEL = { solo: 'suitsSolo', couple: 'suitsCouple', friends: 'suitsFriends', family: 'suitsFamily' };
 
 export function scoreExperience(item, profile) {
   if (!profile?.vibes?.length) return { score: 0, great: false, reasons: [] };
@@ -29,7 +33,7 @@ export function scoreExperience(item, profile) {
   const suitsWho = who && item.suits.includes(who);
   if (suitsWho) {
     score += 2;
-    reasons.push(`Great for ${SUITS_LABEL[who]}`);
+    reasons.push(t('greatFor', { who: t(SUITS_LABEL[who]) }));
   }
 
   if (item.kind === 'group' && (who === 'solo' || who === 'friends')) score += 1;

@@ -10,6 +10,9 @@ import { Container, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { ArchBand, ChainBand, WaveField, Weave, Rosette } from '@/components/brand/Patterns';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/home';
+import { SITE_TEXT } from '../../seo/routes.js';
 
 /*
  * Interim homepage for Phase 1: personal hero + editorial ways-in.
@@ -19,8 +22,8 @@ import { cn } from '@/lib/utils';
 const WAYS_IN = [
   {
     to: '/experiences',
-    title: 'Experiences',
-    desc: 'Marine park snorkelling, Mida Creek, Gede Ruins, forest walks and more.',
+    title: 'wayExperiences',
+    desc: 'wayExperiencesDesc',
     icon: Compass,
     span: 'md:col-span-2 md:row-span-2',
     tone: 'bg-ocean-900 text-sand-50',
@@ -29,22 +32,22 @@ const WAYS_IN = [
   },
   {
     to: '/group-trips',
-    title: 'Group trips',
-    desc: 'Join scheduled adventures with other travellers.',
+    title: 'wayGroupTrips',
+    desc: 'wayGroupTripsDesc',
     icon: Users,
     span: 'md:row-span-2',
     tone: 'bg-coral-500 text-white',
     art: <Rosette className="absolute -bottom-10 -right-10 text-coral-400" size={220} />,
     big: true,
   },
-  { to: '/hotels', title: 'Stays', desc: 'Hotels, villas and beach houses.', icon: BedDouble, tone: 'bg-white', art: <Weave className="text-sand-200" /> },
-  { to: '/transfers', title: 'Transfers', desc: 'Airport and hotel pick-ups.', icon: Plane, tone: 'bg-lagoon-100', art: null },
-  { to: '/carhire', title: 'Car hire', desc: 'Explore the coast at your pace.', icon: CarFront, tone: 'bg-mangrove-100', art: null },
-  { to: '/services', title: 'Local services', desc: 'Chefs, guides, wellness.', icon: Sparkles, tone: 'bg-ochre-100', art: null },
+  { to: '/hotels', title: 'wayStays', desc: 'wayStaysDesc', icon: BedDouble, tone: 'bg-white', art: <Weave className="text-sand-200" /> },
+  { to: '/transfers', title: 'wayTransfers', desc: 'wayTransfersDesc', icon: Plane, tone: 'bg-lagoon-100', art: null },
+  { to: '/carhire', title: 'wayCarHire', desc: 'wayCarHireDesc', icon: CarFront, tone: 'bg-mangrove-100', art: null },
+  { to: '/services', title: 'wayServices', desc: 'wayServicesDesc', icon: Sparkles, tone: 'bg-ochre-100', art: null },
   {
     to: '/properties-for-sale',
-    title: 'Property for sale',
-    desc: 'Make Watamu home.',
+    title: 'wayProperty',
+    desc: 'wayPropertyDesc',
     icon: HomeIcon,
     span: 'md:col-span-2',
     tone: 'bg-white',
@@ -52,13 +55,15 @@ const WAYS_IN = [
   },
 ];
 
+// title/desc/text are message keys (locales/home.js).
 const HOW = [
-  { icon: MousePointerClick, title: 'Pick what you love', text: 'Browse experiences, stays and transfers made for how you travel.' },
-  { icon: CalendarDays, title: 'Tell us your dates', text: 'Share when you’re coming and who’s with you.' },
-  { icon: MessageSquareQuote, title: 'Get a tailored price', text: 'Our local team confirms availability and emails your quote. No payment until you say yes.' },
+  { icon: MousePointerClick, title: 'howPick', text: 'howPickText' },
+  { icon: CalendarDays, title: 'howDates', text: 'howDatesText' },
+  { icon: MessageSquareQuote, title: 'howPrice', text: 'howPriceText' },
 ];
 
 function WayInCard({ item, index }) {
+  const { t } = useI18n(messages);
   const Icon = item.icon;
   const dark = item.tone.includes('ocean-900') || item.tone.includes('coral-500');
   return (
@@ -84,8 +89,8 @@ function WayInCard({ item, index }) {
           <ArrowUpRight className={cn('size-5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5', dark ? 'text-white/70' : 'text-coral-500')} />
         </div>
         <div className="relative mt-8">
-          <h3 className={cn('font-display leading-tight', item.big ? 'text-4xl lg:text-5xl' : 'text-2xl')}>{item.title}</h3>
-          <p className={cn('mt-2 max-w-sm', dark ? 'text-white/75' : 'text-ocean-900/65', item.big && 'text-lg')}>{item.desc}</p>
+          <h3 className={cn('font-display leading-tight', item.big ? 'text-4xl lg:text-5xl' : 'text-2xl')}>{t(item.title)}</h3>
+          <p className={cn('mt-2 max-w-sm', dark ? 'text-white/75' : 'text-ocean-900/65', item.big && 'text-lg')}>{t(item.desc)}</p>
         </div>
       </Link>
     </m.div>
@@ -93,11 +98,13 @@ function WayInCard({ item, index }) {
 }
 
 export default function Home() {
+  const { t, locale } = useI18n(messages);
   useFirstVisitPrompt();
 
   return (
     <>
       <Seo
+        route="/"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'TravelAgency',
@@ -106,8 +113,8 @@ export default function Home() {
           logo: absoluteUrl(SITE.image),
           image: absoluteUrl(SITE.image),
           email: SITE.email,
-          description: SITE.description,
-          areaServed: { '@type': 'Place', name: 'Watamu, Kilifi County, Kenya' },
+          description: SITE_TEXT[locale].description,
+          areaServed: { '@type': 'Place', name: t('areaServed') },
           address: { '@type': 'PostalAddress', addressLocality: 'Watamu', addressRegion: 'Kilifi County', addressCountry: 'KE' },
         }}
       />
@@ -121,12 +128,12 @@ export default function Home() {
         <Container size="wide">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <SectionHeading
-              eyebrow="Ways in"
-              title="Everything Watamu, in one place"
-              lede="Start with an experience, a stay or a group trip — we’ll help you fit the rest around it."
+              eyebrow={t('waysEyebrow')}
+              title={t('waysTitle')}
+              lede={t('waysLede')}
             />
             <Button to="/experiences" variant="outline" className="self-start md:self-auto">
-              All experiences <ArrowUpRight />
+              {t('allExperiences')} <ArrowUpRight />
             </Button>
           </div>
           <div className="mt-12 grid auto-rows-fr gap-4 md:grid-cols-4">
@@ -139,14 +146,14 @@ export default function Home() {
 
       <section className="py-20 lg:py-28">
         <Container size="wide" className="grid gap-12 lg:grid-cols-[1fr_1.6fr] lg:gap-20">
-          <SectionHeading eyebrow="How it works" title="Your trip, priced by people who live here" />
+          <SectionHeading eyebrow={t('howEyebrow')} title={t('howTitle')} />
           <ol className="grid gap-8 sm:grid-cols-3">
             {HOW.map((step, i) => (
               <li key={step.title} className="relative">
                 <span className="font-display text-6xl italic text-coral-200">{String(i + 1).padStart(2, '0')}</span>
                 <step.icon className="mt-4 size-6 text-lagoon-600" />
-                <h3 className="mt-3 font-display text-2xl text-ocean-900">{step.title}</h3>
-                <p className="mt-2 text-ocean-900/65">{step.text}</p>
+                <h3 className="mt-3 font-display text-2xl text-ocean-900">{t(step.title)}</h3>
+                <p className="mt-2 text-ocean-900/65">{t(step.text)}</p>
               </li>
             ))}
           </ol>

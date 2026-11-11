@@ -1,4 +1,6 @@
-import { Fish, Sunset, Compass, Landmark, Heart, Music, Users, User, Baby, UsersRound } from 'lucide-react';
+import { Fish, Sunset, Compass, Landmark, Heart, Music, User, Baby, UsersRound } from 'lucide-react';
+import { translator } from '@/i18n';
+import messages from '@/locales/vibes';
 
 /*
  * The personalisation vocabulary. Listings get tagged with these same ids in
@@ -6,71 +8,40 @@ import { Fish, Sunset, Compass, Landmark, Heart, Music, Users, User, Baby, Users
  * personalities the group-trip join flow already collects, so both speak the
  * same language.
  */
+// Words come from locales/vibes.js in the current language (getters, so
+// they follow a language switch); ids, icons and legacy names never change.
+const t = translator(messages);
+const worded = (id, fields, extra) => {
+  const entry = { id, ...extra };
+  fields.forEach((field) => Object.defineProperty(entry, field, { enumerable: true, get: () => t(`${id}.${field}`) }));
+  return entry;
+};
+const VIBE_WORDS = ['label', 'short', 'blurb', 'phrase'];
+const WORDS = ['label', 'blurb', 'phrase'];
+
 export const VIBES = [
-  {
-    id: 'ocean',
-    label: 'Ocean & Reef',
-    blurb: 'Snorkelling, sandbanks, dhow trips and turtles.',
-    phrase: 'turquoise reefs',
-    icon: Fish,
-    legacy: ['Beach Bum', 'Nature Nerd'],
-  },
-  {
-    id: 'slow',
-    label: 'Slow & Soulful',
-    blurb: 'Long breakfasts, yoga, hammocks and quiet beaches.',
-    phrase: 'slow mornings',
-    icon: Sunset,
-    legacy: ['Chill Connector', 'Reserved Explorer'],
-  },
-  {
-    id: 'adventure',
-    label: 'Adventure',
-    blurb: 'Kitesurfing, deep-sea fishing, forest trails.',
-    phrase: 'wild days out',
-    icon: Compass,
-    legacy: ['Adrenaline Junkie'],
-  },
-  {
-    id: 'culture',
-    label: 'Culture & History',
-    blurb: 'Ancient ruins, Swahili food and local stories.',
-    phrase: 'old stories',
-    icon: Landmark,
-    legacy: ['Storyteller', 'Foodie Explorer', 'Photography Lover'],
-  },
-  {
-    id: 'romance',
-    label: 'Romance',
-    blurb: 'Sunset dhows, candlelit dinners, hidden coves.',
-    phrase: 'sunsets',
-    icon: Heart,
-    legacy: ['Deep Talker'],
-  },
-  {
-    id: 'social',
-    label: 'Social & Nightlife',
-    blurb: 'Group trips, beach parties and new friends.',
-    phrase: 'good company',
-    icon: Music,
-    legacy: ['Party Starter', 'Social Butterfly', 'Music Lover', 'Jokester'],
-  },
+  worded('ocean', VIBE_WORDS, { icon: Fish, legacy: ['Beach Bum', 'Nature Nerd'] }),
+  worded('slow', VIBE_WORDS, { icon: Sunset, legacy: ['Chill Connector', 'Reserved Explorer'] }),
+  worded('adventure', VIBE_WORDS, { icon: Compass, legacy: ['Adrenaline Junkie'] }),
+  worded('culture', VIBE_WORDS, { icon: Landmark, legacy: ['Storyteller', 'Foodie Explorer', 'Photography Lover'] }),
+  worded('romance', VIBE_WORDS, { icon: Heart, legacy: ['Deep Talker'] }),
+  worded('social', VIBE_WORDS, { icon: Music, legacy: ['Party Starter', 'Social Butterfly', 'Music Lover', 'Jokester'] }),
 ];
 
 export const MAX_VIBES = 3;
 
 export const COMPANIONS = [
-  { id: 'solo', label: 'Just me', blurb: 'Solo, but open to company', phrase: 'just for you', icon: User, legacy: 'Solo But Social' },
-  { id: 'couple', label: 'Two of us', blurb: 'Partner or a close friend', phrase: 'for two', icon: Heart, legacy: 'Couple Traveler' },
-  { id: 'friends', label: 'Friends', blurb: 'A crew of three or more', phrase: 'with your crew', icon: UsersRound, legacy: 'In a Friends Crew' },
-  { id: 'family', label: 'Family', blurb: 'Kids or grandparents along', phrase: 'for the whole family', icon: Baby, legacy: null },
+  worded('solo', WORDS, { icon: User, legacy: 'Solo But Social' }),
+  worded('couple', WORDS, { icon: Heart, legacy: 'Couple Traveler' }),
+  worded('friends', WORDS, { icon: UsersRound, legacy: 'In a Friends Crew' }),
+  worded('family', WORDS, { icon: Baby, legacy: null }),
 ];
 
 export const STAYS = [
-  { id: 'weekend', label: 'A weekend', blurb: '1–2 days', days: 2, phrase: 'A weekend' },
-  { id: 'short', label: 'A few days', blurb: '3–4 days', days: 4, phrase: 'A few days' },
-  { id: 'week', label: 'About a week', blurb: '5–7 days', days: 7, phrase: 'A week' },
-  { id: 'long', label: 'Longer', blurb: '8 days or more', days: 10, phrase: 'Weeks' },
+  worded('weekend', WORDS, { days: 2 }),
+  worded('short', WORDS, { days: 4 }),
+  worded('week', WORDS, { days: 7 }),
+  worded('long', WORDS, { days: 10 }),
 ];
 
 export const byId = (list, id) => list.find((x) => x.id === id);
@@ -106,7 +77,7 @@ export function readProfileRecord(raw) {
 
 function joinNatural(parts) {
   if (parts.length <= 1) return parts[0] || '';
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  return `${parts.slice(0, -1).join(', ')} ${t('and')} ${parts[parts.length - 1]}`;
 }
 
 /**
@@ -116,16 +87,16 @@ function joinNatural(parts) {
  */
 export function personalHeadline(profile) {
   if (!profile?.vibes?.length) return null;
-  const stay = byId(STAYS, profile.stay)?.phrase || 'Days';
+  const stay = byId(STAYS, profile.stay)?.phrase || t('headlineDays');
   const vibes = joinNatural(profile.vibes.map((id) => byId(VIBES, id)?.phrase).filter(Boolean));
   const who = byId(COMPANIONS, profile.companions)?.phrase;
-  return `${stay} of ${vibes}${who ? `, ${who}` : ''}.`;
+  return t('headline', { stay, vibes, who: who ? t('headlineWho', { who }) : '' });
 }
 
 /** Short summary for the header pill, e.g. "Ocean · Two of us · 3–4 days". */
 export function profileSummary(profile) {
   if (!profile?.vibes?.length) return null;
-  const vibe = byId(VIBES, profile.vibes[0])?.label.split(' ')[0];
+  const vibe = byId(VIBES, profile.vibes[0])?.short;
   const extra = profile.vibes.length > 1 ? ` +${profile.vibes.length - 1}` : '';
   const who = byId(COMPANIONS, profile.companions)?.label;
   const stay = byId(STAYS, profile.stay)?.blurb;

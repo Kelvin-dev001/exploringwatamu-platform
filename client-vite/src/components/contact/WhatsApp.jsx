@@ -1,6 +1,8 @@
 import { buttonClasses } from '@/components/ui/button';
 import { businessLink, businessNumber, formatWhatsAppNumber } from '@/lib/whatsapp';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/whatsapp';
 
 /** The WhatsApp glyph (decorative: the link text or aria-label says "WhatsApp"). */
 export function WhatsAppIcon({ className }) {
@@ -19,7 +21,8 @@ export function WhatsAppIcon({ className }) {
  * variant: 'whatsapp' (solid green) or any Button variant ('outline', 'ghost').
  * iconOnly: a round icon button — pass `label` for screen readers.
  */
-export function WhatsAppButton({ message, label, children = 'Chat on WhatsApp', variant = 'outline', size = 'md', iconOnly = false, full = false, className, onClick }) {
+export function WhatsAppButton({ message, label, children, variant = 'outline', size = 'md', iconOnly = false, full = false, className, onClick }) {
+  const { t } = useI18n(messages);
   const href = businessLink(message);
   if (!href) return null;
   const green = variant !== 'whatsapp';
@@ -28,8 +31,8 @@ export function WhatsAppButton({ message, label, children = 'Chat on WhatsApp', 
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={label || (iconOnly ? 'Chat with us on WhatsApp' : undefined)}
-      title={iconOnly ? label || 'Chat with us on WhatsApp' : undefined}
+      aria-label={label || (iconOnly ? t('chatWithUs') : undefined)}
+      title={iconOnly ? label || t('chatWithUs') : undefined}
       onClick={(e) => {
         e.stopPropagation(); // safe inside clickable cards
         onClick?.(e);
@@ -37,7 +40,7 @@ export function WhatsAppButton({ message, label, children = 'Chat on WhatsApp', 
       className={buttonClasses({ variant, size: iconOnly ? 'icon' : size, className: cn('relative z-10', full && 'w-full', className) })}
     >
       <WhatsAppIcon className={cn(green && 'text-whatsapp-600')} />
-      {!iconOnly && children}
+      {!iconOnly && (children ?? t('chat'))}
     </a>
   );
 }

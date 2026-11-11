@@ -1,5 +1,9 @@
 import axios from 'axios';
 import { API_URL } from '@/api.js';
+import { localeTag, translator } from '@/i18n';
+import messages from '@/locales/ratings';
+
+const t = translator(messages);
 
 /*
  * Reviews on the website. Everything public comes from approved reviews only
@@ -7,7 +11,11 @@ import { API_URL } from '@/api.js';
  * which the API checks — the website only shows the way.
  */
 
-export const LISTING_LABEL = { tour: 'experience', group: 'group trip', stay: 'stay', transfer: 'transfer', carhire: 'car hire', service: 'service' };
+/** What each kind of listing is called (in the current language): LISTING_LABEL.tour → "experience". */
+export const LISTING_LABEL = Object.defineProperties(
+  {},
+  Object.fromEntries(['tour', 'group', 'stay', 'transfer', 'carhire', 'service'].map((k) => [k, { enumerable: true, get: () => t(`kind.${k}`) }]))
+);
 export const TEXT_MIN = 20;
 export const TEXT_MAX = 2000;
 export const PHOTOS_MAX = 4;
@@ -22,8 +30,9 @@ export function ratingOf(stats) {
 /** How much of star n (1–5) to fill for a rating, to the nearest half star: 0, 0.5 or 1. */
 export const starFill = (value, n) => Math.min(1, Math.max(0, Math.round((Number(value) || 0) * 2) / 2 - (n - 1)));
 
-export const formatAverage = (n) => (Math.round(Number(n) * 10) / 10).toFixed(1);
-export const reviewsLabel = (count) => `${count} review${count === 1 ? '' : 's'}`;
+/** 4.75 → "4.8" ("4,8" in Italian). */
+export const formatAverage = (n) => (Math.round(Number(n) * 10) / 10).toLocaleString(localeTag(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+export const reviewsLabel = (count) => t('reviews', { count });
 
 /**
  * schema.org AggregateRating for a page's JSON-LD — only with real, approved
@@ -66,14 +75,6 @@ export async function uploadReviewPhotos(token, reviewId, files) {
   const form = new FormData();
   files.forEach((f) => form.append('photos', f));
   return (await axios.post(`${API_URL}/reviews/${reviewId}/photos`, form, auth(token))).data.review;
-}
-
-/** The message to show for a failed review request. */
-export function reviewError(err, fallback = 'Something went wrong. Please try again.') {
-  const data = err?.response?.data;
-  if (data?.issues?.length) return data.issues.map((i) => i.message).join(' · ');
-  if (err?.response?.status === 429) return 'You’ve sent a lot of reviews in a short time — please try again in a little while.';
-  return data?.error || (err?.response ? fallback : 'We couldn’t reach our server. Check your connection and try again.');
 }
 
 /** Where a review of this booking is written. */

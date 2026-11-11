@@ -5,11 +5,14 @@ import Photo from '@/components/ui/Photo';
 import { RatingStars } from '@/components/reviews/Rating';
 import { fetchListingReviews, formatAverage, LISTING_LABEL, reviewsLabel } from '@/lib/reviews';
 import { cn } from '@/lib/utils';
+import { localeTag, useI18n } from '@/i18n';
+import messages from '@/locales/reviews';
 
-const monthYear = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '');
+const monthYear = (d) => (d ? new Date(d).toLocaleDateString(localeTag(), { month: 'long', year: 'numeric' }) : '');
 const PAGE = 5;
 
 function ReviewItem({ review }) {
+  const { t } = useI18n(messages);
   return (
     <li className="rounded-2xl border border-sand-200 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -21,7 +24,7 @@ function ReviewItem({ review }) {
           <RatingStars value={review.rating} />
           {review.verified && (
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-mangrove-700">
-              <BadgeCheck className="size-3.5" /> Verified trip
+              <BadgeCheck className="size-3.5" /> {t('verified')}
             </span>
           )}
         </div>
@@ -31,7 +34,7 @@ function ReviewItem({ review }) {
         <ul className="mt-4 flex flex-wrap gap-2">
           {review.photos.map((src, i) => (
             <li key={src}>
-              <a href={src} target="_blank" rel="noopener noreferrer" aria-label={`Open photo ${i + 1} from ${review.displayName}`}>
+              <a href={src} target="_blank" rel="noopener noreferrer" aria-label={t('openPhoto', { n: i + 1, name: review.displayName })}>
                 <Photo src={src} sizes="96px" max={320} alt="" className="size-24 rounded-xl object-cover" fallback={<span className="block size-24 rounded-xl bg-sand-100" />} />
               </a>
             </li>
@@ -41,7 +44,7 @@ function ReviewItem({ review }) {
       {review.reply?.text && (
         <div className="mt-4 rounded-xl bg-sand-100 p-4 text-sm">
           <p className="flex items-center gap-1.5 font-semibold text-ocean-900">
-            <MessageSquareQuote className="size-4 text-lagoon-600" /> Reply from Exploring Watamu
+            <MessageSquareQuote className="size-4 text-lagoon-600" /> {t('reply')}
           </p>
           <p className="mt-1 whitespace-pre-line text-ocean-900/75">{review.reply.text}</p>
         </div>
@@ -54,7 +57,8 @@ function ReviewItem({ review }) {
  * A listing's approved reviews: summary, then five at a time with "Show more".
  * Handles loading, errors (with retry) and the no-reviews state.
  */
-export default function ReviewsSection({ listingType, listingId, title = 'What travellers say', className, headingLevel: H = 'h2' }) {
+export default function ReviewsSection({ listingType, listingId, title, className, headingLevel: H = 'h2' }) {
+  const { t } = useI18n(messages);
   const [state, setState] = useState({ items: [], page: 0, totalPages: 0, total: 0, summary: null, loading: true, error: false });
   const [attempt, setAttempt] = useState(0);
 
@@ -80,7 +84,7 @@ export default function ReviewsSection({ listingType, listingId, title = 'What t
     <section className={cn('space-y-5', className)} aria-labelledby={`reviews-${listingId}`}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <H id={`reviews-${listingId}`} className="font-display text-2xl text-ocean-900">
-          {title}
+          {title ?? t('sectionTitle')}
         </H>
         {summary?.count > 0 && (
           <p className="flex items-center gap-2 text-sm text-ocean-900/70">
@@ -91,25 +95,23 @@ export default function ReviewsSection({ listingType, listingId, title = 'What t
       </div>
 
       {first ? (
-        <div role="status" aria-label="Loading reviews" className="space-y-3">
+        <div role="status" aria-label={t('loadingReviews')} className="space-y-3">
           {[0, 1].map((i) => (
             <div key={i} className="h-28 animate-pulse rounded-2xl bg-sand-100" />
           ))}
         </div>
       ) : error && items.length === 0 ? (
         <div className="rounded-2xl border border-sand-200 bg-white p-6 text-center">
-          <p className="text-ocean-900/70">We couldn’t load the reviews just now.</p>
+          <p className="text-ocean-900/70">{t('loadFailed')}</p>
           <Button size="sm" variant="outline" className="mt-4" onClick={() => setAttempt((n) => n + 1)}>
-            Try again
+            {t('tryAgain')}
           </Button>
         </div>
       ) : total === 0 ? (
         <div className="rounded-2xl border border-dashed border-sand-300 bg-sand-100/60 p-6 text-center">
           <MessageCircleHeart className="mx-auto size-8 text-lagoon-600" />
-          <p className="mt-3 font-display text-xl text-ocean-900">No reviews yet</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-ocean-900/65">
-            Reviews come only from travellers who did this {LISTING_LABEL[listingType] || 'trip'} with us, after their trip. Be the first — we’ll invite you once you’re home.
-          </p>
+          <p className="mt-3 font-display text-xl text-ocean-900">{t('noReviews')}</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-ocean-900/65">{t('noReviewsText', { kind: LISTING_LABEL[listingType] || t('kind.other') })}</p>
         </div>
       ) : (
         <>
@@ -118,10 +120,10 @@ export default function ReviewsSection({ listingType, listingId, title = 'What t
               <ReviewItem key={r._id} review={r} />
             ))}
           </ul>
-          {error && <p className="text-sm text-coral-700">We couldn’t load more reviews. Try again.</p>}
+          {error && <p className="text-sm text-coral-700">{t('moreFailed')}</p>}
           {page < totalPages && (
             <Button variant="outline" size="sm" onClick={() => load(page + 1, false)} disabled={loading}>
-              {loading ? 'Loading…' : `Show more reviews (${total - items.length} more)`}
+              {loading ? t('loadingDots') : t('showMore', { count: total - items.length })}
             </Button>
           )}
         </>

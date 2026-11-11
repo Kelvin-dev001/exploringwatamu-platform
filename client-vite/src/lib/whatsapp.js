@@ -1,5 +1,10 @@
 import { SITE, absoluteUrl } from '@/lib/site';
-import { dayLabel } from '@/lib/trip';
+import { dayLabel, snapTitle, travellersText } from '@/lib/trip';
+import { unitLabel } from '@/lib/catalog';
+import { formatKES, getLocale, localeTag, localisePath, translator } from '@/i18n';
+import { pickText } from '@/i18n/listingContent';
+import messages from '@/locales/whatsapp';
+import catalogText from '@/locales/catalog';
 
 /*
  * WhatsApp click-to-chat (https://wa.me). Links only: the visitor opens
@@ -74,89 +79,108 @@ export const MAX_ENCODED_MESSAGE = 1800;
 export const encodedLength = (text) => encodeURIComponent(String(text ?? '').trim()).length;
 export const fitsInLink = (text) => encodedLength(text) <= MAX_ENCODED_MESSAGE;
 
-const HELLO = `Hi ${SITE.name}!`;
+// Prefilled messages are in the website's language: the visitor sends them.
+const t = translator(messages);
+const hello = () => t('hello', { brand: SITE.name });
 
-/** Header, footer, "ask our team" boxes. `topic`: "finding a stay". */
-export const generalMessage = (topic) =>
-  topic ? `${HELLO} Could you help me with ${topic} in Watamu?` : `${HELLO} I’m planning a trip to Watamu and have a question.`;
+const TOPICS = { stay: 'topicStay', car: 'topicCar', service: 'topicService', transfer: 'topicTransfer', unlisted: 'topicUnlisted' };
 
-const KIND_LABEL = { tour: 'experience', group: 'group trip', stay: 'stay', transfer: 'transfer', carhire: 'car', service: 'service' };
+/**
+ * Header, footer, "ask our team" boxes. `topic`: one of stay, car, service,
+ * transfer, unlisted (said in the current language) — or your own words.
+ */
+export function generalMessage(topic) {
+  if (!topic) return t('general', { hello: hello() });
+  return t('generalTopic', { hello: hello(), topic: TOPICS[topic] ? t(TOPICS[topic]) : topic });
+}
+
+const INTEREST = { tour: 'interestTour', group: 'interestGroup', stay: 'interestStay', transfer: 'interestTransfer', carhire: 'interestCarhire', service: 'interestService' };
 
 /**
  * Enquiry about one listing, so the visitor doesn't have to explain what they
  * were looking at. Only public listing facts — nothing about the visitor.
  * details: short facts ("Half day", "from KES 4,500 per adult"); path: the
- * listing's own page, when it has one.
+ * listing's own page, when it has one (in the visitor's language).
  */
 export function listingMessage({ kind, title, details = [], path }) {
   const facts = details.filter(Boolean).join(' · ');
-  const lines = [`${HELLO} I’m interested in this ${KIND_LABEL[kind] || 'listing'}:`, `*${title}*${facts ? ` (${facts})` : ''}`];
-  if (path) lines.push(absoluteUrl(path));
-  lines.push('', 'Could you tell me more and check availability for my dates?');
+  const lines = [t(INTEREST[kind] || 'interestOther', { hello: hello() }), `*${title}*${facts ? ` (${facts})` : ''}`];
+  if (path) lines.push(absoluteUrl(localisePath(path, getLocale())));
+  lines.push('', t('askAvailability'));
   return lines.join('\n');
 }
 
-const kes = (n) => (n === null || n === undefined || n === '' || Number.isNaN(Number(n)) ? null : `KES ${Math.round(Number(n)).toLocaleString('en-KE')}`);
-const priced = (amount, unit) => (kes(amount) ? `${kes(amount)}${unit ? ` ${unit}` : ''}` : null);
+const kes = (n) => (n === null || n === undefined || n === '' || Number.isNaN(Number(n)) ? null : formatKES(n));
+const priced = (amount, unit) => (kes(amount) ? `${kes(amount)}${unit ? ` ${unitLabel(unit)}` : ''}` : null);
+const STAY_TYPES = { hotel: 'stayHotel', villa: 'stayVilla', airbnb: 'stayAirbnb' };
+const tc = translator(catalogText);
+const stayType = (type) => (getLocale() !== 'en' && STAY_TYPES[type] ? tc(STAY_TYPES[type]) : type);
+const seats = (n) => (n ? tc('seats', { count: Number(n) }) : null);
 
 /** Enquiry for a stay, transfer, car or service card (they have no page of their own). */
 export function listingEnquiry(kind, doc) {
   switch (kind) {
     case 'stay': {
       const where = typeof doc.location === 'string' ? doc.location : doc.location?.address;
-      return listingMessage({ kind, title: doc.name, details: [doc.type, doc.stars > 0 && `${doc.stars}-star`, where, priced(doc.pricePerNight, 'per night')] });
+      return listingMessage({ kind, title: doc.name, details: [stayType(doc.type), doc.stars > 0 && tc('stars', { n: doc.stars }), where, priced(doc.pricePerNight, 'per night')] });
     }
     case 'transfer':
-      return listingMessage({ kind, title: doc.route || 'Transfer', details: [doc.vehicle?.name, doc.vehicle?.capacity && `${doc.vehicle.capacity} seats`, priced(doc.price, 'per vehicle')] });
+      return listingMessage({ kind, title: doc.route || tc('kindTransfer'), details: [doc.vehicle?.name, seats(doc.vehicle?.capacity), priced(doc.price, 'per vehicle')] });
     case 'carhire':
-      return listingMessage({ kind, title: doc.vehicle?.name || 'Car hire', details: [doc.vehicle?.type, doc.vehicle?.capacity && `${doc.vehicle.capacity} seats`, priced(doc.dailyRate, 'per day')] });
+      return listingMessage({ kind, title: doc.vehicle?.name || tc('kindCarHire'), details: [doc.vehicle?.type, seats(doc.vehicle?.capacity), priced(doc.dailyRate, 'per day')] });
     case 'service':
-      return listingMessage({ kind, title: doc.name, details: [priced(doc.price, doc.pricingType)] });
+      return listingMessage({ kind, title: pickText(doc, 'title', getLocale(), doc.name).text, details: [priced(doc.price, doc.pricingType)] });
     default:
       throw new Error(`Unknown listing kind: ${kind}`);
   }
 }
 
+const REFERENCES = { 'trip request': 'refTripRequest', quote: 'refQuote' };
 /** About a request or quote the visitor already has: the reference finds it. */
-export const referenceMessage = (reference, what = 'trip request') => `${HELLO} I have a question about my ${what} ${reference}.`;
+export const referenceMessage = (reference, what = 'trip request') =>
+  REFERENCES[what] ? t(REFERENCES[what], { hello: hello(), reference }) : t('refOther', { hello: hello(), what, reference });
 
 /* ---------- Trip planner ---------- */
 
 const parseDay = (d) => (d ? new Date(`${d}T00:00:00`) : null);
-// "Fri 8 Jan 2027" — built from parts: ICU versions disagree on a comma after the weekday.
+// "Fri 8 Jan 2027" / "ven 8 gen 2027" — built from parts: ICU versions disagree on a comma after the weekday.
 const longDay = (d) => {
   const x = parseDay(d);
-  return `${x.toLocaleDateString('en-GB', { weekday: 'short' })} ${x.getDate()} ${x.toLocaleDateString('en-GB', { month: 'short' })} ${x.getFullYear()}`;
+  const tag = localeTag();
+  return `${x.toLocaleDateString(tag, { weekday: 'short' })} ${x.getDate()} ${x.toLocaleDateString(tag, { month: 'short' })} ${x.getFullYear()}`;
 };
-const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const clip = (text, max) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 
-// How unscheduled items are grouped, and the prefix their titles already carry.
+// How unscheduled items are grouped, and the prefix their (English) titles carry.
 const GROUPS = [
-  { kinds: ['stay'], label: 'Stay', prefix: 'Stay · ' },
-  { kinds: ['transfer'], label: 'Transfers' },
-  { kinds: ['carhire'], label: 'Car hire', prefix: 'Car hire · ' },
-  { kinds: ['service'], label: 'Services' },
-  { kinds: ['tour', 'group'], label: 'Experiences not on a day yet' },
+  { kinds: ['stay'], label: 'groupStay', prefix: 'Stay · ' },
+  { kinds: ['transfer'], label: 'groupTransfers' },
+  { kinds: ['carhire'], label: 'groupCarHire', prefix: 'Car hire · ' },
+  { kinds: ['service'], label: 'groupServices' },
+  { kinds: ['tour', 'group'], label: 'groupUnscheduled' },
 ];
-const groupOf = (snap) => GROUPS.find((g) => g.kinds.includes(snap.kind)) || { label: 'Other', kinds: [] };
+const groupOf = (snap) => GROUPS.find((g) => g.kinds.includes(snap.kind)) || { label: 'groupOther', kinds: [] };
 const shortTitle = (snap) => {
   const g = groupOf(snap);
-  return g.prefix && snap.title.startsWith(g.prefix) ? snap.title.slice(g.prefix.length) : snap.title;
+  return g.prefix && snap.title.startsWith(g.prefix) ? snap.title.slice(g.prefix.length) : snapTitle(snap);
 };
 
 // On a day line, say what isn't obviously an activity ("Transfer · Malindi–Watamu").
-// "Stay · …" / "Car hire · …" titles and the planner's airport transfers already do.
-const DAY_TAGS = { transfer: 'Transfer', group: 'Group trip', stay: 'Stay', carhire: 'Car hire', service: 'Service' };
+// Stays and car hire already say so, and so do the planner's airport transfers.
+const DAY_TAGS = { transfer: 'tagTransfer', group: 'tagGroup', stay: 'tagStay', carhire: 'tagCarHire', service: 'tagService' };
+const SAYS_WHAT = /^(Stay|Car hire) · /;
 function dayTitle(snap) {
   const tag = DAY_TAGS[snap.kind];
-  return !tag || snap.title.startsWith(tag) || /pick-up|drop-off/i.test(snap.title) ? snap.title : `${tag} · ${snap.title}`;
+  const title = snapTitle(snap);
+  const airport = snap.kind === 'transfer' && /^airport-(in|out)$/.test(snap.id);
+  if (!tag || airport || SAYS_WHAT.test(snap.title) || /pick-up|drop-off/i.test(snap.title) || snap.title.startsWith(t(tag))) return title;
+  return `${t(tag)} · ${title}`;
 }
 
 /** Titles joined, at most `max` of them ("A, B, C +2 more"), each clipped to `len`. */
 function list(titles, { max = Infinity, len = 80 } = {}) {
-  const shown = titles.slice(0, max).map((t) => clip(t, len));
-  return titles.length > max ? `${shown.join(', ')} +${titles.length - max} more` : shown.join(', ');
+  const shown = titles.slice(0, max).map((x) => clip(x, len));
+  return titles.length > max ? `${shown.join(', ')} ${t('planMore', { count: titles.length - max })}` : shown.join(', ');
 }
 
 /**
@@ -169,25 +193,25 @@ function list(titles, { max = Infinity, len = 80 } = {}) {
 export function tripMessage(trip, { reference = trip.lastRequest?.reference } = {}) {
   const snaps = (keys) => keys.map((k) => trip.items[k]).filter(Boolean);
   const dayCount = trip.days.length;
+  const days = tc('days', { count: dayCount });
   const dates =
     trip.arrival && trip.departure
-      ? `${longDay(trip.arrival)} – ${longDay(trip.departure)} (${plural(dayCount, 'day')})`
-      : `${plural(dayCount, 'day')}, dates flexible`;
-  const travellers = [plural(trip.adults, 'adult'), trip.children ? plural(trip.children, 'child', 'children') : null].filter(Boolean).join(', ');
+      ? t('planDateRange', { from: longDay(trip.arrival), to: longDay(trip.departure), days })
+      : t('planFlexible', { days });
   const unscheduled = snaps(trip.ideas);
 
   const header = [
-    reference ? `${HELLO} Here’s my Watamu trip plan.` : `${HELLO} Here’s my Watamu trip plan. Could you send me a quote?`,
+    t(reference ? 'planIntro' : 'planIntroQuote', { hello: hello() }),
     '',
-    ...(reference ? [`Reference: ${reference}`] : []),
-    `Dates: ${dates}`,
-    `Travellers: ${travellers}`,
+    ...(reference ? [t('planReference', { reference })] : []),
+    t('planDates', { dates }),
+    t('planTravellers', { who: travellersText(trip) }),
   ];
 
   const grouped = (opts) =>
     GROUPS.map((g) => {
       const titles = unscheduled.filter((s) => g.kinds.includes(s.kind)).map(shortTitle);
-      return titles.length ? `*${g.label}:* ${list(titles, opts)}` : null;
+      return titles.length ? `*${t(g.label)}:* ${list(titles, opts)}` : null;
     }).filter(Boolean);
 
   const levels = [
@@ -195,8 +219,8 @@ export function tripMessage(trip, { reference = trip.lastRequest?.reference } = 
     () => [
       ...header,
       '',
-      '*Day by day*',
-      ...trip.days.map((d, i) => `${dayLabel(trip, i)}: ${d.items.length ? list(snaps(d.items).map(dayTitle)) : 'free day'}`),
+      t('planDayByDay'),
+      ...trip.days.map((d, i) => `${dayLabel(trip, i)}: ${d.items.length ? list(snaps(d.items).map(dayTitle)) : t('planFreeDay')}`),
       ...(unscheduled.length ? ['', ...grouped()] : []),
     ],
     // 2. Shorter: busy days only, clipped titles, a few items per line.
@@ -205,9 +229,9 @@ export function tripMessage(trip, { reference = trip.lastRequest?.reference } = 
       return [
         ...header,
         '',
-        '*Day by day*',
-        ...trip.days.flatMap((d, i) => (d.items.length ? [`Day ${i + 1}: ${list(snaps(d.items).map(dayTitle), { max: 3, len: 40 })}`] : [])),
-        ...(free.length ? [`Free: day ${free.join(', ')}`] : []),
+        t('planDayByDay'),
+        ...trip.days.flatMap((d, i) => (d.items.length ? [`${tc('dayN', { n: i + 1 })}: ${list(snaps(d.items).map(dayTitle), { max: 3, len: 40 })}`] : [])),
+        ...(free.length ? [t('planFreeDays', { days: free.join(', ') })] : []),
         ...(unscheduled.length ? ['', ...grouped({ max: 3, len: 40 })] : []),
       ];
     },
@@ -216,13 +240,15 @@ export function tripMessage(trip, { reference = trip.lastRequest?.reference } = 
       const all = Object.values(trip.items);
       const count = (kinds) => all.filter((s) => kinds.includes(s.kind)).length;
       const parts = [
-        count(['tour', 'group']) && plural(count(['tour', 'group']), 'experience'),
-        count(['stay']) && plural(count(['stay']), 'stay'),
-        count(['transfer']) && plural(count(['transfer']), 'transfer'),
-        count(['carhire']) && plural(count(['carhire']), 'car'),
-        count(['service']) && plural(count(['service']), 'service'),
-      ].filter(Boolean);
-      return [...header, '', `My plan has ${parts.join(', ') || 'nothing in it yet'}. I’ll share the details here.`];
+        ['countExperiences', ['tour', 'group']],
+        ['countStays', ['stay']],
+        ['countTransfers', ['transfer']],
+        ['countCars', ['carhire']],
+        ['countServices', ['service']],
+      ]
+        .map(([key, kinds]) => count(kinds) && t(key, { count: count(kinds) }))
+        .filter(Boolean);
+      return [...header, '', t('planSummary', { parts: parts.join(', ') || t('planEmpty') })];
     },
   ];
 

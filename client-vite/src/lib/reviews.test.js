@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateRatingLd, formatAverage, ratingOf, reviewError, reviewPath, reviewsLabel, withRatingType } from '@/lib/reviews';
+import { aggregateRatingLd, formatAverage, ratingOf, reviewPath, reviewsLabel, withRatingType } from '@/lib/reviews';
+import { reviewError } from '@/lib/reviewErrors';
 import { normaliseGroupTrip, normaliseTour } from '@/lib/catalog';
 
 // Ratings come from approved reviews only (the API's reviewStats). These turn

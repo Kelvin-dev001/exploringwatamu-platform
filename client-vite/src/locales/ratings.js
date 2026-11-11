@@ -1,0 +1,31 @@
+/* Ratings on cards (stars, "4.8 · 12 reviews") and what each kind of listing is called — loaded up front. */
+export default {
+  en: {
+    'kind.tour': 'experience',
+    'kind.group': 'group trip',
+    'kind.stay': 'stay',
+    'kind.transfer': 'transfer',
+    'kind.carhire': 'car hire',
+    'kind.service': 'service',
+    'kind.other': 'listing',
+    reviews_one: '{count} review',
+    reviews_other: '{count} reviews',
+    rated: 'Rated {average} out of 5',
+    ratedFrom: 'Rated {average} out of 5 from {reviews}',
+    ratedOpen: 'Rated {average} out of 5 from {reviews}. Read the reviews',
+  },
+  it: {
+    'kind.tour': 'esperienza',
+    'kind.group': 'viaggio di gruppo',
+    'kind.stay': 'alloggio',
+    'kind.transfer': 'transfer',
+    'kind.carhire': 'noleggio auto',
+    'kind.service': 'servizio',
+    'kind.other': 'annuncio',
+    reviews_one: '{count} recensione',
+    reviews_other: '{count} recensioni',
+    rated: 'Valutazione {average} su 5',
+    ratedFrom: 'Valutazione {average} su 5 da {reviews}',
+    ratedOpen: 'Valutazione {average} su 5 da {reviews}. Leggi le recensioni',
+  },
+};
