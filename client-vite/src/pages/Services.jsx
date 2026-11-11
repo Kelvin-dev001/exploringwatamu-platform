@@ -43,6 +43,7 @@ export default function Services() {
                 ]}
                 description={s.description}
                 price={s.price != null ? { amount: s.price, unit: s.pricingType || '' } : null}
+                reviews={{ listingType: 'service', listingId: s._id, stats: s.reviewStats }}
                 actions={
                   <>
                     <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('service', s)} label={`Ask about ${s.name} on WhatsApp`} />

@@ -4,6 +4,9 @@ import { VibeArt } from '@/components/experience/ExperienceCard';
 import { cn } from '@/lib/utils';
 import Photo from '@/components/ui/Photo';
 import { normaliseWhatsAppNumber, whatsappLink } from '@/lib/whatsapp';
+import { RatingBadge } from '@/components/reviews/Rating';
+import ReviewsSheet from '@/components/reviews/ReviewsSheet';
+import { ratingOf } from '@/lib/reviews';
 
 /** Photo strip with arrows/dots, or the illustrated stand-in when there are no photos. */
 export function CardMedia({ images = [], alt, art = 'ocean', className }) {
@@ -47,8 +50,11 @@ export function CardMedia({ images = [], alt, art = 'ocean', className }) {
 /**
  * Card for stays, transfers, car hire, services and property.
  * meta: [{ icon, text }] · chips: [string] · price: { amount, unit, prefix }
+ * reviews: { listingType, listingId, stats } — shows the rating, which opens the reviews.
  */
-export default function ListingCard({ images, art, title, badge, meta = [], description, chips = [], price, actions, children }) {
+export default function ListingCard({ images, art, title, badge, meta = [], description, chips = [], price, actions, reviews, children }) {
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const rated = reviews && ratingOf(reviews.stats);
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-sand-200 bg-white shadow-soft transition-shadow duration-300 hover:shadow-lift">
       <div className="relative m-2.5 mb-0 overflow-hidden rounded-[1rem]">
@@ -66,6 +72,7 @@ export default function ListingCard({ images, art, title, badge, meta = [], desc
           </div>
         )}
         <h3 className="mt-2 font-display text-[1.4rem] leading-tight text-ocean-900">{title}</h3>
+        {rated && <RatingBadge stats={reviews.stats} onClick={() => setReviewsOpen(true)} className="mt-1.5 self-start" />}
         {description && <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ocean-900/60">{description}</p>}
         {chips.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -91,6 +98,7 @@ export default function ListingCard({ images, art, title, badge, meta = [], desc
           {actions && <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>}
         </div>
       </div>
+      {rated && <ReviewsSheet open={reviewsOpen} onOpenChange={setReviewsOpen} listingType={reviews.listingType} listingId={reviews.listingId} title={title} />}
     </article>
   );
 }

@@ -40,6 +40,7 @@ export default function Transfers() {
                 meta={[t.vehicle?.name && { icon: CarFront, text: t.vehicle.name }, t.vehicle?.capacity && { icon: Users, text: `${t.vehicle.capacity} seats` }, { icon: Plane, text: 'Private transfer' }]}
                 description={t.description}
                 price={t.price != null ? { amount: t.price, unit: 'per vehicle', prefix: '' } : null}
+                reviews={{ listingType: 'transfer', listingId: t._id, stats: t.reviewStats }}
                 actions={
                   <>
                     <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('transfer', t)} label={`Ask about ${t.route || 'this transfer'} on WhatsApp`} />

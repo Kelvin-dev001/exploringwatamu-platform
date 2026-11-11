@@ -7,6 +7,7 @@ import { VIBES, byId } from '@/lib/vibes';
 import { priceFor, formatKES } from '@/lib/catalog';
 import { cn, formatDay } from '@/lib/utils';
 import Photo from '@/components/ui/Photo';
+import { RatingBadge } from '@/components/reviews/Rating';
 
 /*
  * Illustrated stand-in used whenever a listing has no photo yet, keyed to its
@@ -118,6 +119,7 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
             {item.title}
           </Link>
         </h3>
+        {item.rating && <RatingBadge stats={item.rating} className="mt-1.5" />}
         {item.summary && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ocean-900/60">{item.summary}</p>}
 
         {match?.great && match.reasons.length > 0 && (
