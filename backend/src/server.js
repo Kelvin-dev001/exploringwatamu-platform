@@ -34,6 +34,9 @@ async function start() {
     logger.warn('image uploads off: set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET to enable them (uploads answer 503 until then)');
   }
   if (!config.mail.enabled) logger.warn('email off: set SMTP_HOST and SMTP_USER to send emails (the admin is warned that nothing was emailed)');
+  if (config.whatsapp.invalid) {
+    logger.warn('WhatsApp links off: WHATSAPP_NUMBER is not a usable number — use the full international format, e.g. +254712345678');
+  }
   await connectDB();
   await ensureBootstrapAdmin();
   const app = buildApp();

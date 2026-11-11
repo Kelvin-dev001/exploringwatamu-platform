@@ -4,6 +4,7 @@ const { sendMail } = require('./mailer');
 const { sendSms } = require('./notifications/sms');
 const { wrap } = require('./notifications/emailLayout');
 const { buildTripQuotePdf } = require('./documents');
+const whatsapp = require('./whatsapp');
 const escapeHtml = require('./escapeHtml');
 const logger = require('./logger');
 const config = require('../config/env');
@@ -59,7 +60,8 @@ async function notifyTripRequested(r) {
           personal quote soon. There’s nothing to pay yet.</p>
           <p><strong>Reference:</strong> ${r.reference}<br/><strong>Trip:</strong> ${escapeHtml(whoAndWhen(r))}</p>
           ${itineraryHtml(r)}
-          ${r.notes ? `<p><strong>Your notes:</strong> ${escapeHtml(r.notes)}</p>` : ''}`
+          ${r.notes ? `<p><strong>Your notes:</strong> ${escapeHtml(r.notes)}</p>` : ''}
+          ${whatsapp.emailBlock({ lead: 'Thought of something else, or have a question? Message us on WhatsApp.', text: whatsapp.text.tripRequest(r.reference) })}`
         ),
       }),
     'ack'
@@ -127,7 +129,8 @@ async function notifyQuoteSent(r) {
           </table>
           ${q.validUntil ? `<p>This quote is valid until <strong>${fmt(q.validUntil)}</strong>.</p>` : ''}
           <p>To go ahead, just reply to this email. We’ll confirm each booking and how to pay.</p>
-          <p><strong>Reference:</strong> ${r.reference}</p>`
+          <p><strong>Reference:</strong> ${r.reference}</p>
+          ${whatsapp.emailBlock({ lead: 'Questions about your quote, or want to change something? Chat with us on WhatsApp.', text: whatsapp.text.tripQuote(r.reference) })}`
         ),
         attachments,
       }),

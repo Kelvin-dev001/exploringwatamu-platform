@@ -55,6 +55,7 @@ uploads answer 503. Upload routes use `uploadFields`/`uploadArray`/`uploadSingle
 - Listing visibility: use `activeFilter(req)` / `canSee(req, doc)` from `services/listingVisibility.js` with `optionalAdmin` on public reads — the public only ever sees `active !== false`; admins see everything.
 - Photo lists on update: use `nextGallery()` from `services/gallery.js` — an omitted kept-photos field keeps the stored photos; a sent list (even `[]`) replaces them.
 - Anything that notifies a traveller returns `delivery: deliveryFor(...)` so the UIs only say "emailed" when `config.mail.enabled`.
+- WhatsApp is click-to-chat links only (`services/whatsapp.js`: `emailBlock`, `pdfLine`, prefilled `text`). Never hard-code the number — it's `config.whatsapp.number` (`WHATSAPP_NUMBER`, normalised by `utils/whatsappNumber.js`, the same rules as the website's and admin's copies). Links only for travellers, never in team emails.
 
 ## Working rules
 - Plan first; no production code until the plan is approved.

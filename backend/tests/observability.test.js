@@ -188,7 +188,7 @@ describe('health checks', () => {
     expect(res.body).toEqual({
       status: 'unavailable',
       database: 'down',
-      services: { email: false, sms: false, imageUploads: expect.any(Boolean), googleSignIn: expect.any(Boolean), errorMonitoring: false },
+      services: { email: false, sms: false, imageUploads: expect.any(Boolean), googleSignIn: expect.any(Boolean), errorMonitoring: false, whatsappLinks: false },
     });
   });
 });

@@ -26,6 +26,10 @@ services:
         value: "false"
       - key: SMTP_PORT
         value: "587"
+      # Public business WhatsApp number (+254…) for links in quote emails/PDFs.
+      # Not a secret, but set per deployment; empty = no WhatsApp links.
+      - key: WHATSAPP_NUMBER
+        sync: false
       # Requests reach the app through one proxy: req.ip (rate limits) is the visitor.
       - key: TRUST_PROXY
         value: "1"

@@ -83,6 +83,7 @@ function buildApp() {
         imageUploads: config.cloudinary.enabled,
         googleSignIn: Boolean(config.googleClientId),
         errorMonitoring: Boolean(config.monitoring.dsn),
+        whatsappLinks: Boolean(config.whatsapp.number),
       },
     });
   });
