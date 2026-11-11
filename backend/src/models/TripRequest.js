@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { VIBES, SUITS } = require('../constants/discovery');
 const { TRIP_ITEM_KINDS } = require('../constants/tripItems');
+const { LOCALES, DEFAULT_LOCALE } = require('../constants/locales');
 
 /*
  * A custom itinerary sent from the website's trip planner. The traveller
@@ -67,6 +68,9 @@ const tripRequestSchema = new mongoose.Schema(
     adults: { type: Number, min: 1, max: 50, default: 2 },
     children: { type: Number, min: 0, max: 50, default: 0 },
     residency: { type: String, enum: ['resident', 'nonResident'], default: 'nonResident' },
+    // The language the traveller used on the website: their emails, SMS and
+    // PDFs are in it (constants/locales.js). Older records: English.
+    locale: { type: String, enum: LOCALES, default: DEFAULT_LOCALE },
 
     days: [daySchema],
     ideas: [itemSchema], // added but not scheduled on a day

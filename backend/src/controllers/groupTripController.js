@@ -1,4 +1,5 @@
 const { parseDiscovery } = require('../constants/discovery');
+const { ITALIAN_FIELDS, parseItalian } = require('../constants/italianContent');
 const GroupTrip = require('../models/GroupTrip');
 const { nextGallery, uploadedPaths } = require('../services/gallery');
 const logger = require('../services/logger');
@@ -38,6 +39,7 @@ exports.createGroupTrip = async (req, res, next) => {
       heroImage,
       gallery: galleryUrls,
       ...parseDiscovery(req.body),
+      ...parseItalian(req.body, ITALIAN_FIELDS.group),
     };
 
     const trip = new GroupTrip(data);
@@ -83,6 +85,7 @@ exports.updateGroupTrip = async (req, res, next) => {
       balanceDueDate: req.body.balanceDueDate || undefined,
       status: req.body.status,
       ...parseDiscovery(req.body),
+      ...parseItalian(req.body, ITALIAN_FIELDS.group),
       ...(gallery ? { gallery } : {}),
     };
 

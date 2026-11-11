@@ -13,6 +13,7 @@ const { authLimiter, sessionLimiter, resetRequestLimiter, resetAddressLimiter } 
 const { signUserToken } = require('../services/tokens');
 const { sendPasswordResetEmail } = require('../services/notifications/authNotifications');
 const logger = require('../services/logger');
+const { sitePath } = require('../i18n');
 
 // POST /api/auth/register
 router.post('/register', authLimiter, validate(registerSchema), async (req, res, next) => {
@@ -123,16 +124,17 @@ router.post('/google', authLimiter, async (req, res) => {
 // does not give it away either. Limited per IP and per address.
 router.post('/forgot-password', resetRequestLimiter, resetAddressLimiter, validate(forgotPasswordSchema), async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, locale } = req.body;
     const user = await User.findOne({ email });
     if (user && user.passwordHash) {
       const rawToken = crypto.randomBytes(32).toString('hex');
       user.resetTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
       user.resetTokenExpires = new Date(Date.now() + config.resetTokenTtlMinutes * 60 * 1000);
       await user.save();
-      const resetUrl = `${config.frontendUrl}/reset-password?token=${rawToken}`;
+      // The link opens the reset page in the language the request came from.
+      const resetUrl = `${config.frontendUrl.replace(/\/$/, '')}${sitePath('/reset-password', locale)}?token=${rawToken}`;
       Promise.resolve()
-        .then(() => sendPasswordResetEmail(user, resetUrl))
+        .then(() => sendPasswordResetEmail(user, resetUrl, locale))
         .catch((mailErr) => logger.error('password reset email failed', { requestId: req.id, ...logger.errorFields(mailErr) }));
     }
     res.json({ message: 'If that email exists, a reset link has been sent.' });

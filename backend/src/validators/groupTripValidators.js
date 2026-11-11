@@ -2,6 +2,7 @@
 
 const { z } = require('zod');
 const { VIBES, SUITS, ENERGY } = require('../constants/discovery');
+const { ITALIAN_FIELDS, ITALIAN_LIMITS } = require('../constants/italianContent');
 
 // Group trips are submitted as multipart/form-data, so every value arrives as a
 // string (blank when an admin leaves an input empty) and lists arrive
@@ -69,7 +70,12 @@ const itineraryDay = z.object({
   activities: z.array(z.string().trim()).default([]),
 });
 
+// Optional Italian text: a blank value is kept as '' so the admin can clear it.
+const italianText = (field) =>
+  z.preprocess((v) => (v === undefined || v === null ? undefined : String(v).trim()), z.string().max(ITALIAN_LIMITS[field], `${field} can be at most ${ITALIAN_LIMITS[field]} characters`).optional());
+
 const tripFields = {
+  ...Object.fromEntries(ITALIAN_FIELDS.group.map((f) => [f, italianText(f)])),
   title: requiredText('Title'),
   shortDescription: requiredText('Short description'),
   fullDescription: optionalText(),

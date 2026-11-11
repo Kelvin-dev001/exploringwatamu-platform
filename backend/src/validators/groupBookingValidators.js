@@ -1,6 +1,7 @@
 'use strict';
 
 const { z } = require('zod');
+const { LOCALES } = require('../constants/locales');
 
 const joinTripSchema = z.object({
   tripId: z.string().trim().min(1, 'tripId is required'),
@@ -15,6 +16,8 @@ const joinTripSchema = z.object({
   travelGroup: z.string().trim().min(1, 'Travel group is required'),
   selectedAvatar: z.string().trim().optional(),
   referredByCode: z.string().trim().optional(),
+  // The website's language: the traveller's emails and quotation come back in it.
+  locale: z.enum(LOCALES).optional(),
 });
 
 module.exports = { joinTripSchema };

@@ -1,5 +1,6 @@
 const Tour = require('../models/Tour');
 const { parseDiscovery } = require('../constants/discovery');
+const { ITALIAN_FIELDS, parseItalian } = require('../constants/italianContent');
 const { activeFilter, canSee } = require('../services/listingVisibility');
 const { contains, pageParams, pageOf } = require('../services/listQuery');
 const { nextGallery, uploadedPaths } = require('../services/gallery');
@@ -57,6 +58,7 @@ exports.createTour = async (req, res, next) => {
       priceForeignerChild: Number(req.body.priceForeignerChild),
       active: req.body.active === 'true' || req.body.active === true,
       ...parseDiscovery(req.body),
+      ...parseItalian(req.body, ITALIAN_FIELDS.tour),
     };
     const tour = new Tour(tourData);
     await tour.save();
@@ -90,6 +92,7 @@ exports.updateTour = async (req, res, next) => {
       priceForeignerChild: Number(req.body.priceForeignerChild),
       active: req.body.active === 'true' || req.body.active === true,
       ...parseDiscovery(req.body),
+      ...parseItalian(req.body, ITALIAN_FIELDS.tour),
     };
     const tour = await Tour.findByIdAndUpdate(req.params.id, tourData, { new: true, runValidators: true }).populate('vehicles');
     if (!tour) return res.status(404).json({ error: 'Not found' });

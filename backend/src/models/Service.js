@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ITALIAN_FIELDS } = require('../constants/italianContent');
 
 const ServiceSchema = new mongoose.Schema({
   name: { type: String, required: true }, // e.g. "Babysitting", "Chef on Demand"
@@ -16,5 +17,9 @@ ServiceSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin',
 
 // Public rating from approved reviews (written only by services/reviewStats).
 ServiceSchema.plugin(require('./plugins/reviewStats'));
+
+
+// Optional Italian text, written by the team (constants/italianContent.js).
+ServiceSchema.plugin(require('./plugins/italianContent'), { fields: ITALIAN_FIELDS.service });
 
 module.exports = mongoose.model('Service', ServiceSchema);

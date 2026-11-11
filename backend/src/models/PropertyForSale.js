@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ITALIAN_FIELDS } = require('../constants/italianContent');
 
 const PropertyForSaleSchema = new mongoose.Schema({
   type: { type: String, enum: ["villa", "apartment", "land"], required: true },
@@ -13,5 +14,9 @@ const PropertyForSaleSchema = new mongoose.Schema({
 
 // Vendor-ready ownership (null = platform-managed).
 PropertyForSaleSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
+
+// Optional Italian text, written by the team (constants/italianContent.js).
+PropertyForSaleSchema.plugin(require('./plugins/italianContent'), { fields: ITALIAN_FIELDS.property });
 
 module.exports = mongoose.model('PropertyForSale', PropertyForSaleSchema);
