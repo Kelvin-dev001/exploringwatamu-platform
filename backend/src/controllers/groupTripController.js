@@ -132,6 +132,17 @@ exports.deleteGroupTrip = async (req, res, next) => {
 };
 
 // GET /admin/all — All trips for admin
+// GET /admin/:id — one trip, any status (admin form and bookings screen)
+exports.getGroupTripAdmin = async (req, res, next) => {
+  try {
+    const trip = await GroupTrip.findById(req.params.id);
+    if (!trip) return res.status(404).json({ error: 'Group trip not found.' });
+    res.json(trip);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getAllGroupTripsAdmin = async (req, res, next) => {
   try {
     const trips = await GroupTrip.find().sort({ createdAt: -1 });

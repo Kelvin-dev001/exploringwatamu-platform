@@ -15,7 +15,6 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const PRODUCTION_ORIGINS = [
   'https://exploringwatamuadmin.vercel.app',
-  'https://exploringwatamu.vercel.app',
   'https://exploringwatamu-platform.vercel.app',
 ];
 const LOCAL_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:8081'];

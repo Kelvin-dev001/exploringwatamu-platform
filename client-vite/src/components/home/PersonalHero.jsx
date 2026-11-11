@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useVibeProfile } from '@/context/VibeProfileContext';
 import { personalHeadline, byId, VIBES } from '@/lib/vibes';
@@ -44,11 +44,11 @@ export default function PersonalHero() {
     <section className="grain relative overflow-hidden">
       <Container size="wide" className="grid items-center gap-14 pb-20 pt-10 lg:grid-cols-[1.15fr_1fr] lg:pb-28 lg:pt-16">
         <div>
-          <motion.p variants={rise} initial="hidden" animate="show" className="eyebrow">
+          <m.p variants={rise} initial="hidden" animate="show" className="eyebrow">
             {headline ? 'Your Watamu' : 'Watamu, Kenya · Personalised trips'}
-          </motion.p>
+          </m.p>
 
-          <motion.h1
+          <m.h1
             key={headline || 'default'}
             variants={rise}
             initial="hidden"
@@ -61,16 +61,16 @@ export default function PersonalHero() {
                 Watamu, the way <em className="text-coral-500">you</em> like it.
               </>
             )}
-          </motion.h1>
+          </m.h1>
 
-          <motion.p variants={rise} initial="hidden" animate="show" custom={2} className="mt-6 max-w-xl text-lg leading-relaxed text-ocean-900/70 sm:text-xl">
+          <m.p variants={rise} initial="hidden" animate="show" custom={2} className="mt-6 max-w-xl text-lg leading-relaxed text-ocean-900/70 sm:text-xl">
             {headline
               ? 'Pick the experiences that fit, tell us your dates, and our local team prices the whole trip for you.'
               : 'Reef, creek, forest and old Swahili towns. Tell us how you like to travel and we’ll shape the coast around you.'}
-          </motion.p>
+          </m.p>
 
           {profile && (
-            <motion.div variants={rise} initial="hidden" animate="show" custom={3} className="mt-6 flex flex-wrap gap-2">
+            <m.div variants={rise} initial="hidden" animate="show" custom={3} className="mt-6 flex flex-wrap gap-2">
               {profile.vibes.map((id) => {
                 const v = byId(VIBES, id);
                 return v ? (
@@ -79,10 +79,10 @@ export default function PersonalHero() {
                   </Badge>
                 ) : null;
               })}
-            </motion.div>
+            </m.div>
           )}
 
-          <motion.div variants={rise} initial="hidden" animate="show" custom={4} className="mt-9 flex flex-wrap items-center gap-3">
+          <m.div variants={rise} initial="hidden" animate="show" custom={4} className="mt-9 flex flex-wrap items-center gap-3">
             <Button to="/experiences" size="lg">
               {headline ? 'See my experiences' : 'Browse experiences'} <ArrowRight />
             </Button>
@@ -95,16 +95,16 @@ export default function PersonalHero() {
                 <Sparkles /> Personalise my Watamu
               </Button>
             )}
-          </motion.div>
+          </m.div>
         </div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
         >
           <DoorwayArt />
-        </motion.div>
+        </m.div>
       </Container>
     </section>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import html2canvas from 'html2canvas';
 import { formatDay } from '@/lib/utils';
+import { absoluteUrl } from '@/lib/site';
 
 export default function ECardPreview({ booking, trip, user }) {
   const [downloading, setDownloading] = useState(false);
@@ -32,6 +32,8 @@ export default function ECardPreview({ booking, trip, user }) {
   const downloadECard = async () => {
     setDownloading(true);
     try {
+      // ~45 KB gzip, only needed for this button: fetched on the first tap.
+      const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(eCardRef.current, {
         backgroundColor: null,
         scale: 2,
@@ -48,7 +50,7 @@ export default function ECardPreview({ booking, trip, user }) {
     }
   };
 
-  const shareText = `🎉 IT'S OFFICIAL! I'm joining the ${trip.title} on ${startDate}-${endDate} with @ExploringWatamu\n\nMy travel personality: ${personalityText.replace(/\n/g, ' + ')}\n\nWho's joining me? exploringwatamu.vercel.app/group-trips/${trip.slug}`;
+  const shareText = `🎉 IT'S OFFICIAL! I'm joining the ${trip.title} on ${startDate}-${endDate} with @ExploringWatamu\n\nMy travel personality: ${personalityText.replace(/\n/g, ' + ')}\n\nWho's joining me? ${absoluteUrl(`/group-trips/${trip.slug}`)}`;
 
   const shareToWhatsApp = () => {
     const encodedText = encodeURIComponent(shareText);

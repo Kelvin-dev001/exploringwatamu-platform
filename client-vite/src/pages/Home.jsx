@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { ArrowUpRight, Compass, Users, BedDouble, Plane, CarFront, Sparkles, Home as HomeIcon, MousePointerClick, CalendarDays, MessageSquareQuote } from 'lucide-react';
 import { useFirstVisitPrompt } from '@/context/VibeProfileContext';
 import Seo from '@/components/seo/Seo';
@@ -62,7 +62,7 @@ function WayInCard({ item, index }) {
   const Icon = item.icon;
   const dark = item.tone.includes('ocean-900') || item.tone.includes('coral-500');
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay: 0.3 + index * 0.06, ease: [0.22, 1, 0.36, 1] }}
@@ -88,7 +88,7 @@ function WayInCard({ item, index }) {
           <p className={cn('mt-2 max-w-sm', dark ? 'text-white/75' : 'text-ocean-900/65', item.big && 'text-lg')}>{item.desc}</p>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }
 

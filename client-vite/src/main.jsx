@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { BrowserRouter } from 'react-router-dom';
-import { MotionConfig } from 'motion/react';
+import { LazyMotion, MotionConfig } from 'motion/react';
 import axios from 'axios';
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -22,6 +22,11 @@ installRetry(axios);
 // Error monitoring, only when VITE_SENTRY_DSN is set (loads after the page).
 initMonitoring();
 
+// Animations: components use the light <m.*> elements; the engine (~40 KB
+// gzip) arrives in its own chunk after first paint. strict: a full <motion.*>
+// component would pull the whole library back into the first load, so it throws.
+const motionFeatures = () => import('./lib/motionFeatures.js').then((mod) => mod.default);
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
@@ -29,9 +34,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <VibeProfileProvider>
           <TripProvider>
             <BrowserRouter>
-              <MotionConfig reducedMotion="user">
-                <App />
-              </MotionConfig>
+              <LazyMotion features={motionFeatures} strict>
+                <MotionConfig reducedMotion="user">
+                  <App />
+                </MotionConfig>
+              </LazyMotion>
             </BrowserRouter>
           </TripProvider>
         </VibeProfileProvider>

@@ -16,7 +16,6 @@ export default defineConfig({
         // Stable vendor chunks cache across deploys; app code changes more often.
         manualChunks: {
           react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
-          motion: ['motion/react'],
           ui: ['@radix-ui/react-dialog', 'axios', 'clsx', 'tailwind-merge'],
         },
       },

@@ -28,6 +28,7 @@ router.param('id', objectIdParam);
 // Public routes
 router.get('/', publicLimiter, groupTripController.getPublishedGroupTrips);
 router.get('/admin/all', adminLimiter, authAdmin, groupTripController.getAllGroupTripsAdmin);
+router.get('/admin/:id', adminLimiter, authAdmin, groupTripController.getGroupTripAdmin);
 router.get('/:slug', publicLimiter, groupTripController.getGroupTripBySlug);
 
 // Admin routes (uploads run before validation: they parse the multipart body)

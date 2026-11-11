@@ -22,7 +22,8 @@ export default defineConfig([
     rules: {
       // Capitalised names are components used as JSX (<Icon />), and `motion`
       // is used as <motion.div>; core ESLint doesn't count JSX as a use.
-      'no-unused-vars': ['error', { varsIgnorePattern: '^([A-Z_]|motion$)', argsIgnorePattern: '^[A-Z_]' }],
+      // motion / m: used only as JSX namespaces (<m.div>), which this rule can't see.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^([A-Z_]|motion$|m$)', argsIgnorePattern: '^[A-Z_]' }],
     },
   },
   {

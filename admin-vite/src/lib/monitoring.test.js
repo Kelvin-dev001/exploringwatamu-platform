@@ -65,7 +65,7 @@ describe('monitoring with VITE_SENTRY_DSN', () => {
 describe('scrubbing', () => {
   it('removes request details, user data and query strings (reset tokens, searches)', () => {
     const event = scrubEvent({
-      request: { url: 'https://exploringwatamu.vercel.app/reset-password?token=abc#x', headers: { Cookie: 'a' }, cookies: { a: 1 }, query_string: 'token=abc' },
+      request: { url: 'https://exploringwatamu-platform.vercel.app/reset-password?token=abc#x', headers: { Cookie: 'a' }, cookies: { a: 1 }, query_string: 'token=abc' },
       user: { ip_address: '1.2.3.4', email: 'amina@example.com' },
       breadcrumbs: [
         { category: 'navigation', data: { from: '/trip?name=Amina', to: '/reset-password?token=abc' } },
@@ -76,7 +76,7 @@ describe('scrubbing', () => {
     });
 
     expect(event).toEqual({
-      request: { url: 'https://exploringwatamu.vercel.app/reset-password' },
+      request: { url: 'https://exploringwatamu-platform.vercel.app/reset-password' },
       breadcrumbs: [
         { category: 'navigation', data: { from: '/trip', to: '/reset-password' } },
         { category: 'xhr', data: { url: 'https://api.example/api/trip-requests', method: 'GET', status_code: 200 } },

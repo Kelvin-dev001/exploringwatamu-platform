@@ -20,9 +20,11 @@ export default function GroupTripBookings() {
     setLoading(true);
     setError('');
     try {
-      const [b, t] = await Promise.all([api.get(`/group-bookings/admin/trip/${tripId}`), api.get('/group-trips/admin/all')]);
+      // Bookings still show if the trip itself was deleted.
+      const tripOrNull = api.get(`/group-trips/admin/${tripId}`).catch((e) => (e?.response?.status === 404 ? { data: null } : Promise.reject(e)));
+      const [b, t] = await Promise.all([api.get(`/group-bookings/admin/trip/${tripId}`), tripOrNull]);
       setRows(b.data || []);
-      const found = (t.data || []).find((x) => x._id === tripId) || null;
+      const found = t.data || null;
       setTrip(found);
       document.title = `${found?.title || 'Group trip'} bookings · Admin`;
     } catch (err) {

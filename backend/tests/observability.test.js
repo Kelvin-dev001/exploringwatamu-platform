@@ -219,9 +219,17 @@ describe('CORS allow-list', () => {
 
   it('allows the production sites with credentials', async () => {
     const app = require('../src/app')();
-    const res = await request(app).get('/api/health').set('Origin', 'https://exploringwatamu.vercel.app');
-    expect(res.headers['access-control-allow-origin']).toBe('https://exploringwatamu.vercel.app');
+    const res = await request(app).get('/api/health').set('Origin', 'https://exploringwatamu-platform.vercel.app');
+    expect(res.headers['access-control-allow-origin']).toBe('https://exploringwatamu-platform.vercel.app');
     expect(res.headers['access-control-allow-credentials']).toBe('true');
+    const admin = await request(app).get('/api/health').set('Origin', 'https://exploringwatamuadmin.vercel.app');
+    expect(admin.headers['access-control-allow-origin']).toBe('https://exploringwatamuadmin.vercel.app');
+  });
+
+  it('no longer trusts the retired exploringwatamu.vercel.app (no deployment: anyone could claim the name)', async () => {
+    const app = require('../src/app')();
+    const res = await request(app).get('/api/health').set('Origin', 'https://exploringwatamu.vercel.app');
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
   });
 
   it('allows localhost in development but not in production', async () => {

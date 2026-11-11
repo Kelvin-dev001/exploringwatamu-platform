@@ -19,8 +19,7 @@ export default function GroupTripForm() {
   const rec = useRecord({
     noun: 'group trip', done: '/grouptrips', form: f,
     load: async (id) => {
-      const t = ((await api.get('/group-trips/admin/all')).data || []).find((x) => x._id === id);
-      if (!t) throw Object.assign(new Error('not found'), { response: { data: { error: 'Group trip not found.' } } });
+      const t = (await api.get(`/group-trips/admin/${id}`)).data; // 404 "Group trip not found." if it's gone
       return {
         ...EMPTY, title: t.title || '', shortDescription: t.shortDescription || '', fullDescription: t.fullDescription || '',
         startDate: day(t.startDate), endDate: day(t.endDate), balanceDueDate: day(t.balanceDueDate), meetingPoint: t.meetingPoint || '',
