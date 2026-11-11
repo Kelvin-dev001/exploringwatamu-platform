@@ -5,6 +5,11 @@ import { Toggle } from '@/ui/controls';
 import { ChipGroup, FormPage, Grid, MoneyInput, Problems, Section, useForm } from '@/forms/kit';
 import ImageUploader from '@/forms/ImageUploader';
 import useRecord, { required } from './useRecord';
+import ItalianFields from '@/forms/ItalianFields';
+import { appendItalian, emptyItalian, italianFrom, italianProblems } from '@/forms/italian';
+
+const DESC_IT = ['descriptionIt'];
+const TITLE_DESC_IT = ['titleIt', 'descriptionIt'];
 
 /* Transfers, car hire, vehicles, services and property — same structure, smaller forms. */
 
@@ -33,15 +38,15 @@ const LiveSwitch = ({ form, set }) => (
 const ROUTES = ['SGR-Watamu', 'Moi International Airport-Watamu', 'Malindi-Watamu', 'Mombasa-Watamu', 'Diani-Watamu'];
 
 export function TransferForm() {
-  const f = useForm({ route: '', vehicle: '', price: '', active: true, description: '' });
+  const f = useForm({ route: '', vehicle: '', price: '', active: true, description: '', ...emptyItalian(DESC_IT) });
   const { form, set } = f;
   const vehicles = useVehicles();
   const rec = useRecord({
     noun: 'transfer', done: '/transfers', form: f,
-    load: async (id) => { const t = (await api.get(`/transfers/${id}`)).data; return { route: t.route || '', vehicle: t.vehicle?._id || t.vehicle || '', price: t.price ?? '', active: t.active !== false, description: t.description || '' }; },
+    load: async (id) => { const t = (await api.get(`/transfers/${id}`)).data; return { route: t.route || '', vehicle: t.vehicle?._id || t.vehicle || '', price: t.price ?? '', active: t.active !== false, description: t.description || '', ...italianFrom(t, DESC_IT) }; },
     save: (v, id) => { const body = { ...v, price: Number(v.price) }; return id ? api.put(`/transfers/${id}`, body) : api.post('/transfers', body); },
   });
-  const validate = (v) => { const p = {}; required(p, v, 'route', 'Route'); required(p, v, 'vehicle', 'Vehicle'); required(p, v, 'price', 'Price'); return p; };
+  const validate = (v) => { const p = {}; required(p, v, 'route', 'Route'); required(p, v, 'vehicle', 'Vehicle'); required(p, v, 'price', 'Price'); return { ...p, ...italianProblems(v, DESC_IT) }; };
   const err = rec.fieldErrors;
   return (
     <FormPage title={rec.isNew ? 'Add transfer' : 'Edit transfer'} subtitle="A transfer route travellers can add to their trip." back="/transfers" backLabel="Transfers"
@@ -55,18 +60,19 @@ export function TransferForm() {
         </Grid>
         <Field label="Description" hint="Pick-up details, luggage, waiting time"><Textarea rows={3} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
       </Section>
+      <ItalianFields form={form} set={set} fields={DESC_IT} errors={err} english={{ descriptionIt: form.description }} />
     </FormPage>
   );
 }
 
 /* ---------- Car hire ---------- */
 export function CarHireForm() {
-  const f = useForm({ vehicle: '', dailyRate: '', active: true, description: '' });
+  const f = useForm({ vehicle: '', dailyRate: '', active: true, description: '', ...emptyItalian(DESC_IT) });
   const { form, set } = f;
   const vehicles = useVehicles();
   const rec = useRecord({
     noun: 'car', done: '/carhire', form: f,
-    load: async (id) => { const c = (await api.get(`/carhire/${id}`)).data; return { vehicle: c.vehicle?._id || c.vehicle || '', dailyRate: c.dailyRate ?? '', active: c.active !== false, description: c.description || '' }; },
+    load: async (id) => { const c = (await api.get(`/carhire/${id}`)).data; return { vehicle: c.vehicle?._id || c.vehicle || '', dailyRate: c.dailyRate ?? '', active: c.active !== false, description: c.description || '', ...italianFrom(c, DESC_IT) }; },
     save: (v, id) => { const body = { ...v, dailyRate: Number(v.dailyRate) }; return id ? api.put(`/carhire/${id}`, body) : api.post('/carhire', body); },
   });
   const validate = (v) => { const p = {}; required(p, v, 'vehicle', 'Vehicle'); required(p, v, 'dailyRate', 'Daily rate'); return p; };
@@ -82,6 +88,7 @@ export function CarHireForm() {
         </Grid>
         <Field label="Description" hint="Self-drive or with driver, fuel policy, deposit"><Textarea rows={3} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
       </Section>
+      <ItalianFields form={form} set={set} fields={DESC_IT} errors={err} english={{ descriptionIt: form.description }} />
     </FormPage>
   );
 }
@@ -127,13 +134,13 @@ export function VehicleForm() {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function ServiceForm() {
-  const f = useForm({ name: '', description: '', pricingType: 'daily', price: '', availableDays: [], start: '', end: '', active: true, gallery: [], files: [] });
+  const f = useForm({ name: '', description: '', pricingType: 'daily', price: '', availableDays: [], start: '', end: '', active: true, gallery: [], files: [], ...emptyItalian(TITLE_DESC_IT) });
   const { form, set } = f;
   const rec = useRecord({
     noun: 'service', done: '/services', form: f,
     load: async (id) => {
       const s = (await api.get(`/services/${id}`)).data;
-      return { name: s.name || '', description: s.description || '', pricingType: s.pricingType || 'daily', price: s.price ?? '', availableDays: s.availableDays || [], start: s.availableHours?.start || '', end: s.availableHours?.end || '', active: s.active !== false, gallery: s.gallery || [], files: [] };
+      return { name: s.name || '', description: s.description || '', pricingType: s.pricingType || 'daily', price: s.price ?? '', availableDays: s.availableDays || [], start: s.availableHours?.start || '', end: s.availableHours?.end || '', active: s.active !== false, gallery: s.gallery || [], files: [], ...italianFrom(s, TITLE_DESC_IT) };
     },
     save: (v, id) => {
       const fd = new FormData();
@@ -141,12 +148,13 @@ export function ServiceForm() {
       fd.append('availableDays', JSON.stringify(v.availableDays));
       fd.append('availableHours', JSON.stringify({ start: v.start, end: v.end }));
       fd.append('active', String(v.active));
+      appendItalian(fd, v, TITLE_DESC_IT);
       if (id) fd.append('existingGallery', JSON.stringify(v.gallery));
       v.files.forEach((file) => fd.append('gallery', file));
       return id ? api.put(`/services/${id}`, fd) : api.post('/services', fd);
     },
   });
-  const validate = (v) => { const p = {}; required(p, v, 'name', 'Name'); required(p, v, 'description', 'Description'); required(p, v, 'price', 'Price'); return p; };
+  const validate = (v) => { const p = {}; required(p, v, 'name', 'Name'); required(p, v, 'description', 'Description'); required(p, v, 'price', 'Price'); return { ...p, ...italianProblems(v, TITLE_DESC_IT) }; };
   const err = rec.fieldErrors;
   return (
     <FormPage title={rec.isNew ? 'Add service' : form.name || 'Edit service'} subtitle="Chefs, guides, wellness and other local services." back="/services" backLabel="Services"
@@ -160,6 +168,7 @@ export function ServiceForm() {
           <Field label="Price" error={err.price}><MoneyInput value={form.price} onChange={(v) => set('price', v)} /></Field>
         </Grid>
       </Section>
+      <ItalianFields form={form} set={set} fields={TITLE_DESC_IT} errors={err} english={{ titleIt: form.name, descriptionIt: form.description }} />
       <Section title="Availability">
         <Field label="Days"><ChipGroup options={DAYS.map((d) => ({ id: d, label: d.slice(0, 3) }))} value={form.availableDays} onChange={(v) => set('availableDays', v)} multiple label="Available days" /></Field>
         <Grid>
@@ -176,25 +185,26 @@ export function ServiceForm() {
 
 /* ---------- Property ---------- */
 export function PropertyForm() {
-  const f = useForm({ type: 'villa', name: '', description: '', location: '', price: '', active: true, pictures: [], pictureFiles: [], documents: [], documentFiles: [] });
+  const f = useForm({ type: 'villa', name: '', description: '', location: '', price: '', active: true, pictures: [], pictureFiles: [], documents: [], documentFiles: [], ...emptyItalian(TITLE_DESC_IT) });
   const { form, set } = f;
   const rec = useRecord({
     noun: 'property', done: '/properties', form: f,
     load: async (id) => {
       const p = (await api.get(`/properties/${id}`)).data;
-      return { type: p.type || 'villa', name: p.name || '', description: p.description || '', location: p.location || '', price: p.price ?? '', active: p.active !== false, pictures: p.pictures || [], pictureFiles: [], documents: p.documents || [], documentFiles: [] };
+      return { type: p.type || 'villa', name: p.name || '', description: p.description || '', location: p.location || '', price: p.price ?? '', active: p.active !== false, pictures: p.pictures || [], pictureFiles: [], documents: p.documents || [], documentFiles: [], ...italianFrom(p, TITLE_DESC_IT) };
     },
     save: (v, id) => {
       const fd = new FormData();
       ['type', 'name', 'description', 'location', 'price'].forEach((k) => fd.append(k, v[k] ?? ''));
       fd.append('active', String(v.active));
+      appendItalian(fd, v, TITLE_DESC_IT);
       if (id) { fd.append('existingPictures', JSON.stringify(v.pictures)); fd.append('existingDocuments', JSON.stringify(v.documents)); }
       v.pictureFiles.forEach((file) => fd.append('pictures', file));
       v.documentFiles.forEach((file) => fd.append('documents', file));
       return id ? api.put(`/properties/${id}`, fd) : api.post('/properties', fd);
     },
   });
-  const validate = (v) => { const p = {}; required(p, v, 'name', 'Name'); required(p, v, 'description', 'Description'); required(p, v, 'location', 'Location'); required(p, v, 'price', 'Asking price'); return p; };
+  const validate = (v) => { const p = {}; required(p, v, 'name', 'Name'); required(p, v, 'description', 'Description'); required(p, v, 'location', 'Location'); required(p, v, 'price', 'Asking price'); return { ...p, ...italianProblems(v, TITLE_DESC_IT) }; };
   const err = rec.fieldErrors;
   return (
     <FormPage title={rec.isNew ? 'Add property' : form.name || 'Edit property'} subtitle="Villas, apartments and land for sale." back="/properties" backLabel="Property"
@@ -212,6 +222,7 @@ export function PropertyForm() {
       <Section title="Photos">
         <ImageUploader existing={form.pictures} onExistingChange={(v) => set('pictures', v)} files={form.pictureFiles} onFilesChange={(v) => set('pictureFiles', v)} max={10} />
       </Section>
+      <ItalianFields form={form} set={set} fields={TITLE_DESC_IT} errors={err} english={{ titleIt: form.name, descriptionIt: form.description }} />
       <Section title="Documents" description="Title deeds, site plans… uploaded as images (photos or scans).">
         <ImageUploader label="Documents" existing={form.documents} onExistingChange={(v) => set('documents', v)} files={form.documentFiles} onFilesChange={(v) => set('documentFiles', v)} max={10} />
       </Section>

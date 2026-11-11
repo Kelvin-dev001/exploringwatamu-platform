@@ -3,7 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import { Button, Field, Input, Sheet, Textarea } from '@/ui';
 import { cn } from '@/lib/utils';
 import { formatWhatsAppNumber, parseWhatsAppNumber, whatsappLink } from '@/lib/whatsapp';
-import { REPLY_TEMPLATES, defaultReplyTemplate, tripReplyMessage } from '@/lib/tripReplies';
+import { REPLY_LANGUAGES, REPLY_TEMPLATES, defaultReplyTemplate, replyLanguageOf, tripReplyMessage } from '@/lib/tripReplies';
 
 /** What the "To" field says about the number: [error, hint]. */
 function numberCheck(parsed, raw, country) {
@@ -26,14 +26,19 @@ function numberCheck(parsed, raw, country) {
 function ReplyForm({ request: r }) {
   const [phone, setPhone] = useState(r.contact?.phone || '');
   const [template, setTemplate] = useState(() => defaultReplyTemplate(r));
-  const [message, setMessage] = useState(() => tripReplyMessage(r));
+  const [language, setLanguage] = useState(() => replyLanguageOf(r));
+  const [message, setMessage] = useState(() => tripReplyMessage(r, defaultReplyTemplate(r), replyLanguageOf(r)));
   const parsed = parseWhatsAppNumber(phone);
   const href = parsed && message.trim() ? whatsappLink(parsed.digits, message) : null;
   const [numberError, numberHint] = numberCheck(parsed, phone, r.contact?.country);
 
   const pick = (id) => {
     setTemplate(id);
-    setMessage(tripReplyMessage(r, id));
+    setMessage(tripReplyMessage(r, id, language));
+  };
+  const speak = (id) => {
+    setLanguage(id);
+    setMessage(tripReplyMessage(r, template, id));
   };
 
   return (
@@ -41,6 +46,24 @@ function ReplyForm({ request: r }) {
       <Field label="To" error={numberError} hint={numberHint}>
         <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" aria-invalid={!parsed} />
       </Field>
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-ink">Language</legend>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {REPLY_LANGUAGES.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              lang={l.id}
+              aria-pressed={language === l.id}
+              onClick={() => speak(l.id)}
+              className={cn('rounded-full border px-3 py-1 text-xs font-semibold', language === l.id ? 'border-brand bg-brand-soft text-ink' : 'border-line text-muted hover:text-ink')}
+            >
+              {l.label}
+            </button>
+          ))}
+          {r.locale === 'it' && <span className="text-xs text-faint">The traveller used the website in Italian.</span>}
+        </div>
+      </fieldset>
       <fieldset>
         <legend className="mb-1.5 text-sm font-medium text-ink">Start from</legend>
         <div className="flex flex-wrap gap-1.5">
@@ -58,7 +81,7 @@ function ReplyForm({ request: r }) {
         </div>
       </fieldset>
       <Field label="Message" hint="Edit anything before you open WhatsApp.">
-        <Textarea rows={7} value={message} onChange={(e) => setMessage(e.target.value)} />
+        <Textarea rows={7} lang={language} value={message} onChange={(e) => setMessage(e.target.value)} />
       </Field>
       {href ? (
         <Button href={href} target="_blank" rel="noopener noreferrer" variant="whatsapp" size="lg" className="w-full">

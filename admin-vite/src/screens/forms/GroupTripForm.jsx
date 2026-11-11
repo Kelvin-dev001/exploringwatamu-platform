@@ -5,11 +5,15 @@ import { FormPage, Grid, ListInput, MoneyInput, Problems, Repeater, Section, use
 import ImageUploader from '@/forms/ImageUploader';
 import VibeFields, { appendDiscovery, discoveryFrom, emptyDiscovery } from '@/forms/VibeFields';
 import useRecord, { required } from './useRecord';
+import ItalianFields from '@/forms/ItalianFields';
+import { appendItalian, emptyItalian, italianFrom, italianProblems } from '@/forms/italian';
+
+const IT = ['titleIt', 'shortDescriptionIt', 'descriptionIt'];
 
 const EMPTY = {
   title: '', shortDescription: '', fullDescription: '', startDate: '', endDate: '', balanceDueDate: '', meetingPoint: '',
   accommodationDetails: '', maxParticipants: '', fullPrice: '', depositAmount: '', status: 'draft',
-  itinerary: [], includes: [], excludes: [], hero: [], heroFile: [], gallery: [], files: [], confirmed: 0, ...emptyDiscovery,
+  itinerary: [], includes: [], excludes: [], hero: [], heroFile: [], gallery: [], files: [], confirmed: 0, ...emptyDiscovery, ...emptyItalian(IT),
 };
 const day = (d) => (d ? String(d).slice(0, 10) : '');
 
@@ -26,7 +30,7 @@ export default function GroupTripForm() {
         accommodationDetails: t.accommodationDetails || '', maxParticipants: t.maxParticipants ?? '', fullPrice: t.fullPrice ?? '', depositAmount: t.depositAmount ?? '',
         status: t.status || 'draft', itinerary: (t.itinerary || []).map((d) => ({ title: d.title || '', activities: d.activities || [] })),
         includes: t.includes || [], excludes: t.excludes || [], hero: t.heroImage ? [t.heroImage] : [], heroFile: [], gallery: t.gallery || [], files: [],
-        confirmed: t.confirmedParticipants || 0, ...discoveryFrom(t),
+        confirmed: t.confirmedParticipants || 0, ...discoveryFrom(t), ...italianFrom(t, IT),
       };
     },
     save: (v, id) => {
@@ -36,6 +40,7 @@ export default function GroupTripForm() {
       fd.append('itinerary', JSON.stringify(v.itinerary.map((d, i) => ({ day: i + 1, title: d.title, activities: d.activities }))));
       fd.append('includes', JSON.stringify(v.includes));
       fd.append('excludes', JSON.stringify(v.excludes));
+      appendItalian(fd, v, IT);
       appendDiscovery(fd, v);
       if (v.heroFile[0]) fd.append('heroImage', v.heroFile[0]);
       else if (v.hero[0]) fd.append('heroImage', v.hero[0]);
@@ -58,6 +63,7 @@ export default function GroupTripForm() {
     if (Number(v.depositAmount) > Number(v.fullPrice)) p.depositAmount = 'Deposit can’t be more than the full price';
     if (v.maxParticipants && Number(v.maxParticipants) < v.confirmed) p.maxParticipants = `${v.confirmed} travellers are already confirmed`;
     v.itinerary.forEach((d, i) => { if (!d.title.trim()) p[`itinerary.${i}.title`] = `Day ${i + 1} needs a title`; });
+    Object.assign(p, italianProblems(v, IT));
     return p;
   };
   const err = rec.fieldErrors;
@@ -83,6 +89,8 @@ export default function GroupTripForm() {
         <Field label="Short description" error={err.shortDescription} hint="One or two lines — shown on cards and link previews"><Textarea rows={2} value={form.shortDescription} onChange={(e) => set('shortDescription', e.target.value)} /></Field>
         <Field label="Full description"><Textarea rows={6} value={form.fullDescription} onChange={(e) => set('fullDescription', e.target.value)} /></Field>
       </Section>
+
+      <ItalianFields form={form} set={set} fields={IT} errors={err} english={{ titleIt: form.title, shortDescriptionIt: form.shortDescription, descriptionIt: form.fullDescription }} hasPage />
 
       <Section title="Photos">
         <Field label="Hero photo" error={err.heroImage} hint="Large banner at the top of the trip page and in WhatsApp previews">

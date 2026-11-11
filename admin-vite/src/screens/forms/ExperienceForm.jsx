@@ -6,11 +6,15 @@ import { FormPage, Grid, ListInput, MoneyInput, Problems, Section, useForm, Chip
 import ImageUploader from '@/forms/ImageUploader';
 import VibeFields, { appendDiscovery, discoveryFrom, emptyDiscovery } from '@/forms/VibeFields';
 import useRecord, { required } from './useRecord';
+import ItalianFields from '@/forms/ItalianFields';
+import { appendItalian, emptyItalian, italianFrom, italianProblems } from '@/forms/italian';
+
+const IT = ['titleIt', 'descriptionIt'];
 
 const EMPTY = {
   name: '', description: '', duration: '', recommendedTimes: '', highlights: [], whatToCarry: [], vehicles: [],
   priceForeignerAdult: '', priceForeignerChild: '', priceResidentAdult: '', priceResidentChild: '', active: true,
-  gallery: [], files: [], ...emptyDiscovery,
+  gallery: [], files: [], ...emptyDiscovery, ...emptyItalian(IT),
 };
 
 export default function ExperienceForm() {
@@ -27,7 +31,7 @@ export default function ExperienceForm() {
         ...EMPTY, name: t.name || '', description: t.description || '', duration: t.duration || '', recommendedTimes: t.recommendedTimes || '',
         highlights: t.highlights || [], whatToCarry: t.whatToCarry || [], vehicles: (t.vehicles || []).map((v) => v._id || v),
         priceForeignerAdult: t.priceForeignerAdult ?? '', priceForeignerChild: t.priceForeignerChild ?? '', priceResidentAdult: t.priceResidentAdult ?? '', priceResidentChild: t.priceResidentChild ?? '',
-        active: t.active !== false, gallery: t.gallery || [], files: [], ...discoveryFrom(t),
+        active: t.active !== false, gallery: t.gallery || [], files: [], ...discoveryFrom(t), ...italianFrom(t, IT),
       };
     },
     save: (v, id) => {
@@ -38,6 +42,7 @@ export default function ExperienceForm() {
       fd.append('vehicles', JSON.stringify(v.vehicles));
       fd.append('active', String(v.active));
       appendDiscovery(fd, v);
+      appendItalian(fd, v, IT);
       if (id) fd.append('existingGallery', JSON.stringify(v.gallery));
       v.files.forEach((file) => fd.append('gallery', file));
       return id ? api.put(`/tours/${id}`, fd) : api.post('/tours', fd);
@@ -49,7 +54,7 @@ export default function ExperienceForm() {
     required(p, v, 'name', 'Name');
     required(p, v, 'description', 'Description');
     ['priceForeignerAdult', 'priceForeignerChild', 'priceResidentAdult', 'priceResidentChild'].forEach((k) => { if (v[k] === '' || v[k] === null) p[k] = 'All four prices are required (use 0 if free)'; });
-    return p;
+    return { ...p, ...italianProblems(v, IT) };
   };
   const err = rec.fieldErrors;
 
@@ -78,6 +83,8 @@ export default function ExperienceForm() {
           <Field label="Best time" hint="e.g. “Oct – Mar” or “Low tide mornings”"><Input value={form.recommendedTimes} onChange={(e) => set('recommendedTimes', e.target.value)} /></Field>
         </Grid>
       </Section>
+
+      <ItalianFields form={form} set={set} fields={IT} errors={err} english={{ titleIt: form.name, descriptionIt: form.description }} hasPage />
 
       <Section title="Photos" description="The first photo is the cover on the website.">
         <ImageUploader existing={form.gallery} onExistingChange={(v) => set('gallery', v)} files={form.files} onFilesChange={(v) => set('files', v)} max={10} />

@@ -92,7 +92,7 @@ export default function GroupTripBookings() {
         defaultSort={{ key: 'created', dir: 'asc' }}
         empty={{ icon: Users, title: 'No one has asked to join yet' }}
         columns={[
-          { key: 'name', header: 'Traveller', sort: (b) => b.fullName, cell: (b) => <div className="min-w-0"><p className="truncate font-semibold text-ink">{b.fullName}</p><p className="truncate text-xs text-faint">{b.email} · {b.phone}</p></div> },
+          { key: 'name', header: 'Traveller', sort: (b) => b.fullName, cell: (b) => <div className="min-w-0"><p className="truncate font-semibold text-ink">{b.fullName}{b.locale === 'it' && <span title="Booked on the Italian website: their emails and quotation are in Italian" className="ml-1.5 align-middle"><Badge>IT</Badge></span>}</p><p className="truncate text-xs text-faint">{b.email} · {b.phone}</p></div> },
           { key: 'vibe', header: 'Vibe', cell: (b) => <div className="flex max-w-56 flex-wrap gap-1">{(b.travelPersonalities || []).slice(0, 2).map((p) => <Badge key={p}>{p}</Badge>)}{b.travelGroup && <Badge tone="brand">{b.travelGroup}</Badge>}</div> },
           { key: 'pay', header: 'Payment', sort: (b) => b.amountPaid || 0, cell: (b) => <div className="text-sm"><p className="font-medium capitalize text-ink">{b.paymentType} · {kes(b.amountPaid)}</p>{b.amountDue > 0 && <p className="text-xs text-faint">balance {kes(b.amountDue)}</p>}</div> },
           { key: 'status', header: 'Status', sort: (b) => b.status, cell: (b) => <StatusBadge status={b.status} /> },
