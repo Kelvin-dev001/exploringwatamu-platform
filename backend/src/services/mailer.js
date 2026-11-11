@@ -1,6 +1,7 @@
 'use strict';
 
 const config = require('../config/env');
+const logger = require('./logger');
 const { record } = require('./notifications/log');
 
 let transporter = null;
@@ -39,11 +40,13 @@ async function sendMail({ to, subject, html, text, attachments, event = null, us
     // Same test as the transport choice above, so the audit log never says
     // "sent" for a message the dev transport only serialized.
     if (!config.mail.enabled) {
-      console.log(`[mailer] SMTP not configured — email NOT sent. to=${to} subject="${subject}"`);
+      // No subject: some carry the traveller's name. The Notification log has the details.
+      logger.info('email NOT sent: SMTP not configured', { event, to: logger.maskEmail(to) });
     }
     await record({ user, channel: 'email', event, to, subject, status: config.mail.enabled ? 'sent' : 'skipped' });
     return info;
   } catch (err) {
+    logger.error('email failed', { event, to: logger.maskEmail(to), ...logger.errorFields(err) });
     await record({ user, channel: 'email', event, to, subject, status: 'failed', error: err.message });
     throw err;
   }

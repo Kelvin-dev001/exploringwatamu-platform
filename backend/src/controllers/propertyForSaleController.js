@@ -1,44 +1,42 @@
 const PropertyForSale = require('../models/PropertyForSale');
 const { activeFilter, canSee } = require('../services/listingVisibility');
+const { contains, pageParams, pageOf } = require('../services/listQuery');
 const { nextGallery } = require('../services/gallery');
 
 // List properties with filter, pagination, and type
-exports.getProperties = async (req, res) => {
+exports.getProperties = async (req, res, next) => {
   try {
-    const { type, name, location, page = 1, limit = 10 } = req.query;
-    let query = activeFilter(req);
+    const { type, name, location } = req.query;
+    const paging = pageParams(req.query);
+    const query = activeFilter(req);
     if (type) query.type = type;
-    if (name) query.name = { $regex: name, $options: "i" };
-    if (location) query.location = { $regex: location, $options: "i" };
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const properties = await PropertyForSale.find(query)
-      .skip(skip)
-      .limit(parseInt(limit));
-    const total = await PropertyForSale.countDocuments(query);
-    res.json({
-      data: properties,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      total
-    });
+    const nameMatch = contains(name);
+    if (nameMatch) query.name = nameMatch;
+    const locationMatch = contains(location);
+    if (locationMatch) query.location = locationMatch;
+    const [properties, total] = await Promise.all([
+      PropertyForSale.find(query).skip(paging.skip).limit(paging.limit),
+      PropertyForSale.countDocuments(query),
+    ]);
+    res.json(pageOf(properties, total, paging));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch properties' });
+    next(err);
   }
 };
 
 // Single property
-exports.getProperty = async (req, res) => {
+exports.getProperty = async (req, res, next) => {
   try {
     const property = await PropertyForSale.findById(req.params.id);
     if (!property || !canSee(req, property)) return res.status(404).json({ error: 'Not found' });
     res.json(property);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch property' });
+    next(err);
   }
 };
 
 // Admin: Create property
-exports.createProperty = async (req, res) => {
+exports.createProperty = async (req, res, next) => {
   try {
     // req.files comes from upload.fields([{name:'pictures'},{name:'documents'}])
     const pictureUrls = req.files && req.files.pictures
@@ -67,7 +65,7 @@ exports.createProperty = async (req, res) => {
 };
 
 // Admin: Update property
-exports.updateProperty = async (req, res) => {
+exports.updateProperty = async (req, res, next) => {
   try {
     const newPictureUrls = req.files && req.files.pictures
       ? req.files.pictures.map(f => f.path)
@@ -103,12 +101,12 @@ exports.updateProperty = async (req, res) => {
 };
 
 // Admin: Delete property
-exports.deleteProperty = async (req, res) => {
+exports.deleteProperty = async (req, res, next) => {
   try {
     const property = await PropertyForSale.findByIdAndDelete(req.params.id);
     if (!property) return res.status(404).json({ error: 'Not found' });
     res.json({ message: "Property deleted" });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete property' });
+    next(err);
   }
 };

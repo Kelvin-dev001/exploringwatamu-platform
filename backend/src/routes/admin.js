@@ -2,20 +2,23 @@
 
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const config = require('../config/env');
+const { z } = require('zod');
 const Admin = require('../models/Admin');
+const validate = require('../middleware/validate');
+const { signAdminToken } = require('../services/tokens');
 const authAdmin = require('../middleware/authAdmin');
 const { authLimiter, adminLimiter } = require('../middleware/rateLimiters');
 
+const loginSchema = z.object({
+  email: z.string({ error: 'Email and password are required.' }).trim().toLowerCase().min(1, 'Email and password are required.').max(200),
+  password: z.string({ error: 'Email and password are required.' }).min(1, 'Email and password are required.').max(200),
+});
+
 // --- Login (DB-backed admin, hashed passwords only) ---
-router.post('/login', authLimiter, async (req, res, next) => {
+router.post('/login', authLimiter, validate(loginSchema), async (req, res, next) => {
   try {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
-    const admin = await Admin.findOne({ email: String(email).toLowerCase().trim() });
+    const { email, password } = req.body;
+    const admin = await Admin.findOne({ email });
     if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
 
     const valid = await admin.validatePassword(password);
@@ -24,11 +27,7 @@ router.post('/login', authLimiter, async (req, res, next) => {
     admin.lastLoginAt = new Date();
     await admin.save();
 
-    const token = jwt.sign(
-      { id: admin._id, email: admin.email, admin: true, role: admin.role || 'admin' },
-      config.jwtSecret,
-      { expiresIn: config.adminJwtExpiresIn }
-    );
+    const token = signAdminToken(admin);
     res.json({ token, admin: { id: admin._id, email: admin.email, name: admin.name || '', role: admin.role || 'admin' } });
   } catch (err) {
     next(err);

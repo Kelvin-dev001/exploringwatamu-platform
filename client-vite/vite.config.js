@@ -4,6 +4,10 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import seoPlugin from './seo/plugin.js';
 
+// The deployed commit tags error reports (Vercel sets VERCEL_GIT_COMMIT_SHA at
+// build time; Vite only exposes VITE_* variables to the app).
+process.env.VITE_RELEASE ||= process.env.VERCEL_GIT_COMMIT_SHA || '';
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), seoPlugin()],
   build: {
@@ -12,7 +16,6 @@ export default defineConfig({
         // Stable vendor chunks cache across deploys; app code changes more often.
         manualChunks: {
           react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
-          motion: ['motion/react'],
           ui: ['@radix-ui/react-dialog', 'axios', 'clsx', 'tailwind-merge'],
         },
       },

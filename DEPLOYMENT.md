@@ -31,14 +31,14 @@ Do the steps in order; each one produces a value the next step needs.
 
 ## Step 2 — Backend (Render)
 Easiest is the included blueprint:
-1. Render → **New + → Blueprint** → connect your GitHub repo. It reads `render.yaml` and creates the `exploringwatamu-api` service (build `npm install`, start `npm start`, health check `/api/health`). `JWT_SECRET` is generated for you.
+1. Render → **New + → Blueprint** → connect your GitHub repo. It reads `render.yaml` and creates the `exploringwatamu-api` service (build `npm ci --omit=dev`, start `npm start`, health check `/api/health`). `JWT_SECRET` is generated for you.
 2. Open the service → **Environment** and set the secrets (marked "sync: false"):
    - `MONGODB_URI` = your Atlas string from Step 1
    - Leave `FRONTEND_URLS` / `FRONTEND_URL` blank for now — you'll fill them after Step 4.
    - Optional (can add later): `CLOUDINARY_*`, `SMTP_*`, `MAIL_FROM`, `ADMIN_NOTIFY_EMAIL`, `GOOGLE_CLIENT_ID`, `AT_*`.
-3. Deploy. When it's live, note the URL, e.g. `https://exploringwatamu-api.onrender.com`. Visit `https://…/api/health` — you should see `{"status":"ok"}`.
+3. Deploy. When it's live, note the URL, e.g. `https://exploringwatamu-api.onrender.com` (today's production API is `https://exploringwatamu-platform.onrender.com`). Visit `https://…/api/health` — you should see `{"status":"ok"}` — and `https://…/api/health/ready` for `"database":"up"`.
 
-> No blueprint? Create a **Web Service** manually: Root Directory `backend`, Build `npm install`, Start `npm start`, Health Check Path `/api/health`, and add the same env vars (plus `NODE_ENV=production`, `JWT_SECRET` = a long random string, `PAYMENTS_ENABLED=false`).
+> No blueprint? Create a **Web Service** manually: Root Directory `backend`, Build `npm ci --omit=dev`, Start `npm start`, Health Check Path `/api/health`, and add the same env vars (plus `NODE_ENV=production`, `JWT_SECRET` = a long random string, `PAYMENTS_ENABLED=false`, `TRUST_PROXY=1`). A service made this way **does not read `render.yaml`**: keep its settings in step with the file by hand.
 
 ## Step 3 — Create your admin login
 The admin portal signs in against an admin stored in the database. In Render, open the service's **Shell** and run:
@@ -56,7 +56,7 @@ Deploy the two web apps as **separate Vercel projects from the same repo**:
 1. Vercel → **Add New → Project** → import the repo.
 2. **Root Directory:** `client-vite`. Framework preset: **Vite**.
 3. **Environment Variables:** `VITE_API_URL` = `https://<your-render-url>/api` (note the `/api`).
-4. Deploy → note the URL, e.g. `https://exploringwatamu.vercel.app`.
+4. Deploy → note the URL. Production today: `https://exploringwatamu-platform.vercel.app`.
 
 **Admin app** — repeat with **Root Directory:** `admin-vite`, same `VITE_API_URL`. Note its URL, e.g. `https://exploringwatamuadmin.vercel.app`.
 
@@ -65,8 +65,8 @@ Deploy the two web apps as **separate Vercel projects from the same repo**:
 ## Step 5 — Connect the frontends to the API (CORS)
 Back in Render → the API service → **Environment**:
 - `FRONTEND_URLS` = your two Vercel URLs, comma-separated, e.g.
-  `https://exploringwatamu.vercel.app,https://exploringwatamuadmin.vercel.app`
-- `FRONTEND_URL` = the traveller app URL (used in email/e-card links), e.g. `https://exploringwatamu.vercel.app`
+  `https://exploringwatamu-platform.vercel.app,https://exploringwatamuadmin.vercel.app` (the API already trusts these two; add any custom domain here)
+- `FRONTEND_URL` = the traveller app URL (used in email and reset links), e.g. `https://exploringwatamu-platform.vercel.app`
 
 Save (Render redeploys). The apps can now call the API.
 
@@ -76,6 +76,10 @@ Set these on Render and redeploy; each is a safe no-op until configured:
 - **SMS:** `AT_USERNAME`, `AT_API_KEY`, `AT_SENDER_ID` (Africa's Talking).
 - **Image uploads:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — set all three (a partial set stops the API from booting). Until then, saving a listing *with* images answers 503 "Image hosting is not configured"; listings without images still work. `/api/health` reports `"imageUploads": true` once they're picked up.
 - **Google sign-in:** `GOOGLE_CLIENT_ID` (and set `VITE_GOOGLE_CLIENT_ID` on the Vercel apps).
+- **Error monitoring (Sentry):** `SENTRY_DSN` on Render, `VITE_SENTRY_DSN` on the Vercel apps — see [`docs/OPERATIONS.md`](docs/OPERATIONS.md#error-monitoring-sentry).
+- **Logs:** JSON lines in Render's log viewer; `LOG_LEVEL=debug` for more detail.
+
+Every variable is described in [`docs/OPERATIONS.md`](docs/OPERATIONS.md#environment-variables).
 
 ---
 
@@ -85,7 +89,7 @@ Set these on Render and redeploy; each is a safe no-op until configured:
 Every app installs from its committed lockfile (`npm ci`). After changing dependencies, commit the updated `package-lock.json`, or CI will refuse to install.
 
 ## After each deploy — quick smoke check
-1. `https://<api>/api/health` answers `{"status":"ok", ...}` (the first request after a quiet spell can take 30–60 s on Render's free plan).
+1. `https://<api>/api/health` answers `{"status":"ok", ...}` with the new `release` (the first request after a quiet spell can take 30–60 s on Render's free plan), and `/api/health/ready` shows `"database":"up"`.
 2. Open the website, click a few links in the menu — pages must keep rendering.
 3. Admin portal: sign in, open Trip requests and the Dashboard.
 
@@ -95,12 +99,14 @@ Every app installs from its committed lockfile (`npm ci`). After changing depend
 - [ ] `PAYMENTS_ENABLED=false` (M-Pesa stays off until you're ready).
 - [ ] No secrets in the repo — all set in Render/Vercel dashboards.
 - [ ] HTTPS everywhere (Render + Vercel do this automatically).
-- [ ] Health check passing (`/api/health`).
-- [ ] Atlas automated backups enabled (Atlas does daily snapshots on paid tiers; enable when you upgrade).
+- [ ] Health check passing (`/api/health`), and an uptime monitor on `/api/health/ready`.
+- [ ] Backups: the free Atlas tier has **no** automatic backups — follow [`docs/DATABASE.md`](docs/DATABASE.md#backups).
 - [ ] Revoked the temporary GitHub push token.
-- [ ] Admin account seeded (Step 3).
+- [ ] Admin account seeded (Step 3), then `BOOTSTRAP_ADMIN_*` removed from Render.
+
+The full list of owner tasks is [`docs/OWNER-ACTIONS.md`](docs/OWNER-ACTIONS.md).
 
 ## Known follow-ups (not blockers)
-- **Rate limiting** is in-memory (fine on Render's single free instance; add a shared store like Redis when you scale to multiple instances).
-- **Error monitoring:** consider adding Sentry (or Render's log alerts) for production visibility.
-- **Custom domains:** add them in Vercel/Render, then update `FRONTEND_URLS` accordingly.
+- **Rate limiting** is in-memory (fine on Render's single free instance; add a shared store like Redis before running several instances — [`docs/SECURITY-REVIEW.md`](docs/SECURITY-REVIEW.md)).
+- **Custom domains:** add them in Vercel/Render, then update `FRONTEND_URLS` (and `VITE_SITE_URL` on the website) accordingly.
+- Day-to-day running (rollback, secret rotation, admins, monitoring, cold starts): [`docs/OPERATIONS.md`](docs/OPERATIONS.md).

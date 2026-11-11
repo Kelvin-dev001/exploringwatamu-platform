@@ -2,6 +2,7 @@ const CarHire = require('../models/CarHire');
 const CarHireBooking = require('../models/CarHireBooking');
 const Vehicle = require('../models/Vehicle');
 const { activeFilter, canSee } = require('../services/listingVisibility');
+const { pageParams, pageOf } = require('../services/listQuery');
 
 // Helper: check if a car is available for the requested dates
 async function isCarAvailable(carHireId, startDate, endDate) {
@@ -16,10 +17,10 @@ async function isCarAvailable(carHireId, startDate, endDate) {
 }
 
 // GET /api/carhires?vehicleType=Sedan&minPrice=50&maxPrice=300&capacity=4&page=1&limit=10&startDate=2025-09-05&endDate=2025-09-06
-exports.getCarHires = async (req, res) => {
+exports.getCarHires = async (req, res, next) => {
   try {
-    let { vehicleType, minPrice, maxPrice, capacity, page = 1, limit = 10, startDate, endDate } = req.query;
-    page = parseInt(page); limit = parseInt(limit);
+    const { vehicleType, minPrice, maxPrice, capacity, startDate, endDate } = req.query;
+    const paging = pageParams(req.query);
 
     // Build filter
     let vehicleQuery = {};
@@ -33,9 +34,7 @@ exports.getCarHires = async (req, res) => {
     if (minPrice) hireQuery.dailyRate = { ...hireQuery.dailyRate, $gte: parseFloat(minPrice) };
     if (maxPrice) hireQuery.dailyRate = { ...hireQuery.dailyRate, $lte: parseFloat(maxPrice) };
 
-    // Pagination
-    const skip = (page - 1) * limit;
-    let carHires = await CarHire.find(hireQuery).populate('vehicle').skip(skip).limit(limit);
+    let carHires = await CarHire.find(hireQuery).populate('vehicle').skip(paging.skip).limit(paging.limit);
     const total = await CarHire.countDocuments(hireQuery);
 
     // Availability filter (if dates provided)
@@ -51,44 +50,43 @@ exports.getCarHires = async (req, res) => {
       carHires = availableCarHires;
     }
 
-    res.json({
-      data: carHires,
-      page,
-      totalPages: Math.ceil(total / limit),
-      total
-    });
+    res.json(pageOf(carHires, total, paging));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch car hires' });
+    next(err);
   }
 };
 
 // POST /api/carhirebookings
-exports.bookCarHire = async (req, res) => {
+// POST /api/carhire/book (public; body validated by carHireBookSchema)
+exports.bookCarHire = async (req, res, next) => {
   try {
     const { carHireId, startDate, endDate, userName, userContact } = req.body;
-    const available = await isCarAvailable(carHireId, new Date(startDate), new Date(endDate));
+    // Only cars the public can see can be booked.
+    const carHire = await CarHire.findById(carHireId).select('active');
+    if (!carHire || !canSee({}, carHire)) return res.status(404).json({ error: 'Car hire not found' });
+    const available = await isCarAvailable(carHireId, startDate, endDate);
     if (!available) return res.status(400).json({ error: "Car not available for these dates" });
     const booking = new CarHireBooking({ carHire: carHireId, startDate, endDate, userName, userContact });
     await booking.save();
     res.status(201).json(booking);
   } catch (err) {
-    res.status(400).json({ error: "Booking failed", details: err.message });
+    next(err);
   }
 };
 
 // GET /api/carhires/:id
-exports.getCarHire = async (req, res) => {
+exports.getCarHire = async (req, res, next) => {
   try {
     const carHire = await CarHire.findById(req.params.id).populate('vehicle');
     if (!carHire || !canSee(req, carHire)) return res.status(404).json({ error: 'Car hire not found' });
     res.json(carHire);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch car hire' });
+    next(err);
   }
 };
 
 // POST /api/carhires (Admin)
-exports.createCarHire = async (req, res) => {
+exports.createCarHire = async (req, res, next) => {
   try {
     const carHire = new CarHire(req.body);
     await carHire.save();
@@ -99,7 +97,7 @@ exports.createCarHire = async (req, res) => {
 };
 
 // PUT /api/carhires/:id (Admin)
-exports.updateCarHire = async (req, res) => {
+exports.updateCarHire = async (req, res, next) => {
   try {
     const carHire = await CarHire.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!carHire) return res.status(404).json({ error: 'Car hire not found' });
@@ -110,12 +108,12 @@ exports.updateCarHire = async (req, res) => {
 };
 
 // DELETE /api/carhires/:id (Admin)
-exports.deleteCarHire = async (req, res) => {
+exports.deleteCarHire = async (req, res, next) => {
   try {
     const carHire = await CarHire.findByIdAndDelete(req.params.id);
     if (!carHire) return res.status(404).json({ error: 'Car hire not found' });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete car hire' });
+    next(err);
   }
 };

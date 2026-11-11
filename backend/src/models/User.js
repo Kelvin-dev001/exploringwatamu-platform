@@ -22,8 +22,11 @@ const userSchema = new mongoose.Schema(
     referralCode: { type: String, unique: true, sparse: true }, // slug-based like 'sarah-smith'
 
     // Password reset (hashed token + expiry)
-    resetTokenHash: { type: String },
+    resetTokenHash: { type: String, index: { sparse: true } }, // looked up on every reset attempt
     resetTokenExpires: { type: Date },
+
+    // Bumped by setPassword: ends every session signed before the change (services/tokens).
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
@@ -44,6 +47,7 @@ userSchema.pre('save', function generateReferralCode(next) {
 
 userSchema.methods.setPassword = async function setPassword(password) {
   this.passwordHash = await bcrypt.hash(password, 12);
+  this.tokenVersion = (this.tokenVersion || 0) + 1;
 };
 
 userSchema.methods.validatePassword = async function validatePassword(password) {

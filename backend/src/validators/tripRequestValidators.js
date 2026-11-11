@@ -66,7 +66,8 @@ const createTripRequestSchema = z
 const sendQuoteSchema = z.object({
   lines: z
     .array(z.object({ label: text(200).min(1, 'Each line needs a description'), amount: z.coerce.number().min(0, 'Amounts cannot be negative') }))
-    .min(1, 'Add at least one quote line'),
+    .min(1, 'Add at least one quote line')
+    .max(100, 'A quote can have at most 100 lines'),
   message: text(4000).optional(),
   validUntil: optionalDate,
   adminNotes: text(4000).optional(),
@@ -78,4 +79,6 @@ const updateStatusSchema = z.object({
   notify: z.boolean().default(true),
 });
 
-module.exports = { createTripRequestSchema, sendQuoteSchema, updateStatusSchema };
+const updateNotesSchema = z.object({ adminNotes: text(4000) });
+
+module.exports = { createTripRequestSchema, sendQuoteSchema, updateStatusSchema, updateNotesSchema };

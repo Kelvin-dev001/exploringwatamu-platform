@@ -2,6 +2,7 @@
 
 const axios = require('axios');
 const config = require('../../config/env');
+const logger = require('../logger');
 const { record } = require('./log');
 
 // Sends an SMS via Africa's Talking. When credentials are unset it is a safe
@@ -13,7 +14,7 @@ async function sendSms({ to, message, user = null, event = null } = {}) {
   const subject = message.slice(0, 60);
 
   if (!config.sms.enabled) {
-    console.log(`[sms] not configured — SMS NOT sent. to=${to}`);
+    logger.info('SMS NOT sent: SMS not configured', { event, to: logger.maskPhone(to) });
     await record({ user, channel: 'sms', event, to, subject, status: 'skipped' });
     return { skipped: true };
   }
@@ -34,6 +35,7 @@ async function sendSms({ to, message, user = null, event = null } = {}) {
     await record({ user, channel: 'sms', event, to, subject, status: 'sent', meta: res.data });
     return res.data;
   } catch (err) {
+    logger.error('SMS failed', { event, to: logger.maskPhone(to), ...logger.errorFields(err) });
     await record({ user, channel: 'sms', event, to, subject, status: 'failed', error: err.message });
     throw err;
   }

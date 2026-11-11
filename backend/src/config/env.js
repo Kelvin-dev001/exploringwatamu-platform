@@ -5,7 +5,8 @@
 // so the app refuses to boot in an insecure/misconfigured state.
 
 const dotenv = require('dotenv');
-dotenv.config();
+// quiet: dotenv 17 otherwise prints an unstructured banner (with ads) on every boot.
+dotenv.config({ quiet: true });
 
 function readEnv(name, { aliases = [], required = false, min = 0 } = {}) {
   let value = process.env[name];
@@ -41,6 +42,15 @@ const smtpUser = process.env.SMTP_USER || '';
 const atUsername = process.env.AT_USERNAME || '';
 const atApiKey = process.env.AT_API_KEY || '';
 
+// Proxies in front of the app (Render: 1). Decides which address req.ip — and
+// so each visitor's rate limit — comes from. A number of hops, or true/false.
+function readTrustProxy(raw) {
+  if (raw === undefined || raw === '') return 1;
+  if (/^\d+$/.test(raw)) return Number(raw);
+  if (raw === 'true' || raw === 'false') return raw === 'true';
+  throw new Error('[config] TRUST_PROXY must be a number of proxy hops, true or false');
+}
+
 const jwtSecret = readEnv('JWT_SECRET', { required: true, min: 16 });
 if (jwtSecret === 'your_jwt_secret') {
   throw new Error('[config] JWT_SECRET is set to an insecure default value. Set a strong, unique secret.');
@@ -59,6 +69,14 @@ const config = {
   isProd: nodeEnv === 'production',
   isTest: nodeEnv === 'test',
   port: Number(process.env.PORT) || 5000,
+  trustProxy: readTrustProxy(process.env.TRUST_PROXY),
+  // The deployed commit (Render sets RENDER_GIT_COMMIT) — shown by /api/health.
+  release: process.env.SENTRY_RELEASE || process.env.RENDER_GIT_COMMIT || '',
+  // Error monitoring (Sentry). Off — and the SDK not even loaded — while unset.
+  monitoring: {
+    dsn: process.env.SENTRY_DSN || '',
+    environment: process.env.SENTRY_ENVIRONMENT || nodeEnv,
+  },
   mongoUri: readEnv('MONGODB_URI', { aliases: ['MONGO_URI'], required: true }),
   jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',

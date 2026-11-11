@@ -9,6 +9,7 @@
     "test:unit": "cross-env NODE_ENV=test jest --runInBand --testPathIgnorePatterns=/tests/e2e/",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "seed:admin": "node scripts/createAdmin.js",
+    "seed:demo": "node scripts/seedDemo.js",
     "test:e2e": "cross-env NODE_ENV=test jest tests/e2e --runInBand",
     "loadtest": "node scripts/loadtest.js",
     "seed:loadtest": "node scripts/seed.js"
@@ -18,6 +19,7 @@
   "license": "ISC",
   "description": "ExploringWatamu backend API",
   "dependencies": {
+    "@sentry/node": "11.9.0",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
@@ -30,7 +32,7 @@
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
-    "nodemailer": "^6.9.14",
+    "nodemailer": "^10.2.1",
     "pdfkit": "^0.15.0",
     "zod": "^4.4.3"
   },

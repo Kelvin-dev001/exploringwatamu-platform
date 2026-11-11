@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { CheckCircle2, MailCheck, Search, FileText, ArrowRight } from 'lucide-react';
 import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
@@ -34,9 +34,9 @@ export default function TripRequested() {
       <section className="relative overflow-hidden bg-ocean-900 text-sand-50">
         <WaveField className="absolute inset-0 text-ocean-800" rows={8} gap={18} />
         <Container size="narrow" className="relative py-16 text-center lg:py-24">
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+          <m.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
             <BrandBadge priority className="mx-auto size-24 ring-4 ring-ocean-800" />
-          </motion.div>
+          </m.div>
           <p className="eyebrow mt-8 !text-lagoon-300">Request sent</p>
           <h1 className="mt-3 font-display text-4xl leading-tight sm:text-5xl">Asante! Your trip is with our team.</h1>
           <p className="mt-4 text-lg text-sand-50/70">

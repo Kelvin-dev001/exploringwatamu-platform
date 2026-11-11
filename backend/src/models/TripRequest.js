@@ -45,7 +45,7 @@ const quoteLineSchema = new mongoose.Schema(
 
 const tripRequestSchema = new mongoose.Schema(
   {
-    reference: { type: String, unique: true, index: true },
+    reference: { type: String, unique: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
     contact: {
@@ -73,7 +73,7 @@ const tripRequestSchema = new mongoose.Schema(
     notes: { type: String, trim: true, maxlength: 2000 },
     estimate: { total: { type: Number, min: 0 }, unpriced: { type: Number, min: 0 } },
 
-    status: { type: String, enum: STATUSES, default: 'new', index: true },
+    status: { type: String, enum: STATUSES, default: 'new' },
     quote: {
       lines: [quoteLineSchema],
       total: { type: Number, min: 0 },
@@ -115,5 +115,14 @@ tripRequestSchema.virtual('itemCount').get(function itemCount() {
 tripRequestSchema.set('toJSON', { virtuals: true });
 
 tripRequestSchema.statics.STATUSES = STATUSES;
+
+// Indexes follow the real queries (docs/DATABASE.md):
+// admin inbox by status, newest first (also the dashboard's oldest "new")
+tripRequestSchema.index({ status: 1, createdAt: -1 });
+// admin inbox without a status filter
+tripRequestSchema.index({ createdAt: -1 });
+// "My trips": requests made signed in, or as a guest with the same email
+tripRequestSchema.index({ user: 1, createdAt: -1 });
+tripRequestSchema.index({ 'contact.email': 1 });
 
 module.exports = mongoose.model('TripRequest', tripRequestSchema);

@@ -28,7 +28,7 @@ function PasswordField({ value, onChange, label = 'Password' }) {
 }
 
 export default function Team() {
-  const { admin, setAdmin, logout } = useAdminAuth();
+  const { admin, setAdmin, replaceToken, logout } = useAdminAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const [team, setTeam] = useState(null);
@@ -63,8 +63,10 @@ export default function Team() {
         await api.post('/admin/team', { email: form.email.trim(), name: form.name.trim() || undefined, password: form.password });
         toast(`${form.name || form.email} can now sign in`);
       } else if (sheet.kind === 'password') {
-        await api.put(`/admin/team/${sheet.member.id}/password`, { password: form.password });
-        toast(`Password updated for ${sheet.member.name || sheet.member.email}`);
+        const res = await api.put(`/admin/team/${sheet.member.id}/password`, { password: form.password });
+        // Your own: other devices are signed out; this one gets a fresh token.
+        if (res.data?.token) replaceToken(res.data.token);
+        toast(res.data?.token ? 'Password updated — you’re signed out everywhere else' : `Password updated for ${sheet.member.name || sheet.member.email}`);
       } else {
         const res = await api.put(`/admin/team/${sheet.member.id}/name`, { name: form.name.trim() });
         if (res.data.isYou) {
@@ -142,7 +144,7 @@ export default function Team() {
 
       <p className="mt-4 flex items-start gap-2 text-xs text-faint">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-        If an admin is also set in Render as BOOTSTRAP_ADMIN_EMAIL, the server resets that admin’s password to the Render value on every restart — change it there too.
+        Setting a new password signs that admin out on every device. If an admin is also set in Render as BOOTSTRAP_ADMIN_EMAIL, the server resets that admin’s password to the Render value on every restart — change it there too.
       </p>
 
       <Sheet

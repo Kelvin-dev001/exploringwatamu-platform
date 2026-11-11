@@ -3,7 +3,7 @@ const Referral = require('../models/Referral');
 const GroupBooking = require('../models/GroupBooking');
 
 // GET /my-referrals — Get referral stats for current user
-exports.getMyReferrals = async (req, res) => {
+exports.getMyReferrals = async (req, res, next) => {
   try {
     const userId = req.user._id;
 
@@ -32,29 +32,26 @@ exports.getMyReferrals = async (req, res) => {
       pending,
     });
   } catch (err) {
-    console.error('Get referrals error:', err);
-    res.status(500).json({ error: 'Failed to fetch referrals.' });
+    next(err);
   }
 };
 
 // POST /redeem-points — Redeem safari points as discount on next booking
-exports.redeemPoints = async (req, res) => {
+exports.redeemPoints = async (req, res, next) => {
   try {
-    const { points } = req.body;
-    const userId = req.user._id;
-
-    if (!points || points <= 0 || points % 10 !== 0) {
+    const points = Number(req.body?.points);
+    if (!Number.isInteger(points) || points <= 0 || points % 10 !== 0) {
       return res.status(400).json({ error: 'Points must be multiple of 10.' });
     }
 
-    const user = await User.findById(userId);
-    if (!user || user.safariPoints < points) {
-      return res.status(400).json({ error: 'Insufficient Safari Points.' });
-    }
-
-    // Deduct points
-    user.safariPoints -= points;
-    await user.save();
+    // One atomic check-and-deduct: two redemptions at the same moment can't
+    // both spend the same points (a read-then-save could).
+    const user = await User.findOneAndUpdate(
+      { _id: req.user._id, safariPoints: { $gte: points } },
+      { $inc: { safariPoints: -points } },
+      { new: true }
+    ).select('safariPoints');
+    if (!user) return res.status(400).json({ error: 'Insufficient Safari Points.' });
 
     // Calculate discount: 10 points = 100 KES
     const discount = (points / 10) * 100;
@@ -66,13 +63,12 @@ exports.redeemPoints = async (req, res) => {
       remainingPoints: user.safariPoints,
     });
   } catch (err) {
-    console.error('Redeem points error:', err);
-    res.status(500).json({ error: 'Failed to redeem points.' });
+    next(err);
   }
 };
 
 // POST /apply-code — Apply referral discount before booking
-exports.applyReferralDiscount = async (req, res) => {
+exports.applyReferralDiscount = async (req, res, next) => {
   try {
     const { referralCode } = req.body;
 
@@ -88,7 +84,6 @@ exports.applyReferralDiscount = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Apply referral error:', err);
-    res.status(500).json({ error: 'Failed to apply referral code.' });
+    next(err);
   }
 };

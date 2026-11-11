@@ -1,6 +1,7 @@
 const Tour = require('../models/Tour');
 const { parseDiscovery } = require('../constants/discovery');
 const { activeFilter, canSee } = require('../services/listingVisibility');
+const { contains, pageParams, pageOf } = require('../services/listQuery');
 const { nextGallery, uploadedPaths } = require('../services/gallery');
 
 // Helper to parse JSON strings from FormData
@@ -10,28 +11,31 @@ const parseJSON = (val, fallback = []) => {
   return fallback;
 };
 
-exports.getTours = async (req, res) => {
+exports.getTours = async (req, res, next) => {
   try {
-    const { name, vehicleId, page = 1, limit = 10 } = req.query;
-    let query = activeFilter(req);
-    if (name) query.name = { $regex: name, $options: "i" };
+    const { name, vehicleId } = req.query;
+    const paging = pageParams(req.query);
+    const query = activeFilter(req);
+    const match = contains(name);
+    if (match) query.name = match;
     if (vehicleId) query.vehicles = vehicleId;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const tours = await Tour.find(query).populate('vehicles').skip(skip).limit(parseInt(limit));
-    const total = await Tour.countDocuments(query);
-    res.json({ data: tours, page: parseInt(page), totalPages: Math.ceil(total / limit), total });
-  } catch (err) { res.status(500).json({ error: 'Failed to fetch tours' }); }
+    const [tours, total] = await Promise.all([
+      Tour.find(query).populate('vehicles').skip(paging.skip).limit(paging.limit),
+      Tour.countDocuments(query),
+    ]);
+    res.json(pageOf(tours, total, paging));
+  } catch (err) { next(err); }
 };
 
-exports.getTour = async (req, res) => {
+exports.getTour = async (req, res, next) => {
   try {
     const tour = await Tour.findById(req.params.id).populate('vehicles');
     if (!tour || !canSee(req, tour)) return res.status(404).json({ error: 'Not found' });
     res.json(tour);
-  } catch (err) { res.status(500).json({ error: 'Failed to fetch tour' }); }
+  } catch (err) { next(err); }
 };
 
-exports.createTour = async (req, res) => {
+exports.createTour = async (req, res, next) => {
   try {
     const galleryUrls = req.files ? req.files.map(f => f.path) : [];
 
@@ -62,7 +66,7 @@ exports.createTour = async (req, res) => {
   }
 };
 
-exports.updateTour = async (req, res) => {
+exports.updateTour = async (req, res, next) => {
   try {
     const current = await Tour.findById(req.params.id).select('gallery');
     if (!current) return res.status(404).json({ error: 'Not found' });
@@ -95,10 +99,10 @@ exports.updateTour = async (req, res) => {
   }
 };
 
-exports.deleteTour = async (req, res) => {
+exports.deleteTour = async (req, res, next) => {
   try {
     const tour = await Tour.findByIdAndDelete(req.params.id);
     if (!tour) return res.status(404).json({ error: 'Not found' });
     res.json({ message: "Tour deleted" });
-  } catch (err) { res.status(500).json({ error: 'Failed to delete tour' }); }
+  } catch (err) { next(err); }
 };

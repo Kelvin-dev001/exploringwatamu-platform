@@ -11,12 +11,28 @@ const {
   notifyBookingCancelled,
 } = require('../services/bookingNotifications');
 const { deliveryFor } = require('../services/notifications/delivery');
+const logger = require('../services/logger');
+const { pageParams, pageOf } = require('../services/listQuery');
+
+// Admin lists grow with every booking. Without ?page/?limit they answer the
+// full array, as they always have; with either, one page in the usual
+// { data, page, totalPages, total } envelope.
+async function listOrPage(req, res, filter, build) {
+  const { page, limit } = req.query;
+  if (page === undefined && limit === undefined) return res.json(await build(GroupBooking.find(filter)));
+  const paging = pageParams(req.query, { defaultLimit: 50, maxLimit: 200 });
+  const [data, total] = await Promise.all([
+    build(GroupBooking.find(filter)).skip(paging.skip).limit(paging.limit),
+    GroupBooking.countDocuments(filter),
+  ]);
+  res.json(pageOf(data, total, paging));
+}
 
 // Fire-and-forget email helper: never let an email failure break the request.
 function sendAsync(promiseFactory, label) {
   Promise.resolve()
     .then(promiseFactory)
-    .catch((err) => console.error(`[email] ${label} failed:`, err.message));
+    .catch((err) => logger.error('booking notification failed', { step: label, ...logger.errorFields(err) }));
 }
 
 // POST /join — Create a pending booking with vibe data (authUser required).
@@ -226,12 +242,9 @@ exports.getTripParticipants = async (req, res, next) => {
 // GET /admin/all — all bookings (authAdmin required)
 exports.getAllBookingsAdmin = async (req, res, next) => {
   try {
-    const bookings = await GroupBooking.find()
-      .populate('trip', 'title startDate endDate')
-      .populate('user', 'name email')
-      .populate('referredBy', 'name')
-      .sort({ createdAt: -1 });
-    res.json(bookings);
+    await listOrPage(req, res, {}, (q) =>
+      q.populate('trip', 'title startDate endDate').populate('user', 'name email').populate('referredBy', 'name').sort({ createdAt: -1 })
+    );
   } catch (err) {
     next(err);
   }
@@ -240,12 +253,9 @@ exports.getAllBookingsAdmin = async (req, res, next) => {
 // GET /admin/trip/:tripId — bookings for a specific trip (authAdmin required)
 exports.getBookingsByTripAdmin = async (req, res, next) => {
   try {
-    const { tripId } = req.params;
-    const bookings = await GroupBooking.find({ trip: tripId })
-      .populate('trip', 'title startDate endDate')
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(bookings);
+    await listOrPage(req, res, { trip: req.params.tripId }, (q) =>
+      q.populate('trip', 'title startDate endDate').populate('user', 'name email').sort({ createdAt: -1 })
+    );
   } catch (err) {
     next(err);
   }

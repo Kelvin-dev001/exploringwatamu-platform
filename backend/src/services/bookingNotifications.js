@@ -5,6 +5,7 @@ const { sendSms } = require('./notifications/sms');
 const { wrap } = require('./notifications/emailLayout');
 const { buildQuotationPdf, buildReceiptPdf } = require('./documents');
 const escapeHtml = require('./escapeHtml');
+const logger = require('./logger');
 const config = require('../config/env');
 
 function money(n) {
@@ -28,7 +29,7 @@ async function trySms(args) {
   try {
     await sendSms(args);
   } catch (err) {
-    console.error('[sms]', err.message);
+    logger.error('booking SMS failed', { event: args.event, ...logger.errorFields(err) });
   }
 }
 

@@ -5,11 +5,13 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 const config = require('../config/env');
+const logger = require('../services/logger');
 
 // Admin image uploads: multipart parsing (multer) streamed to Cloudinary.
 // Upload failures are answered here with a real status and a message the
 // admin UI can show, instead of reaching the generic handler as a bare 500:
-//   400  too large, unexpected field, too many files, format rejected by Cloudinary
+//   400  not an image, too large, unexpected field, too many files, format
+//        rejected by Cloudinary
 //   502  Cloudinary or network failure
 //   503  image hosting not configured on this server
 
@@ -105,7 +107,7 @@ function handleUploadErrors(middleware, fields) {
         return res.status(400).json({ error: describeMulterError(err, fields), code: err.code, field: err.field });
       }
       if (err instanceof UploadError) {
-        if (err.status >= 500) console.error(`[upload] ${err.status} ${err.message}`, err.cause || '');
+        if (err.status >= 500) logger.error('upload failed', { requestId: req.id, status: err.status, code: err.code, field: err.field, errMessage: err.message });
         return res.status(err.status).json({ error: err.message, code: err.code, field: err.field });
       }
       // Anything else was raised parsing the multipart body itself (busboy),
@@ -115,9 +117,22 @@ function handleUploadErrors(middleware, fields) {
   };
 }
 
+// Only image files go on to Cloudinary (which also checks the real content
+// against ALLOWED_FORMATS, but only after receiving the whole file). Browsers
+// label HEIC inconsistently (image/heic, or application/octet-stream on
+// Windows), so either an image type or an image extension is enough here.
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/avif']);
+
+function imagesOnly(req, file, cb) {
+  const mime = String(file.mimetype || '').toLowerCase();
+  const extension = path.extname(file.originalname || '').slice(1).toLowerCase();
+  if (ALLOWED_MIME.has(mime) || ALLOWED_FORMATS.includes(extension)) return cb(null, true);
+  return cb(new UploadError(400, `"${file.originalname}" is not a supported image: use JPG, PNG, WebP or HEIC.`, { code: 'UPLOAD_TYPE', field: file.fieldname }));
+}
+
 function uploader(fields) {
   const files = fields.reduce((total, field) => total + field.maxCount, 0);
-  return multer({ storage, limits: { fileSize: MAX_FILE_SIZE, files } });
+  return multer({ storage, fileFilter: imagesOnly, limits: { fileSize: MAX_FILE_SIZE, files, fields: 100, fieldSize: 256 * 1024 } });
 }
 
 // Drop-in replacements for multer's .fields() / .array() / .single().
@@ -135,4 +150,4 @@ function uploadSingle(name) {
   return handleUploadErrors(uploader(fields).single(name), fields);
 }
 
-module.exports = { uploadFields, uploadArray, uploadSingle, UploadError, MAX_FILE_SIZE };
+module.exports = { uploadFields, uploadArray, uploadSingle, UploadError, MAX_FILE_SIZE, imagesOnly };

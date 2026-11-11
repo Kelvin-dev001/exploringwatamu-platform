@@ -7,41 +7,84 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const mongoose = require('mongoose');
 const config = require('./config/env');
+const requestLogger = require('./middleware/requestLogger');
 const { globalLimiter } = require('./middleware/rateLimiters');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
+
+const PRODUCTION_ORIGINS = [
+  'https://exploringwatamuadmin.vercel.app',
+  'https://exploringwatamu-platform.vercel.app',
+];
+const LOCAL_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:8081'];
+
+// A quick database round trip for the readiness check, bounded so a stuck
+// connection answers "down" instead of hanging the probe.
+async function databaseUp(timeoutMs = 2000) {
+  if (mongoose.connection.readyState !== 1) return false;
+  try {
+    await Promise.race([
+      mongoose.connection.db.admin().ping(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function buildApp() {
   const app = express();
 
-  app.set('trust proxy', 1);
+  app.set('trust proxy', config.trustProxy);
+  app.use(requestLogger);
   app.use(helmet());
 
-  const defaultAllowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://localhost:8081',
-    'https://exploringwatamuadmin.vercel.app',
-    'https://exploringwatamu.vercel.app',
-    'https://exploringwatamu-platform.vercel.app',
-  ];
-  const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...config.frontendUrls]));
-
+  // Local dev origins are only trusted outside production.
+  const allowedOrigins = new Set([...PRODUCTION_ORIGINS, ...(config.isProd ? [] : LOCAL_ORIGINS), ...config.frontendUrls]);
   app.use(cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS: origin not allowed: ${origin}`), false);
-    },
+    // Unknown origins just get no CORS headers (the browser blocks the call);
+    // passing an Error here used to turn every stray request into a 500.
+    origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)),
     credentials: true,
   }));
 
-  app.use(express.json({ limit: '1mb' }));
+  // Generous for the largest real payload (a 30-day trip request is ~125 KB).
+  app.use(express.json({ limit: '256kb' }));
+
+  // Responses to signed-in requests are private: never store them in any
+  // cache. Public reads may be cached but must be revalidated (ETag), so an
+  // admin's change shows on the website at once.
+  app.use((req, res, next) => {
+    res.set('Cache-Control', req.get('authorization') ? 'private, no-store' : 'no-cache');
+    res.vary('Authorization');
+    next();
+  });
+
   app.use(globalLimiter);
 
-  // Lightweight health check — no DB dependency, safe for uptime probes.
+  // Liveness — the process is up. No database call, so a database blip doesn't
+  // make Render restart a healthy server (used as Render's health check).
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', env: config.nodeEnv, uptime: process.uptime(), imageUploads: config.cloudinary.enabled });
+    res.json({ status: 'ok', env: config.nodeEnv, uptime: process.uptime(), release: config.release || undefined, imageUploads: config.cloudinary.enabled });
+  });
+
+  // Readiness — can the API serve data right now? 503 when the database is
+  // unreachable. Optional services are reported but never make it fail.
+  app.get('/api/health/ready', async (req, res) => {
+    const up = await databaseUp();
+    res.status(up ? 200 : 503).json({
+      status: up ? 'ok' : 'unavailable',
+      database: up ? 'up' : 'down',
+      services: {
+        email: config.mail.enabled,
+        sms: config.sms.enabled,
+        imageUploads: config.cloudinary.enabled,
+        googleSignIn: Boolean(config.googleClientId),
+        errorMonitoring: Boolean(config.monitoring.dsn),
+      },
+    });
   });
 
   // Feature routes

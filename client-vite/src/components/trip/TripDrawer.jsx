@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { ArrowRight, Luggage, Trash2, X, CalendarDays } from 'lucide-react';
 import { useTrip } from '@/context/TripContext';
 import { Sheet } from '@/components/ui/sheet';
@@ -87,7 +87,7 @@ export function TripToast() {
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-[55] flex justify-center px-4" aria-live="polite">
       <AnimatePresence>
         {toast && (
-          <motion.div
+          <m.div
             key={toast.id}
             initial={{ opacity: 0, y: 20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -102,7 +102,7 @@ export function TripToast() {
             <button type="button" onClick={dismissToast} aria-label="Dismiss" className="shrink-0 rounded-full p-1.5 text-sand-50/60 hover:text-sand-50">
               <X className="size-4" />
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -122,14 +122,14 @@ export function TripButton({ className }) {
       <Luggage className="size-5" />
       <span className="hidden xl:inline">My trip</span>
       {count > 0 && (
-        <motion.span
+        <m.span
           key={count}
           initial={{ scale: 0.6 }}
           animate={{ scale: 1 }}
           className="absolute -right-0.5 -top-0.5 grid size-5 place-items-center rounded-full bg-coral-500 text-[0.7rem] font-bold text-white xl:static"
         >
           {count}
-        </motion.span>
+        </m.span>
       )}
     </button>
   );

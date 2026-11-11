@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react';
 import { useVibeProfile } from '@/context/VibeProfileContext';
 import { VIBES, COMPANIONS, STAYS, MAX_VIBES, personalHeadline } from '@/lib/vibes';
@@ -135,7 +135,7 @@ export default function VibeOnboarding() {
                   ))}
                 </div>
                 <AnimatePresence mode="wait">
-                  <motion.div
+                  <m.div
                     key={current.key}
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -149,12 +149,12 @@ export default function VibeOnboarding() {
                     <p id="vibe-onboarding-hint" className="mt-4 max-w-md text-lg text-sand-50/70">
                       {current.hint}
                     </p>
-                  </motion.div>
+                  </m.div>
                 </AnimatePresence>
 
                 {/* Live preview of their personal headline */}
                 {preview && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="mt-8 hidden max-w-md rounded-2xl border border-sand-50/10 bg-sand-50/[0.05] p-5 lg:block"
@@ -163,13 +163,13 @@ export default function VibeOnboarding() {
                       <Sparkles className="size-3.5 text-ochre-300" /> Your Watamu so far
                     </p>
                     <p className="mt-2 font-display text-2xl italic leading-snug text-sand-50">{preview}</p>
-                  </motion.div>
+                  </m.div>
                 )}
               </div>
 
               {/* Right: the options */}
               <AnimatePresence mode="wait">
-                <motion.div
+                <m.div
                   key={current.key}
                   initial={{ opacity: 0, x: 24 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -209,7 +209,7 @@ export default function VibeOnboarding() {
                         onClick={() => setDraft((d) => ({ ...d, stay: s.id }))}
                       />
                     ))}
-                </motion.div>
+                </m.div>
               </AnimatePresence>
             </div>
 

@@ -158,3 +158,16 @@ Writing the tests surfaced four more defects, fixed in the Phase 2 PR:
 | Medium | `backend/package-lock.json` had not been updated since the early MVP: it lacked `helmet`, `zod`, `jest`, `mongodb-memory-server` and others, so `npm ci` refused to install and every `npm install` (CI and Render) resolved versions afresh. | Regenerated from the current `package.json` (same ranges; Express and Mongoose unchanged). Render still builds with `npm install` — switching it to `npm ci` is a Phase 3 item. |
 | Low | Filtered admin lists said "1 of 3 item". | Count agrees with the total ("1 of 3 items"); covered by `DataView.test.jsx`. |
 | Low | `react-toastify` was installed in the admin but never used. | Removed. |
+
+## 10. Phase 3 (production hardening)
+
+Phase 3's findings and changes have their own documents:
+
+- [`SECURITY-REVIEW.md`](SECURITY-REVIEW.md) — 16 findings (13 fixed, 1 needing an owner decision: guest quote requests and unverified sign-ups; 2 dependency advisories accepted with a plan), each reproduced on the previous commit.
+- [`DATABASE.md`](DATABASE.md) — indexes with measured effect, backup and restore runbook.
+- [`OPERATIONS.md`](OPERATIONS.md) — deploy, rollback, secrets, admins, email, photos, monitoring, logs, health checks, cold starts, demo content.
+- [`OWNER-ACTIONS.md`](OWNER-ACTIONS.md) — the owner checklist.
+
+Of the section 8 checks above: item 6 is now easy — each request log line carries an
+`ipHash`, so different visitors should show different hashes (`TRUST_PROXY=1`). The
+Render build command moved to `npm ci --omit=dev` (Phase 2 follow-up).

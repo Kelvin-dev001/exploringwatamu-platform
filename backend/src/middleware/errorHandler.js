@@ -2,6 +2,8 @@
 
 const util = require('util');
 const config = require('../config/env');
+const logger = require('../services/logger');
+const monitoring = require('../services/monitoring');
 
 // 404 handler for unmatched routes.
 function notFound(req, res) {
@@ -31,8 +33,9 @@ function clientError(err) {
 }
 
 // Centralized error handler. Never leaks internal error details for 5xx in
-// production; client (4xx) messages are passed through. The server log always
-// gets the real message and stack.
+// production; client (4xx) messages are passed through. The server log (and
+// error monitoring, when configured) gets the real message and stack, tagged
+// with the request id that the 5xx response also carries for support.
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   const explicit = err && (err.status || err.statusCode);
@@ -44,11 +47,15 @@ function errorHandler(err, req, res, next) {
   const message = describeError(err);
 
   if (isServerError) {
-    console.error('[error]', req.method, req.originalUrl, err.stack || message);
+    const route = req.route ? `${req.baseUrl}${req.route.path}` : (req.originalUrl || '').split('?')[0];
+    const context = { requestId: req.id, method: req.method, route };
+    logger.error('unhandled error', { ...context, status, ...logger.errorFields(err, { stack: true }), errMessage: message });
+    monitoring.captureException(typeof err === 'string' ? new Error(err) : err, context);
   }
 
   const body = { error: isServerError ? 'Internal server error' : err.message || 'Request failed' };
   if (err.issues) body.issues = err.issues;
+  if (isServerError && req.id) body.requestId = req.id;
   if (!config.isProd && isServerError) body.details = message;
 
   res.status(status).json(body);

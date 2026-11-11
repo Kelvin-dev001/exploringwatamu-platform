@@ -40,6 +40,7 @@ const ADMIN_ONLY = [
   ['get', '/api/group-bookings/admin/all'],
   ['get', `/api/group-bookings/admin/trip/${ID}`],
   ['get', '/api/group-trips/admin/all'],
+  ['get', `/api/group-trips/admin/${ID}`],
   ['post', '/api/group-trips'],
   ['put', `/api/group-trips/${ID}`],
   ['put', `/api/group-trips/${ID}/publish`],

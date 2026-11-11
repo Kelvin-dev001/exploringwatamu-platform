@@ -25,8 +25,8 @@ cd client-vite && npm install && npm run dev                        # http://loc
 cd admin-vite && npm install && npm run dev
 ```
 
-Email, SMS, image uploads and Google sign-in are optional and switch themselves off
-when unconfigured. While email isn't configured, the admin warns that travellers were
+Email, SMS, image uploads, Google sign-in and error monitoring are optional and switch
+themselves off when unconfigured. While email isn't configured, the admin warns that travellers were
 **not** emailed, and travellers can read their quote under **My bookings**.
 
 ## Tests and checks
@@ -42,9 +42,17 @@ cd e2e && npx playwright install chromium && npx playwright test   # browser smo
 
 CI runs the same checks on every pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)). See [`TESTING.md`](TESTING.md) for what each suite covers, and for the GitHub billing lock that currently stops Actions from running.
 
+Need listings to click through on a fresh local or staging database?
+`cd backend && npm run seed:demo -- --confirm-db=<database name>` adds clearly labelled
+demo content (never run it against production).
+
 ## Docs
 
 - [`DEPLOYMENT.md`](DEPLOYMENT.md) — Render, Vercel and MongoDB Atlas setup, environment variables.
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — running it: deploys, rollback, secrets, admins, email, photos, monitoring, logs, health checks, cold starts.
+- [`docs/DATABASE.md`](docs/DATABASE.md) — indexes, backups and restores.
+- [`docs/SECURITY-REVIEW.md`](docs/SECURITY-REVIEW.md) — security review (November 2026): findings and fixes.
+- [`docs/OWNER-ACTIONS.md`](docs/OWNER-ACTIONS.md) — tasks that need the account owner.
 - [`TESTING.md`](TESTING.md) — the test suites, the browser smoke test and CI.
 - [`backend/CLAUDE.md`](backend/CLAUDE.md) — backend architecture and conventions.
 - [`docs/SECTION-8-INTEGRATION-AUDIT.md`](docs/SECTION-8-INTEGRATION-AUDIT.md) — end-to-end audit (November 2026): defects found, fixes, open recommendations.

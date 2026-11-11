@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import { buttonClasses } from '@/components/ui/button';
+import { reportError } from '@/lib/monitoring';
 
 /**
  * Last line of defence: if rendering crashes, show a way back instead of a
@@ -16,6 +17,7 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('[app] page crashed:', error, info?.componentStack);
+    reportError(error, { componentStack: info?.componentStack });
   }
 
   render() {

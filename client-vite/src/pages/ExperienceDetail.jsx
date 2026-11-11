@@ -7,6 +7,7 @@ import { scoreExperience, rankExperiences } from '@/lib/match';
 import { VIBES, COMPANIONS, byId } from '@/lib/vibes';
 import { Container, Badge, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
+import Photo from '@/components/ui/Photo';
 import ExperienceCard, { VibeArt } from '@/components/experience/ExperienceCard';
 import ResidencyToggle from '@/components/experience/ResidencyToggle';
 import AddToTripButton from '@/components/trip/AddToTripButton';
@@ -25,7 +26,14 @@ function Gallery({ item }) {
   return (
     <div>
       <div className="overflow-hidden rounded-[var(--radius-card)] bg-sand-100">
-        <img src={images[active]} alt={`${item.title} — photo ${active + 1}`} className="aspect-[16/10] w-full object-cover" />
+        <Photo
+          src={images[active]}
+          alt={`${item.title} — photo ${active + 1}`}
+          sizes="(min-width: 1024px) 60vw, 100vw"
+          priority={active === 0}
+          className="aspect-[16/10] w-full object-cover"
+          fallback={<VibeArt vibe={item.vibes[0]} className="aspect-[16/10] w-full" label={item.title} />}
+        />
       </div>
       {images.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -37,7 +45,7 @@ function Gallery({ item }) {
               aria-label={`Show photo ${i + 1}`}
               className={`shrink-0 overflow-hidden rounded-xl border-2 transition ${i === active ? 'border-coral-500' : 'border-transparent opacity-70 hover:opacity-100'}`}
             >
-              <img src={src} alt="" loading="lazy" className="h-16 w-24 object-cover" />
+              <Photo src={src} sizes="96px" max={320} className="h-16 w-24 object-cover" fallback={<span className="block h-16 w-24 bg-sand-100" />} />
             </button>
           ))}
         </div>

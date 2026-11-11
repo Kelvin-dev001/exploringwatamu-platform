@@ -9,4 +9,7 @@ const CarHireBookingSchema = new mongoose.Schema({
   status: { type: String, enum: ["booked", "cancelled"], default: "booked" }
 }, { timestamps: true });
 
+// Overlap check for a car's dates.
+CarHireBookingSchema.index({ carHire: 1, status: 1, startDate: 1 });
+
 module.exports = mongoose.model('CarHireBooking', CarHireBookingSchema);

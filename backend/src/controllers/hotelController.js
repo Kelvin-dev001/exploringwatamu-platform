@@ -20,28 +20,28 @@ function parseJsonFields(data) {
 }
 
 // Get all hotels
-exports.getHotels = async (req, res) => {
+exports.getHotels = async (req, res, next) => {
   try {
     const hotels = await Hotel.find();
     res.json(hotels);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch hotels', details: err.message });
+    next(err);
   }
 };
 
 // Get single hotel by ID
-exports.getHotel = async (req, res) => {
+exports.getHotel = async (req, res, next) => {
   try {
     const hotel = await Hotel.findById(req.params.id);
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
     res.json(hotel);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch hotel', details: err.message });
+    next(err);
   }
 };
 
 // Create hotel with image upload
-exports.createHotel = async (req, res) => {
+exports.createHotel = async (req, res, next) => {
   try {
     const hotelData = { ...req.body, images: uploadedPaths(req.files) };
     const bad = parseJsonFields(hotelData);
@@ -62,12 +62,12 @@ exports.createHotel = async (req, res) => {
     await hotel.save();
     res.status(201).json(hotel);
   } catch (err) {
-    res.status(500).json({ error: "Failed to create hotel", details: err.message });
+    next(err);
   }
 };
 
 // Update hotel with image upload
-exports.updateHotel = async (req, res) => {
+exports.updateHotel = async (req, res, next) => {
   try {
     const current = await Hotel.findById(req.params.id).select('images');
     if (!current) return res.status(404).json({ error: 'Hotel not found' });
@@ -87,16 +87,16 @@ exports.updateHotel = async (req, res) => {
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
     res.json(hotel);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update hotel", details: err.message });
+    next(err);
   }
 };
 
 // Delete hotel
-exports.deleteHotel = async (req, res) => {
+exports.deleteHotel = async (req, res, next) => {
   try {
     await Hotel.findByIdAndDelete(req.params.id);
     res.json({ message: "Hotel deleted" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete hotel", details: err.message });
+    next(err);
   }
 };

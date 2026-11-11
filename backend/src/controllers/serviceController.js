@@ -1,5 +1,6 @@
 const Service = require('../models/Service');
 const { activeFilter, canSee } = require('../services/listingVisibility');
+const { contains, pageParams, pageOf } = require('../services/listQuery');
 const { nextGallery, uploadedPaths } = require('../services/gallery');
 
 // Helper to parse JSON strings from FormData
@@ -10,42 +11,38 @@ const parseJSON = (val, fallback = []) => {
 };
 
 // List services with pagination, search, and filter
-exports.getServices = async (req, res) => {
+exports.getServices = async (req, res, next) => {
   try {
-    const { name, pricingType, day, page = 1, limit = 10 } = req.query;
-    let query = activeFilter(req);
-    if (name) query.name = { $regex: name, $options: "i" };
+    const { name, pricingType, day } = req.query;
+    const paging = pageParams(req.query);
+    const query = activeFilter(req);
+    const match = contains(name);
+    if (match) query.name = match;
     if (pricingType) query.pricingType = pricingType;
     if (day) query.availableDays = day;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const services = await Service.find(query)
-      .skip(skip)
-      .limit(parseInt(limit));
-    const total = await Service.countDocuments(query);
-    res.json({
-      data: services,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      total
-    });
+    const [services, total] = await Promise.all([
+      Service.find(query).skip(paging.skip).limit(paging.limit),
+      Service.countDocuments(query),
+    ]);
+    res.json(pageOf(services, total, paging));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch services' });
+    next(err);
   }
 };
 
 // Single service
-exports.getService = async (req, res) => {
+exports.getService = async (req, res, next) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service || !canSee(req, service)) return res.status(404).json({ error: 'Not found' });
     res.json(service);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch service' });
+    next(err);
   }
 };
 
 // Admin: Create service
-exports.createService = async (req, res) => {
+exports.createService = async (req, res, next) => {
   try {
     const galleryUrls = req.files ? req.files.map(f => f.path) : [];
     const serviceData = {
@@ -67,7 +64,7 @@ exports.createService = async (req, res) => {
 };
 
 // Admin: Update service
-exports.updateService = async (req, res) => {
+exports.updateService = async (req, res, next) => {
   try {
     const current = await Service.findById(req.params.id).select('gallery');
     if (!current) return res.status(404).json({ error: 'Not found' });
@@ -95,12 +92,12 @@ exports.updateService = async (req, res) => {
 };
 
 // Admin: Delete service
-exports.deleteService = async (req, res) => {
+exports.deleteService = async (req, res, next) => {
   try {
     const service = await Service.findByIdAndDelete(req.params.id);
     if (!service) return res.status(404).json({ error: 'Not found' });
     res.json({ message: "Service deleted" });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete service' });
+    next(err);
   }
 };

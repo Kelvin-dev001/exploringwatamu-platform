@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import { useAdminAuth } from './context/AdminAuthContext';
 import AppShell from '@/shell/AppShell';
+import RouteError from '@/shell/RouteError';
 import { Skeleton } from '@/ui';
 
 // Every screen loads on demand so the first visit (often on a phone) stays light.
@@ -54,9 +55,11 @@ const crud = (path, List, Form) => [
 ];
 
 const router = createBrowserRouter([
-  { path: '/admin/login', element: <Suspense fallback={null}><Login /></Suspense> },
+  { path: '/admin/login', element: <Suspense fallback={null}><Login /></Suspense>, errorElement: <RouteError /> },
   {
     element: <Protected />,
+    // A crash or a stale build (after a deploy) shows a way back, and is reported.
+    errorElement: <RouteError />,
     children: [
       { path: '/', element: <Navigate to="/admin/dashboard" replace /> },
       { path: '/admin/dashboard', element: <Dashboard /> },

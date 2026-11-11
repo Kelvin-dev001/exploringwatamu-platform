@@ -5,6 +5,7 @@ const { sendSms } = require('./notifications/sms');
 const { wrap } = require('./notifications/emailLayout');
 const { buildTripQuotePdf } = require('./documents');
 const escapeHtml = require('./escapeHtml');
+const logger = require('./logger');
 const config = require('../config/env');
 
 // All sends are best-effort: callers fire these without awaiting, and a
@@ -38,7 +39,7 @@ async function safe(fn, label) {
   try {
     await fn();
   } catch (err) {
-    console.error(`[trip-request:${label}]`, err.message);
+    logger.error('trip request notification failed', { step: label, ...logger.errorFields(err) });
   }
 }
 

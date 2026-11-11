@@ -14,7 +14,7 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'
 
 function siteUrl() {
   const fromEnv = process.env.VITE_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
-  return (fromEnv || 'https://exploringwatamu.vercel.app').replace(/\/$/, '');
+  return (fromEnv || 'https://exploringwatamu-platform.vercel.app').replace(/\/$/, '');
 }
 
 export function headFor({ title, description = DEFAULT_DESCRIPTION, url, image, noindex }) {

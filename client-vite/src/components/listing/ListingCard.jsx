@@ -2,19 +2,28 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { VibeArt } from '@/components/experience/ExperienceCard';
 import { cn } from '@/lib/utils';
+import Photo from '@/components/ui/Photo';
 
 /** Photo strip with arrows/dots, or the illustrated stand-in when there are no photos. */
 export function CardMedia({ images = [], alt, art = 'ocean', className }) {
   const pics = images.filter(Boolean);
   const [i, setI] = useState(0);
-  if (!pics.length) return <VibeArt vibe={art} className={cn('aspect-[4/3] w-full', className)} label={alt} />;
+  const placeholder = <VibeArt vibe={art} className={cn('aspect-[4/3] w-full', className)} label={alt} />;
+  if (!pics.length) return placeholder;
   const go = (d) => (e) => {
     e.preventDefault();
     setI((n) => (n + d + pics.length) % pics.length);
   };
   return (
     <div className={cn('group/media relative aspect-[4/3] w-full overflow-hidden bg-sand-100', className)}>
-      <img src={pics[i]} alt={`${alt}${pics.length > 1 ? ` — photo ${i + 1} of ${pics.length}` : ''}`} loading="lazy" decoding="async" className="size-full object-cover" />
+      <Photo
+        src={pics[i]}
+        alt={`${alt}${pics.length > 1 ? ` — photo ${i + 1} of ${pics.length}` : ''}`}
+        sizes="(min-width: 1280px) 400px, (min-width: 640px) 50vw, 100vw"
+        max={960}
+        className="size-full object-cover"
+        fallback={placeholder}
+      />
       {pics.length > 1 && (
         <>
           <button type="button" onClick={go(-1)} aria-label="Previous photo" className="absolute left-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-ocean-900 opacity-0 shadow-soft transition group-hover/media:opacity-100 focus-visible:opacity-100">

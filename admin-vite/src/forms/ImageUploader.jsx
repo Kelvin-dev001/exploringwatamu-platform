@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ImagePlus, X, Star, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { cloudinaryUrl } from '@/lib/images';
 
 // Must match backend/src/middleware/upload.js
 const MAX_MB = 8;
@@ -54,7 +55,8 @@ export default function ImageUploader({ existing = [], onExistingChange, files =
 
   const Tile = ({ src, name, onRemove, cover, controls }) => (
     <li className={cn('group relative overflow-hidden rounded-xl border border-line bg-subtle', single ? 'aspect-[16/9]' : 'aspect-square')}>
-      {src ? <img src={src} alt="" className="size-full object-cover" /> : <span className="flex size-full flex-col items-center justify-center gap-1 p-2 text-center text-xs text-muted"><FileText className="size-6 text-faint" />{name}</span>}
+      {/* A preview-sized version of stored photos; the original if that fails. */}
+      {src ? <img src={cloudinaryUrl(src, 640)} alt="" loading="lazy" decoding="async" onError={(e) => { if (e.currentTarget.getAttribute('src') !== src) e.currentTarget.src = src; }} className="size-full object-cover" /> : <span className="flex size-full flex-col items-center justify-center gap-1 p-2 text-center text-xs text-muted"><FileText className="size-6 text-faint" />{name}</span>}
       {cover && <span className="absolute left-1.5 top-1.5 rounded-full bg-ink/80 px-2 py-0.5 text-[0.65rem] font-semibold text-canvas">Cover</span>}
       <button type="button" onClick={onRemove} className="absolute right-1.5 top-1.5 rounded-full bg-ink/70 p-1 text-canvas hover:bg-danger" aria-label="Remove photo"><X className="size-3.5" /></button>
       {controls}

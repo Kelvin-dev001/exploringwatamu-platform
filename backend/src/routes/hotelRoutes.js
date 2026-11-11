@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const hotelController = require('../controllers/hotelController');
 const authAdmin = require('../middleware/authAdmin');
+const { adminWriteLimiter } = require('../middleware/rateLimiters');
 const objectIdParam = require('../middleware/objectIdParam');
 const { uploadArray } = require('../middleware/upload');
 
@@ -13,12 +14,12 @@ router.get('/', hotelController.getHotels);
 router.get('/:id', hotelController.getHotel);
 
 // Create hotel (with image upload)
-router.post('/', authAdmin, uploadArray('images', 10), hotelController.createHotel);
+router.post('/', adminWriteLimiter, authAdmin, uploadArray('images', 10), hotelController.createHotel);
 
 // Update hotel (with image upload)
-router.put('/:id', authAdmin, uploadArray('images', 10), hotelController.updateHotel);
+router.put('/:id', adminWriteLimiter, authAdmin, uploadArray('images', 10), hotelController.updateHotel);
 
 // Delete hotel
-router.delete('/:id', authAdmin, hotelController.deleteHotel);
+router.delete('/:id', adminWriteLimiter, authAdmin, hotelController.deleteHotel);
 
 module.exports = router;

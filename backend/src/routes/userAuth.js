@@ -2,7 +2,6 @@
 
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const config = require('../config/env');
 const User = require('../models/User');
@@ -10,8 +9,10 @@ const authUser = require('../middleware/authUser');
 const validate = require('../middleware/validate');
 const crypto = require('crypto');
 const { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validators/authValidators');
-const { authLimiter } = require('../middleware/rateLimiters');
+const { authLimiter, sessionLimiter, resetRequestLimiter, resetAddressLimiter } = require('../middleware/rateLimiters');
+const { signUserToken } = require('../services/tokens');
 const { sendPasswordResetEmail } = require('../services/notifications/authNotifications');
+const logger = require('../services/logger');
 
 // POST /api/auth/register
 router.post('/register', authLimiter, validate(registerSchema), async (req, res, next) => {
@@ -24,7 +25,7 @@ router.post('/register', authLimiter, validate(registerSchema), async (req, res,
     const user = new User({ name, email, phone: phone || '' });
     await user.setPassword(password);
     await user.save();
-    const token = jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+    const token = signUserToken(user);
     res.status(201).json({
       token,
       user: { _id: user._id, name: user.name, email: user.email, phone: user.phone },
@@ -45,7 +46,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res, next)
     }
     const valid = await user.validatePassword(password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
-    const token = jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+    const token = signUserToken(user);
     res.json({
       token,
       user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, avatar: user.avatar },
@@ -55,8 +56,9 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res, next)
   }
 });
 
-// GET /api/auth/me — protected
-router.get('/me', authLimiter, authUser, async (req, res, next) => {
+// GET /api/auth/me — protected. Runs on every page load of the website, so it
+// has its own (generous) limit rather than eating into the sign-in attempts.
+router.get('/me', sessionLimiter, authUser, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).select('_id name email phone avatar');
     if (!user) return res.status(404).json({ error: 'User not found.' });
@@ -105,19 +107,21 @@ router.post('/google', authLimiter, async (req, res) => {
       }
     }
 
-    const token = jwt.sign({ id: user._id }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+    const token = signUserToken(user);
     res.json({
       token,
       user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, avatar: user.avatar },
     });
   } catch (err) {
-    console.error('Google auth error:', err?.response?.data || err.message);
+    logger.warn('Google sign-in failed', { requestId: req.id, googleError: err?.response?.data?.error, ...logger.errorFields(err) });
     res.status(401).json({ error: 'Google authentication failed.' });
   }
 });
 
-// POST /api/auth/forgot-password — always responds 200 (never reveals whether the email exists)
-router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), async (req, res, next) => {
+// POST /api/auth/forgot-password — always responds 200 (never reveals whether
+// the email exists). The email is sent after answering, so the response time
+// does not give it away either. Limited per IP and per address.
+router.post('/forgot-password', resetRequestLimiter, resetAddressLimiter, validate(forgotPasswordSchema), async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
@@ -127,11 +131,9 @@ router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), asy
       user.resetTokenExpires = new Date(Date.now() + config.resetTokenTtlMinutes * 60 * 1000);
       await user.save();
       const resetUrl = `${config.frontendUrl}/reset-password?token=${rawToken}`;
-      try {
-        await sendPasswordResetEmail(user, resetUrl);
-      } catch (mailErr) {
-        console.error('[reset-email]', mailErr.message);
-      }
+      Promise.resolve()
+        .then(() => sendPasswordResetEmail(user, resetUrl))
+        .catch((mailErr) => logger.error('password reset email failed', { requestId: req.id, ...logger.errorFields(mailErr) }));
     }
     res.json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (err) {
@@ -147,6 +149,7 @@ router.post('/reset-password', authLimiter, validate(resetPasswordSchema), async
     const user = await User.findOne({ resetTokenHash: tokenHash, resetTokenExpires: { $gt: new Date() } });
     if (!user) return res.status(400).json({ error: 'Invalid or expired reset token.' });
 
+    // Also signs out every existing session (tokenVersion).
     await user.setPassword(password);
     user.resetTokenHash = undefined;
     user.resetTokenExpires = undefined;
