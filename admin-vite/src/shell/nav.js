@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Inbox, CalendarCheck, Compass, Users, BedDouble, Plane, CarFront, Car, Sparkles, Home,
-  Bell, UsersRound,
+  Bell, UsersRound, Star,
 } from 'lucide-react';
 
 /* Single source for the sidebar, phone menus and the quick-jump palette. */
@@ -11,6 +11,7 @@ export const NAV = [
       { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/trip-requests', label: 'Trip requests', icon: Inbox, badge: 'newRequests' },
       { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
+      { to: '/reviews', label: 'Reviews', icon: Star, badge: 'pendingReviews' },
     ],
   },
   {
