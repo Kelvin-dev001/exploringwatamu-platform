@@ -66,4 +66,7 @@ groupTripSchema.pre('validate', function (next) {
 // Vendor-ready ownership (null = platform-managed).
 groupTripSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
 
+// Published/full trips by date (website list, dashboard).
+groupTripSchema.index({ status: 1, startDate: 1 });
+
 module.exports = mongoose.model('GroupTrip', groupTripSchema);

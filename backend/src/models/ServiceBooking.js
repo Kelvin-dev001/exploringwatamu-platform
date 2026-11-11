@@ -10,4 +10,7 @@ const ServiceBookingSchema = new mongoose.Schema({
   status: { type: String, enum: ["booked", "cancelled"], default: "booked" }
 }, { timestamps: true });
 
+// Slot check for a service booking.
+ServiceBookingSchema.index({ service: 1, date: 1, time: 1 });
+
 module.exports = mongoose.model('ServiceBooking', ServiceBookingSchema);

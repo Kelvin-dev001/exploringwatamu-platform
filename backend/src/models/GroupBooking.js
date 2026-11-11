@@ -27,4 +27,10 @@ const groupBookingSchema = new mongoose.Schema({
   
 }, { timestamps: true });
 
+// Indexes follow the real queries (docs/DATABASE.md):
+groupBookingSchema.index({ user: 1, createdAt: -1 }); // a traveller's bookings
+groupBookingSchema.index({ trip: 1, status: 1, createdAt: -1 }); // a trip's bookings / confirmed participants
+groupBookingSchema.index({ status: 1, createdAt: 1 }); // pending bookings to approve
+groupBookingSchema.index({ createdAt: -1 }); // admin list, newest first
+
 module.exports = mongoose.model('GroupBooking', groupBookingSchema);

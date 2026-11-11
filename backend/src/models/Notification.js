@@ -18,4 +18,8 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// The admin's delivery log (newest first) and the dashboard's recent failures.
+notificationSchema.index({ createdAt: -1 });
+notificationSchema.index({ status: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Notification', notificationSchema);
