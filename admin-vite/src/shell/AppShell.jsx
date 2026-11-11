@@ -11,18 +11,18 @@ import CommandPalette from './CommandPalette';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://exploringwatamu-platform.vercel.app';
 
-/** Count of new trip requests for the nav badge; refreshed every 2 minutes. */
-function useNewRequestCount(enabled) {
+/** A list's total for a nav badge (new requests, reviews waiting); refreshed every 2 minutes. */
+function useCount(enabled, path, status) {
   const [n, setN] = useState(0);
   const { pathname } = useLocation();
   useEffect(() => {
     if (!enabled) return undefined;
     let alive = true;
-    const load = () => api.get('/trip-requests', { params: { status: 'new', limit: 1 } }).then((r) => alive && setN(r.data.total || 0)).catch(() => {});
+    const load = () => api.get(path, { params: { status, limit: 1 } }).then((r) => alive && setN(r.data.total || 0)).catch(() => {});
     load();
     const t = setInterval(load, 120000);
     return () => { alive = false; clearInterval(t); };
-  }, [enabled, pathname]);
+  }, [enabled, pathname, path, status]);
   return n;
 }
 
@@ -140,8 +140,9 @@ export default function AppShell({ children }) {
   const [pref, setPref] = useTheme();
   const [palette, setPalette] = useState(false);
   const [menu, setMenu] = useState(null); // null | 'all' | 'Catalogue'
-  const newRequests = useNewRequestCount(isAuthenticated);
-  const counts = { newRequests };
+  const newRequests = useCount(isAuthenticated, '/trip-requests', 'new');
+  const pendingReviews = useCount(isAuthenticated, '/reviews/admin', 'pending');
+  const counts = { newRequests, pendingReviews };
   const dark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 
   useEffect(() => {

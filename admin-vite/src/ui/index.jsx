@@ -100,6 +100,8 @@ export const STATUS = {
   failed: { label: 'Failed', tone: 'danger' },
   sent: { label: 'Sent', tone: 'ok' },
   skipped: { label: 'Skipped', tone: 'neutral' },
+  approved: { label: 'Approved', tone: 'ok' },
+  hidden: { label: 'Hidden', tone: 'neutral' },
 };
 
 export function StatusBadge({ status }) {

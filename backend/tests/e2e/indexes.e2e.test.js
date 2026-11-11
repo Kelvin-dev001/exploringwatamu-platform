@@ -15,6 +15,8 @@ const User = require('../../src/models/User');
 const PropertyViewingBooking = require('../../src/models/PropertyViewingBooking');
 const ServiceBooking = require('../../src/models/ServiceBooking');
 const CarHireBooking = require('../../src/models/CarHireBooking');
+const Review = require('../../src/models/Review');
+const ReviewInvite = require('../../src/models/ReviewInvite');
 
 const N = 400;
 const ids = Array.from({ length: 8 }, () => new mongoose.Types.ObjectId());
@@ -44,7 +46,7 @@ async function baseline(query) {
 
 beforeAll(async () => {
   await connect();
-  await Promise.all([TripRequest, GroupBooking, GroupTrip, Notification, User, PropertyViewingBooking, ServiceBooking, CarHireBooking].map((M) => M.syncIndexes()));
+  await Promise.all([TripRequest, GroupBooking, GroupTrip, Notification, User, PropertyViewingBooking, ServiceBooking, CarHireBooking, Review, ReviewInvite].map((M) => M.syncIndexes()));
 
   const statuses = ['new', 'quoted', 'accepted', 'declined', 'cancelled'];
   await TripRequest.insertMany(Array.from({ length: N }, (_, i) => ({
@@ -66,6 +68,12 @@ beforeAll(async () => {
   await PropertyViewingBooking.insertMany(Array.from({ length: N }, (_, i) => ({ property: pick(ids, i), date: day(i), time: pick(['10:00', '14:00'], i), status: 'booked' })));
   await ServiceBooking.insertMany(Array.from({ length: N }, (_, i) => ({ service: pick(ids, i), date: day(i), time: '18:00', status: 'booked' })));
   await CarHireBooking.insertMany(Array.from({ length: N }, (_, i) => ({ carHire: pick(ids, i), startDate: day(i), endDate: day(i + 2), status: 'booked' })));
+  await Review.insertMany(Array.from({ length: N }, (_, i) => ({
+    listingType: pick(['tour', 'stay', 'group', 'service'], i), listingId: pick(ids, i), user: pick(ids, i * 7),
+    booking: { type: 'tripRequest', id: new mongoose.Types.ObjectId() }, displayName: 'X', rating: 1 + (i % 5), text: 'Review text',
+    status: pick(['approved', 'approved', 'pending', 'hidden'], i), createdAt: day(i),
+  })));
+  await ReviewInvite.insertMany(Array.from({ length: N }, (_, i) => ({ bookingType: 'tripRequest', bookingId: i === 5 ? ids[5] : new mongoose.Types.ObjectId(), status: 'sent' })));
   await GroupTrip.insertMany(Array.from({ length: 60 }, (_, i) => ({
     title: `Trip ${i}`, slug: `trip-${i}`, shortDescription: 's', startDate: day(i), endDate: day(i + 2), maxParticipants: 10, fullPrice: 1, depositAmount: 1,
     status: pick(['draft', 'published', 'full', 'closed'], i),
@@ -90,6 +98,11 @@ const QUERIES = [
   // index it would read every booking.
   ['car hire overlap check (car free)', () => CarHireBooking.findOne({ carHire: ids[2], status: 'booked', $or: [{ startDate: { $lte: new Date('2030-01-03') }, endDate: { $gte: new Date('2030-01-01') } }] })],
   ['published trips by date (website)', () => GroupTrip.find({ status: { $in: ['published', 'full'] } }).sort({ startDate: 1 })],
+  ["a listing's approved reviews, newest first (website)", () => Review.find({ listingType: 'tour', listingId: ids[0], status: 'approved' }).sort({ createdAt: -1 }).limit(5)],
+  ['reviews waiting for moderation', () => Review.find({ status: 'pending' }).sort({ createdAt: -1 }).limit(20)],
+  ["a traveller's reviews", () => Review.find({ user: ids[2] }).sort({ createdAt: -1 })],
+  ["a booking's reviews (eligibility, invitations)", () => Review.find({ 'booking.type': 'tripRequest', 'booking.id': ids[3] })],
+  ["a booking's review invitation", () => ReviewInvite.findOne({ bookingType: 'tripRequest', bookingId: ids[5] })],
 ];
 
 describe('indexed queries', () => {
@@ -107,7 +120,7 @@ describe('indexed queries', () => {
 });
 
 describe('index hygiene', () => {
-  const models = [TripRequest, GroupBooking, GroupTrip, Notification, User, PropertyViewingBooking, ServiceBooking, CarHireBooking];
+  const models = [TripRequest, GroupBooking, GroupTrip, Notification, User, PropertyViewingBooking, ServiceBooking, CarHireBooking, Review, ReviewInvite];
 
   it.each(models.map((M) => [M.modelName, M]))('%s declares no two indexes with the same keys', (name, M) => {
     const keys = M.schema.indexes().map(([fields]) => JSON.stringify(fields));

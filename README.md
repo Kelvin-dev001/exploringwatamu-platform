@@ -52,6 +52,7 @@ demo content (never run it against production).
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — running it: deploys, rollback, secrets, admins, email, photos, monitoring, logs, health checks, cold starts.
 - [`docs/DATABASE.md`](docs/DATABASE.md) — indexes, backups and restores.
 - [`docs/WHATSAPP.md`](docs/WHATSAPP.md) — WhatsApp click-to-chat: setup, where it appears, number rules.
+- [`docs/REVIEWS.md`](docs/REVIEWS.md) — verified reviews: eligibility, data model, API, moderation, migration, invitations.
 - [`docs/SECURITY-REVIEW.md`](docs/SECURITY-REVIEW.md) — security review (November 2026): findings and fixes.
 - [`docs/OWNER-ACTIONS.md`](docs/OWNER-ACTIONS.md) — tasks that need the account owner.
 - [`TESTING.md`](TESTING.md) — the test suites, the browser smoke test and CI.

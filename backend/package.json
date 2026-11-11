@@ -12,7 +12,10 @@
     "seed:demo": "node scripts/seedDemo.js",
     "test:e2e": "cross-env NODE_ENV=test jest tests/e2e --runInBand",
     "loadtest": "node scripts/loadtest.js",
-    "seed:loadtest": "node scripts/seed.js"
+    "seed:loadtest": "node scripts/seed.js",
+    "reviews:migrate": "node scripts/migrateLegacyReviews.js",
+    "reviews:invite": "node scripts/sendReviewInvites.js",
+    "reviews:recompute": "node scripts/recomputeReviewStats.js"
   },
   "keywords": [],
   "author": "",

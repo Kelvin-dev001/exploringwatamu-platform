@@ -92,6 +92,7 @@ export default function Hotels() {
                   description={a.description}
                   chips={a.facilities || []}
                   price={a.pricePerNight != null ? { amount: a.pricePerNight, unit: 'per night' } : null}
+                  reviews={{ listingType: 'stay', listingId: a._id, stats: a.reviewStats }}
                   actions={
                     <>
                       <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('stay', a)} label={`Ask about ${a.name} on WhatsApp`} />

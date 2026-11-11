@@ -180,5 +180,41 @@ two weeks); upgrade from 19 November 2026.
 - M-Pesa stays disabled (`PAYMENTS_ENABLED=false`; its routes aren't mounted). Its
   controller now logs through the logger and no longer echoes Safaricom's error to
   the client, but it was not otherwise reviewed.
-- Reviews: anyone signed in can review any stay — Phase 5 (verified reviews).
+- Reviews: anyone signed in could review any stay, and edit or delete reviews — fixed
+  in Phase 5 (verified reviews; see below and [REVIEWS.md](REVIEWS.md)).
 - The Expo app (`client/`) is parked.
+
+## Phase 5: verified reviews (November 2026)
+
+What changed, and how each risk is handled (details in [REVIEWS.md](REVIEWS.md)):
+
+- **Posting without having been there.** The old `/api/reviews` let any signed-in account post, edit or delete reviews of any stay. Those routes are gone. The API now decides eligibility from the booking itself (`services/reviewEligibility.js`); anything the client says about the booking is ignored:
+  - the booking's owner;
+  - its status (accepted or confirmed);
+  - the listing being in it, with the same type;
+  - its date having passed.
+
+  Someone else's booking answers 404, as if it didn't exist.
+- **Guest requests (S6).** A trip request sent without an account can be reviewed by:
+  - a Google account with that email;
+  - whoever opens the invitation emailed to that address.
+
+  A password account with the same email can't review it: the S6 weakness does not extend to reviews.
+- **Invitation tokens.**
+  - Signed with the JWT secret, with the audience `review-invite`, valid 120 days.
+  - They carry no account id, and session verification now refuses any token that has an audience. So an invitation can never sign anyone in, and a session token can't pass as an invitation (both tested).
+  - Request logs and Sentry already leave out query strings, where the token travels.
+- **Duplicates and floods.**
+  - One review per listing per booking, enforced by a unique index (concurrent submissions tested).
+  - Writes and photo uploads are limited to 30 per hour per account.
+- **Publishing.**
+  - Everything starts `pending`; only `approved` reviews are public or counted in ratings.
+  - Public responses use an allow-list of fields (`Review.publicView`): no user, booking or moderation fields.
+  - Legacy embedded stay reviews (never moderated) are no longer sent in public stay responses.
+- **Ratings.** `reviewStats` on listings can't be set through listing create or update requests. It is only recomputed from approved reviews.
+- **Photos.**
+  - Accepted only for the caller's own pending review, checked before any file is received.
+  - Images only, 8 MB each, at most 4 per review.
+  - A Cloudinary failure leaves the review unchanged.
+- **Moderation.** Admin only (`authAdmin`), validated with zod, and recorded with who and when.
+- **Found and fixed on the way:** under Express 5, `validate(schema, 'query')` silently dropped the parsed query (`req.query` is a getter). It now redefines it.

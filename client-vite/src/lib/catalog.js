@@ -56,6 +56,8 @@ function lengthLabel(hours, text) {
 }
 
 const num = (v) => (v === null || v === undefined || v === '' || Number.isNaN(Number(v)) ? null : Number(v));
+// Approved reviews only (the API's reviewStats); null until there are some.
+const ratingFrom = (s) => (num(s?.count) > 0 ? { average: num(s.average), count: num(s.count) } : null);
 
 export function normaliseTour(t) {
   const hours = hoursFor(t.durationHours, t.duration);
@@ -74,6 +76,7 @@ export function normaliseTour(t) {
     lengthLabel: lengthLabel(hours, t.duration),
     price: { resident: num(t.priceResidentAdult), nonResident: num(t.priceForeignerAdult), unit: 'per adult' },
     href: `/experiences/${t._id}`,
+    rating: ratingFrom(t.reviewStats),
     createdAt: t.createdAt,
     raw: t,
   };
@@ -103,6 +106,7 @@ export function normaliseGroupTrip(g) {
     startDate: g.startDate,
     seatsLeft,
     full: g.status === 'full' || seatsLeft <= 0,
+    rating: ratingFrom(g.reviewStats),
     createdAt: g.createdAt,
     raw: g,
   };

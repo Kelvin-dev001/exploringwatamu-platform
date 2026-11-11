@@ -76,3 +76,35 @@ services:
       # RENDER_GIT_COMMIT automatically.
       - key: SENTRY_DSN
         sync: false
+
+# --- Post-trip review invitations (optional; see docs/REVIEWS.md) ---
+# A Render Cron Job is a separate, billed service. Uncomment to add it to the
+# Blueprint, or create it by hand (New -> Cron Job) with the same settings.
+# It needs the API's MONGODB_URI, JWT_SECRET (the same value), FRONTEND_URL and
+# SMTP_* values; with SMTP unset it sends nothing.
+#
+#  - type: cron
+#    name: exploringwatamu-review-invites
+#    runtime: node
+#    plan: starter
+#    rootDir: backend
+#    schedule: "0 7 * * *"   # daily, 07:00 UTC = 10:00 in Kenya
+#    buildCommand: npm ci --omit=dev
+#    startCommand: npm run reviews:invite -- --send
+#    envVars:
+#      - key: NODE_ENV
+#        value: production
+#      - key: JWT_SECRET
+#        fromService: { type: web, name: exploringwatamu-api, envVarKey: JWT_SECRET }
+#      - key: MONGODB_URI
+#        sync: false
+#      - key: FRONTEND_URL
+#        sync: false
+#      - key: SMTP_HOST
+#        sync: false
+#      - key: SMTP_USER
+#        sync: false
+#      - key: SMTP_PASS
+#        sync: false
+#      - key: MAIL_FROM
+#        sync: false

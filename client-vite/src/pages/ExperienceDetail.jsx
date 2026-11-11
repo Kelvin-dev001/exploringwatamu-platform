@@ -16,6 +16,9 @@ import { ErrorState, SlowNotice } from '@/components/listing/States';
 import { absoluteUrl } from '@/lib/site';
 import { listingMessage } from '@/lib/whatsapp';
 import { WhatsAppButton } from '@/components/contact/WhatsApp';
+import ReviewsSection from '@/components/reviews/ReviewsSection';
+import { RatingBadge } from '@/components/reviews/Rating';
+import { aggregateRatingLd, withRatingType } from '@/lib/reviews';
 import { isNotFound } from '@/lib/http';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
@@ -177,9 +180,10 @@ export default function ExperienceDetail() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'TouristTrip',
+    '@type': withRatingType('TouristTrip', item.rating),
     name: item.title,
     description: item.summary,
+    aggregateRating: aggregateRatingLd(item.rating),
     image: item.gallery?.length ? item.gallery : undefined,
     url: absoluteUrl(item.href),
     touristType: item.vibes.map((v) => byId(VIBES, v)?.label).filter(Boolean),
@@ -214,6 +218,11 @@ export default function ExperienceDetail() {
             })}
           </div>
           <h1 className="mt-4 font-display text-4xl leading-[1.05] text-ocean-900 sm:text-5xl">{item.title}</h1>
+          {item.rating && (
+            <a href="#reviews" className="mt-3 inline-block">
+              <RatingBadge stats={item.rating} />
+            </a>
+          )}
 
           <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
             {item.lengthLabel && (
@@ -273,6 +282,10 @@ export default function ExperienceDetail() {
                 </ul>
               </section>
             )}
+
+            <div id="reviews" className="scroll-mt-28">
+              <ReviewsSection listingType={item.kind} listingId={item.id} />
+            </div>
 
             {raw.whatToCarry?.length > 0 && (
               <section>

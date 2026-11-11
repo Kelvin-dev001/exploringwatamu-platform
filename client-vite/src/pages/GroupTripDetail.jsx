@@ -19,6 +19,9 @@ import { normaliseGroupTrip } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/site';
 import { listingMessage } from '@/lib/whatsapp';
 import { WhatsAppButton } from '@/components/contact/WhatsApp';
+import ReviewsSection from '@/components/reviews/ReviewsSection';
+import { RatingBadge } from '@/components/reviews/Rating';
+import { aggregateRatingLd, withRatingType } from '@/lib/reviews';
 import { formatDay } from '@/lib/utils';
 import { isNotFound } from '@/lib/http';
 import { ErrorState, SlowNotice } from '@/components/listing/States';
@@ -191,9 +194,10 @@ export default function GroupTripDetail() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'TouristTrip',
+    '@type': withRatingType('TouristTrip', exp.rating),
     name: trip.title,
     description: trip.shortDescription,
+    aggregateRating: aggregateRatingLd(exp.rating),
     image: trip.heroImage || undefined,
     url: absoluteUrl(`/group-trips/${trip.slug}`),
     touristType: 'Group travellers',
@@ -274,6 +278,11 @@ export default function GroupTripDetail() {
             {isFull && <Badge tone="sand">Fully booked</Badge>}
           </div>
           <h1 className="mt-3 max-w-4xl font-display text-4xl leading-[1.05] sm:text-6xl">{trip.title}</h1>
+          {exp.rating && (
+            <a href="#reviews" className="mt-3 inline-block rounded-full bg-white/90 px-3 py-1">
+              <RatingBadge stats={exp.rating} />
+            </a>
+          )}
           <p className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sand-50/85">
             <span className="inline-flex items-center gap-2"><CalendarDays className="size-5" /> {formatDate(trip.startDate)} – {formatDate(trip.endDate)}</span>
             {trip.meetingPoint && <span className="inline-flex items-center gap-2"><MapPin className="size-5" /> {trip.meetingPoint}</span>}
@@ -346,6 +355,10 @@ export default function GroupTripDetail() {
               )}
             </section>
           )}
+
+          <div id="reviews" className="scroll-mt-28">
+            <ReviewsSection listingType="group" listingId={trip._id} />
+          </div>
 
           {trip.gallery?.length > 0 && (
             <section>

@@ -50,6 +50,10 @@ const ADMIN_ONLY = [
     ['put', `/api/${r}/${ID}`],
     ['delete', `/api/${r}/${ID}`],
   ]),
+  ['get', '/api/reviews/admin'],
+  ['get', `/api/reviews/admin/${ID}`],
+  ['put', `/api/reviews/admin/${ID}/status`],
+  ['put', `/api/reviews/admin/${ID}/reply`],
   ['get', '/api/tourbookings'],
   ['get', '/api/carhirebookings'],
   ['get', '/api/servicebookings'],
@@ -92,6 +96,10 @@ describe('traveller endpoints', () => {
     ['get', '/api/trip-requests/mine'],
     ['get', '/api/group-bookings/my-bookings'],
     ['post', '/api/group-bookings/join'],
+    ['get', '/api/reviews/eligible'],
+    ['get', '/api/reviews/mine'],
+    ['post', '/api/reviews'],
+    ['post', `/api/reviews/${ID}/photos`],
   ])('%s %s needs a traveller token and refuses admin tokens', async (method, path) => {
     expect((await request(app)[method](path)).status).toBe(401);
     expect((await request(app)[method](path).set('Authorization', `Bearer ${adminToken}`)).status).toBe(403);

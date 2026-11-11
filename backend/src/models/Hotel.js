@@ -13,6 +13,8 @@ const FAQSchema = new mongoose.Schema({
   answer: String,
 });
 
+// Legacy embedded reviews: kept as they are (never deleted), no longer written
+// or shown. scripts/migrateLegacyReviews.js copies them into the Review model.
 const ReviewSchema = new mongoose.Schema({
   user: String,
   rating: Number,
@@ -54,5 +56,8 @@ const HotelSchema = new mongoose.Schema({
 
 // Vendor-ready ownership (null = platform-managed).
 HotelSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
+
+// Public rating from approved reviews (written only by services/reviewStats).
+HotelSchema.plugin(require('./plugins/reviewStats'));
 
 module.exports = mongoose.model('Hotel', HotelSchema);

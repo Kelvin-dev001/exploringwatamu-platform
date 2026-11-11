@@ -14,6 +14,7 @@ const Team = lazy(() => import('@/screens/Team'));
 const Bookings = lazy(() => import('@/screens/Bookings'));
 const GroupTripBookings = lazy(() => import('@/screens/GroupTripBookings'));
 const Notifications = lazy(() => import('@/screens/Notifications'));
+const Reviews = lazy(() => import('@/screens/Reviews'));
 const Experiences = lazy(() => import('@/screens/catalogue/Experiences'));
 const GroupTrips = lazy(() => import('@/screens/catalogue/GroupTrips'));
 const lists = () => import('@/screens/catalogue/configs');
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
       { path: '/bookings', element: <Bookings /> },
       { path: '/grouptripbookings/:tripId', element: <GroupTripBookings /> },
       { path: '/notifications', element: <Notifications /> },
+      { path: '/reviews', element: <Reviews /> },
       { path: '/team', element: <Team /> },
       ...crud('/tours', Experiences, ExperienceForm),
       ...crud('/grouptrips', GroupTrips, GroupTripForm),

@@ -40,6 +40,7 @@ export default function CarHire() {
                 meta={[c.vehicle?.capacity && { icon: Users, text: `${c.vehicle.capacity} seats` }, c.vehicle?.type && { icon: CarFront, text: c.vehicle.type }]}
                 description={c.description}
                 price={c.dailyRate != null ? { amount: c.dailyRate, unit: 'per day' } : null}
+                reviews={{ listingType: 'carhire', listingId: c._id, stats: c.reviewStats }}
                 actions={
                   <>
                     <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('carhire', c)} label={`Ask about ${c.vehicle?.name || 'this car'} on WhatsApp`} />

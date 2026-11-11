@@ -35,6 +35,16 @@ module.exports = {
       return email ? `email:${email}` : ipKeyGenerator(req.ip);
     },
   }),
+  // Writing reviews and adding their photos (Cloudinary uploads), per account
+  // (it runs after authUser): a traveller writes a handful after a trip, so this
+  // is generous for people and tight for scripts; people sharing a network
+  // don't share it, and a new IP doesn't reset it.
+  reviewWriteLimiter: rateLimit({
+    ...base,
+    windowMs: 60 * MINUTE,
+    max: 30,
+    keyGenerator: (req) => (req.user ? `user:${req.user._id}` : ipKeyGenerator(req.ip)),
+  }),
   // Public writes: quote requests, bookings, viewings.
   bookingLimiter: rateLimit({ ...base, max: 30 }),
   // Signed-in admin work (a busy session is a few hundred calls).

@@ -21,4 +21,7 @@ TourSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', de
 // Discovery tags for personalised matching (vibes, suits, energy, durationHours).
 TourSchema.plugin(require('./plugins/discovery'));
 
+// Public rating from approved reviews (written only by services/reviewStats).
+TourSchema.plugin(require('./plugins/reviewStats'));
+
 module.exports = mongoose.model('Tour', TourSchema);

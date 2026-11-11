@@ -11,6 +11,7 @@ import { ErrorState, SlowNotice } from '@/components/listing/States';
 import { formatKES } from '@/lib/catalog';
 import { formatDay } from '@/lib/utils';
 import Seo from '@/components/seo/Seo';
+import MyReviews from '@/components/reviews/MyReviews';
 import { WhatsAppNumberLink } from '@/components/contact/WhatsApp';
 import { referenceMessage, whatsappEnabled } from '@/lib/whatsapp';
 
@@ -241,6 +242,8 @@ export default function MyTrips() {
           )}
         </div>
       </section>
+
+      <MyReviews token={token} />
     </Container>
   );
 }

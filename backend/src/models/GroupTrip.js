@@ -69,4 +69,7 @@ groupTripSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin
 // Published/full trips by date (website list, dashboard).
 groupTripSchema.index({ status: 1, startDate: 1 });
 
+// Public rating from approved reviews (written only by services/reviewStats).
+groupTripSchema.plugin(require('./plugins/reviewStats'));
+
 module.exports = mongoose.model('GroupTrip', groupTripSchema);

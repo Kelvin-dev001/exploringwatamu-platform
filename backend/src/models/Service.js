@@ -14,4 +14,7 @@ const ServiceSchema = new mongoose.Schema({
 // Vendor-ready ownership (null = platform-managed).
 ServiceSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null } });
 
+// Public rating from approved reviews (written only by services/reviewStats).
+ServiceSchema.plugin(require('./plugins/reviewStats'));
+
 module.exports = mongoose.model('Service', ServiceSchema);
