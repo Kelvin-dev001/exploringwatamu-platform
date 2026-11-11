@@ -77,6 +77,7 @@ Set these on Render and redeploy; each is a safe no-op until configured:
 - **Image uploads:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — set all three (a partial set stops the API from booting). Until then, saving a listing *with* images answers 503 "Image hosting is not configured"; listings without images still work. `/api/health` reports `"imageUploads": true` once they're picked up.
 - **Google sign-in:** `GOOGLE_CLIENT_ID` (and set `VITE_GOOGLE_CLIENT_ID` on the Vercel apps).
 - **Error monitoring (Sentry):** `SENTRY_DSN` on Render, `VITE_SENTRY_DSN` on the Vercel apps — see [`docs/OPERATIONS.md`](docs/OPERATIONS.md#error-monitoring-sentry).
+- **WhatsApp click-to-chat:** the public business number as `WHATSAPP_NUMBER` on Render (quote emails) and `VITE_WHATSAPP_NUMBER` on the website's Vercel project (buttons), then redeploy the website — see [`docs/WHATSAPP.md`](docs/WHATSAPP.md). Nothing is ever sent through WhatsApp; until it's set the buttons stay hidden.
 - **Logs:** JSON lines in Render's log viewer; `LOG_LEVEL=debug` for more detail.
 
 Every variable is described in [`docs/OPERATIONS.md`](docs/OPERATIONS.md#environment-variables).
