@@ -11,6 +11,7 @@ const variants = {
   outline: 'border border-ocean-900/20 bg-transparent text-ocean-900 hover:border-ocean-900 hover:bg-ocean-900/[0.03]',
   ghost: 'bg-transparent text-ocean-900 hover:bg-ocean-900/[0.06]',
   light: 'bg-sand-50 text-ocean-900 hover:bg-white',
+  whatsapp: 'bg-whatsapp-600 text-white shadow-soft hover:bg-whatsapp-700 hover:shadow-lift',
   link: 'bg-transparent p-0 h-auto text-ocean-900 underline decoration-coral-400 decoration-2 underline-offset-4 hover:decoration-coral-600',
 };
 

@@ -71,6 +71,11 @@
   --color-ochre-500: #f8b65c;
   --color-ochre-700: #a86f1f;
 
+  /* WhatsApp — a deep shade of its green, so white text and the icon on
+     white both pass WCAG AA (6.3:1). Only used for WhatsApp actions. */
+  --color-whatsapp-600: #0b6e3b;
+  --color-whatsapp-700: #095c31;
+
   /* Legacy brand names kept so pages not yet redesigned keep working */
   --color-primary: #02a8ab;
   --color-primary-dark: #215a75;

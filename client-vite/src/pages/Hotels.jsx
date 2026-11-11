@@ -9,6 +9,8 @@ import Seo from '@/components/seo/Seo';
 import { Container, Chip, Badge } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { snapshotFor } from '@/lib/trip';
+import { listingEnquiry, generalMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
 
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
@@ -68,6 +70,7 @@ export default function Hotels() {
           <EmptyState title="No stays match those filters" text="Try another type or rating — or tell us what you’re looking for and we’ll find it.">
             <Button variant="outline" onClick={() => { setType(''); setMinStars(0); }}>Show all stays</Button>
             <Button href="mailto:hello@exploringwatamu.com?subject=Help%20me%20find%20a%20stay">Ask our team</Button>
+            <WhatsAppButton message={generalMessage('finding a stay')}>Ask on WhatsApp</WhatsAppButton>
           </EmptyState>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -89,7 +92,12 @@ export default function Hotels() {
                   description={a.description}
                   chips={a.facilities || []}
                   price={a.pricePerNight != null ? { amount: a.pricePerNight, unit: 'per night' } : null}
-                  actions={<AddToTripButton snapshot={snapshotFor('stay', a)} label="Add stay" />}
+                  actions={
+                    <>
+                      <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('stay', a)} label={`Ask about ${a.name} on WhatsApp`} />
+                      <AddToTripButton snapshot={snapshotFor('stay', a)} label="Add stay" />
+                    </>
+                  }
                 >
                   {a.roomTypes?.length > 0 && (
                     <p className="mt-3 text-xs text-ocean-900/60">

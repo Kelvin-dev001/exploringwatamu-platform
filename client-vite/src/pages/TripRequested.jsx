@@ -7,6 +7,8 @@ import { BrandBadge } from '@/components/brand/Logo';
 import { WaveField } from '@/components/brand/Patterns';
 import { useAuth } from '@/context/AuthContext.jsx';
 import Seo from '@/components/seo/Seo';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
+import { referenceMessage } from '@/lib/whatsapp';
 
 
 // Only promise an email when the API says it can send one (delivery.email);
@@ -78,6 +80,9 @@ export default function TripRequested() {
           <Button to="/experiences" size="lg">
             Keep exploring <ArrowRight />
           </Button>
+          <WhatsAppButton size="lg" message={referenceMessage(reference)}>
+            Questions? WhatsApp us
+          </WhatsAppButton>
         </div>
         <p className="mt-8 text-center text-sm text-ocean-900/60">
           <CheckCircle2 className="mr-1 inline size-4 text-lagoon-600" />

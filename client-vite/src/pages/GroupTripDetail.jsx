@@ -17,6 +17,8 @@ import Photo from '@/components/ui/Photo';
 import { VibeArt } from '@/components/experience/ExperienceCard';
 import { normaliseGroupTrip } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/site';
+import { listingMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/contact/WhatsApp';
 import { formatDay } from '@/lib/utils';
 import { isNotFound } from '@/lib/http';
 import { ErrorState, SlowNotice } from '@/components/listing/States';
@@ -226,6 +228,18 @@ export default function GroupTripDetail() {
       {!isClosed && !isFull && (
         <AddToTripButton item={exp} size="md" full className="mt-3" label="Add to my trip plan" />
       )}
+      <WhatsAppButton
+        full
+        className="mt-3"
+        message={listingMessage({
+          kind: 'group',
+          title: trip.title,
+          details: [`${formatDate(trip.startDate)} – ${formatDate(trip.endDate)}`, `${kes(trip.fullPrice)} per person`],
+          path: `/group-trips/${trip.slug}`,
+        })}
+      >
+        Ask about this trip on WhatsApp
+      </WhatsAppButton>
       <ul className="mt-5 space-y-2 text-sm text-ocean-900/65">
         <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-lagoon-600" /> Reserve now, pay after we confirm</li>
         <li className="flex gap-2"><Users className="size-4 shrink-0 text-lagoon-600" /> Small group, local hosts</li>
