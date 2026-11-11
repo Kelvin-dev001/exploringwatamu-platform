@@ -218,3 +218,30 @@ What changed, and how each risk is handled (details in [REVIEWS.md](REVIEWS.md))
   - A Cloudinary failure leaves the review unchanged.
 - **Moderation.** Admin only (`authAdmin`), validated with zod, and recorded with who and when.
 - **Found and fixed on the way:** under Express 5, `validate(schema, 'query')` silently dropped the parsed query (`req.query` is a getter). It now redefines it.
+
+## Phase 6: English and Italian (November 2026)
+
+New input and output, and how each is handled (details in [LOCALISATION.md](LOCALISATION.md)):
+
+- **The language a request carries.** `locale` on trip requests, group-trip bookings and
+  password-reset requests is validated with zod as `en` or `it`; anything else is refused
+  (400, tested) and the models only accept those two. It only picks message templates and a
+  path prefix (`/it`), never free text in a URL: the reset and review-invitation links stay
+  on `FRONTEND_URL` (no open redirect). Missing means English.
+- **Italian listing text.** Admin-only, like the rest of a listing (`authAdmin` on create and
+  update). Trimmed and length-limited (title 200, short description 1,000, description
+  20,000 characters; the API refuses more, tested). The website renders it as text (React
+  escapes it); it goes into no email HTML.
+- **Emails and PDFs.** The Italian templates use the same escaping as the English ones: the
+  traveller's name, notes and item titles are escaped before they enter HTML (the
+  existing injection tests run against both). PDF text is plain.
+- **Language preference.** Stored in `localStorage` (`ew.locale`), read defensively: blocked
+  storage or an unexpected value means "use the address" (tested). It is not sent anywhere
+  except as the `locale` above.
+- **Bot previews.** The middleware now also answers bots on `/it/experiences/:id` and
+  `/it/group-trips/:slug`, with the same escaping, timeout and fall-through as before; people
+  are never affected.
+- **New public pages and robots.** The Italian copies of private pages are `noindex` like the
+  English ones, and `robots.txt` disallows `/it/my-trips`, `/it/review/`, `/it/trip/sent/` and
+  `/it/reset-password` (and now `/review/`, whose invitation links carry a token).
+- **No new dependencies, secrets or environment variables.**

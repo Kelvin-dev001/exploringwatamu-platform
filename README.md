@@ -5,6 +5,9 @@ how they like to travel, add experiences, stays, transfers, car hire and service
 day-by-day planner, and request one quote for the whole trip. Our team prices it in the
 admin portal. There are no online payments: the request-a-quote model is deliberate.
 
+The website is in English and Italian (`/it/…`); travellers who use the Italian site get
+their emails, texts and PDFs in Italian. See [`docs/LOCALISATION.md`](docs/LOCALISATION.md).
+
 | Folder | What | Deployed to |
 |---|---|---|
 | `backend/` | Node 20 · Express 5 · MongoDB (Mongoose 8) REST API | Render |
@@ -53,6 +56,7 @@ demo content (never run it against production).
 - [`docs/DATABASE.md`](docs/DATABASE.md) — indexes, backups and restores.
 - [`docs/WHATSAPP.md`](docs/WHATSAPP.md) — WhatsApp click-to-chat: setup, where it appears, number rules.
 - [`docs/REVIEWS.md`](docs/REVIEWS.md) — verified reviews: eligibility, data model, API, moderation, migration, invitations.
+- [`docs/LOCALISATION.md`](docs/LOCALISATION.md) — English and Italian: addresses, messages, SEO, emails, Italian listing text, translation coverage.
 - [`docs/SECURITY-REVIEW.md`](docs/SECURITY-REVIEW.md) — security review (November 2026): findings and fixes.
 - [`docs/OWNER-ACTIONS.md`](docs/OWNER-ACTIONS.md) — tasks that need the account owner.
 - [`TESTING.md`](TESTING.md) — the test suites, the browser smoke test and CI.

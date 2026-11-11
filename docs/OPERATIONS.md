@@ -251,6 +251,22 @@ npm run reviews:recompute -- --confirm-db=<database name> # repair every listing
 The invitation job needs a scheduler: a daily Render Cron Job (settings in
 [REVIEWS.md](REVIEWS.md#scheduling-it-on-render)). It sends nothing while SMTP is off.
 
+## English and Italian
+
+The website serves Italian under `/it/…` ([LOCALISATION.md](LOCALISATION.md)). Nothing to
+configure. Things to know when operating it:
+
+- **Deploy order doesn't matter.** An API without Phase 6 ignores the `locale` the website
+  sends (the request still succeeds; emails are English); a website without it simply
+  doesn't send one. Records without a language are treated as English.
+- **After a website deploy**, `/it`, `/it/experiences` and a refresh on an
+  `/it/experiences/<id>` page should all load in Italian. A blank or English shell there
+  means the `/it/(.*)` rewrite in `client-vite/vercel.json` isn't applied.
+- **Changing a text** means changing both languages (`client-vite/src/locales/`,
+  `backend/src/i18n/`); the tests fail if one is missing.
+- **Italian listing text** is edited by the team in the admin (**Italian (optional)** on each
+  listing). A listing with an Italian description gets its own Italian page in search results.
+
 ## Demo content (staging and local only)
 
 ```bash

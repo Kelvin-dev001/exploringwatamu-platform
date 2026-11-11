@@ -58,6 +58,16 @@ the quote* (total and validity), *Trip confirmed*, *Follow up*. The default fits
 status; the admin edits before opening WhatsApp. They mention the reference, dates,
 party size and quote — never the traveller’s notes or contact details.
 
+## Languages
+
+On the Italian website every prefilled message is in Italian (“Ciao Exploring Watamu! …”),
+and page links in it point at the Italian page. Emails and PDFs for a traveller who used
+the Italian site carry Italian messages and an Italian **Scrivici su WhatsApp** button.
+In the admin, **Reply on WhatsApp** starts in the traveller’s language, with an
+**English / Italiano** choice. Messages: `client-vite/src/locales/whatsapp.js`,
+`backend/src/i18n/*.js`, `admin-vite/src/lib/tripReplies.js`. See
+[LOCALISATION.md](LOCALISATION.md).
+
 ## Screenshots
 
 Taken from local builds with demo listings and a placeholder number (+254 700 000 000).
