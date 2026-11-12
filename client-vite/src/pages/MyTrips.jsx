@@ -14,25 +14,29 @@ import Seo from '@/components/seo/Seo';
 import MyReviews from '@/components/reviews/MyReviews';
 import { WhatsAppNumberLink } from '@/components/contact/WhatsApp';
 import { referenceMessage, whatsappEnabled } from '@/lib/whatsapp';
+import { localeTag, useI18n } from '@/i18n';
+import { pickText } from '@/i18n/listingContent';
+import messages from '@/locales/account';
 
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 
 // Arrival, departure, trip dates and validity are calendar days; "sent" is a moment in time.
 const fmt = (d) => formatDay(d);
-const fmtSent = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+const fmtSent = (d) => (d ? new Date(d).toLocaleDateString(localeTag(), { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
 /** The priced quote, line by line — readable here even if the email never arrived. */
 function QuoteDetails({ request: r }) {
+  const { t, rich } = useI18n(messages);
   const q = r.quote;
-  const subject = encodeURIComponent(`My Watamu trip quote ${r.reference}`);
+  const subject = encodeURIComponent(t('quoteSubject', { reference: r.reference }));
   return (
     <div className="mt-4 rounded-2xl bg-sand-100 p-4">
-      <p className="text-sm text-ocean-900/60">Your quote</p>
+      <p className="text-sm text-ocean-900/60">{t('yourQuote')}</p>
       <p className="font-display text-3xl text-ocean-900">{formatKES(q.total)}</p>
-      {q.validUntil && <p className="text-xs text-ocean-900/60">Valid until {fmt(q.validUntil)}</p>}
+      {q.validUntil && <p className="text-xs text-ocean-900/60">{t('validUntil', { date: fmt(q.validUntil) })}</p>}
       {q.lines?.length > 0 && (
         <table className="mt-4 w-full text-sm">
-          <caption className="sr-only">What your quote includes</caption>
+          <caption className="sr-only">{t('quoteIncludes')}</caption>
           <tbody>
             {q.lines.map((l, i) => (
               <tr key={i} className="border-t border-sand-200">
@@ -46,36 +50,40 @@ function QuoteDetails({ request: r }) {
       {q.message && <p className="mt-4 whitespace-pre-line text-sm text-ocean-900/75">{q.message}</p>}
       {r.status === 'quoted' && (
         <p className="mt-4 text-sm text-ocean-900/70">
-          To go ahead, reply to your quote email{whatsappEnabled() ? ', ' : ' or '}
-          {whatsappEnabled() && (
-            <>
-              <WhatsAppNumberLink message={referenceMessage(r.reference, 'quote')} className="inline-flex items-center gap-1 font-semibold text-lagoon-700 underline [&_svg]:size-3.5">
-                message us on WhatsApp
-              </WhatsAppNumberLink>{' '}
-              or{' '}
-            </>
+          {rich(
+            whatsappEnabled() ? 'goAhead' : 'goAheadNoWhatsApp',
+            {
+              wa: (text) => (
+                <WhatsAppNumberLink message={referenceMessage(r.reference, 'quote')} className="inline-flex items-center gap-1 font-semibold text-lagoon-700 underline [&_svg]:size-3.5">
+                  {text}
+                </WhatsAppNumberLink>
+              ),
+              mail: (text) => (
+                <a href={`mailto:${SUPPORT_EMAIL}?subject=${subject}`} className="inline-flex items-center gap-1 font-semibold text-lagoon-700 underline">
+                  <Mail className="size-3.5" /> {text}
+                </a>
+              ),
+            },
+            { reference: r.reference }
           )}
-          <a href={`mailto:${SUPPORT_EMAIL}?subject=${subject}`} className="inline-flex items-center gap-1 font-semibold text-lagoon-700 underline">
-            <Mail className="size-3.5" /> write to us
-          </a>{' '}
-          quoting {r.reference}.
         </p>
       )}
     </div>
   );
 }
 
+// Labels are message keys (locales/account.js).
 const REQUEST_STATUS = {
-  new: { label: 'With our team', tone: 'ochre' },
-  quoted: { label: 'Quote sent', tone: 'coral' },
-  accepted: { label: 'Confirmed', tone: 'mangrove' },
-  declined: { label: 'Declined', tone: 'sand' },
-  cancelled: { label: 'Cancelled', tone: 'sand' },
+  new: { label: 'statusNew', tone: 'ochre' },
+  quoted: { label: 'statusQuoted', tone: 'coral' },
+  accepted: { label: 'statusAccepted', tone: 'mangrove' },
+  declined: { label: 'statusDeclined', tone: 'sand' },
+  cancelled: { label: 'statusCancelled', tone: 'sand' },
 };
 const BOOKING_STATUS = {
-  pending: { label: 'Pending', tone: 'ochre' },
-  confirmed: { label: 'Confirmed', tone: 'mangrove' },
-  cancelled: { label: 'Cancelled', tone: 'sand' },
+  pending: { label: 'statusPending', tone: 'ochre' },
+  confirmed: { label: 'statusConfirmed', tone: 'mangrove' },
+  cancelled: { label: 'statusCancelled', tone: 'sand' },
 };
 
 function Empty({ icon: Icon, title, text, to, cta }) {
@@ -93,6 +101,7 @@ function Empty({ icon: Icon, title, text, to, cta }) {
 
 /** Signed-in traveller's trip requests (quotes) and group-trip bookings. */
 export default function MyTrips() {
+  const { t, locale, langOf } = useI18n(messages);
   const { user, token, loading: authLoading, unreachable, retry: retryAuth } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
@@ -115,14 +124,14 @@ export default function MyTrips() {
       .then(([r, b]) => {
         if (r.status === 'fulfilled') setRequests(Array.isArray(r.value.data) ? r.value.data : []);
         if (b.status === 'fulfilled') setBookings(Array.isArray(b.value.data) ? b.value.data : []);
-        if (r.status === 'rejected' || b.status === 'rejected') setError('Some of your bookings couldn’t be loaded.');
+        if (r.status === 'rejected' || b.status === 'rejected') setError('someFailed');
       })
       .finally(() => setLoading(false));
   }, [user, token, authLoading, unreachable, navigate, attempt]);
 
   if (authLoading || (user && loading)) {
     return (
-      <div className="grid min-h-[50vh] place-items-center px-5" role="status" aria-label="Loading">
+      <div className="grid min-h-[50vh] place-items-center px-5" role="status" aria-label={t('loading')}>
         <div className="text-center">
           <span className="mx-auto block size-8 animate-spin rounded-full border-2 border-sand-300 border-t-coral-500" />
           <SlowNotice className="mt-6" />
@@ -134,29 +143,29 @@ export default function MyTrips() {
   if (!user) {
     return (
       <Container size="narrow" className="py-24">
-        <Seo title="My bookings" noindex />
-        {unreachable ? <ErrorState what="your account" onRetry={retryAuth} /> : null}
+        <Seo title={t('seo')} noindex />
+        {unreachable ? <ErrorState what={t('yourAccount')} onRetry={retryAuth} /> : null}
       </Container>
     );
   }
 
   return (
     <Container size="default" className="py-12 lg:py-16">
-      <Seo title="My bookings" noindex />
-      <p className="eyebrow">Hi {user?.name?.split(' ')[0] || 'there'}</p>
-      <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">My bookings</h1>
+      <Seo title={t('seo')} noindex />
+      <p className="eyebrow">{user?.name?.split(' ')[0] ? t('hi', { name: user.name.split(' ')[0] }) : t('hiNoName')}</p>
+      <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">{t('title')}</h1>
       {error && (
         <p className="mt-6 flex flex-wrap items-center gap-3 rounded-xl bg-coral-50 p-4 text-coral-700">
-          {error}
-          <Button size="sm" variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
+          {t(error)}
+          <Button size="sm" variant="outline" onClick={() => setAttempt((n) => n + 1)}>{t('tryAgain')}</Button>
         </p>
       )}
 
       <section className="mt-12">
-        <SectionHeading title="Trip quotes" lede="Itineraries you’ve sent from the trip planner." />
+        <SectionHeading title={t('quotesTitle')} lede={t('quotesLede')} />
         <div className="mt-6 space-y-4">
           {requests.length === 0 ? (
-            <Empty icon={Luggage} title="No trip requests yet" text="Plan your days and send them to us for a tailored price." to="/trip" cta="Open the trip planner" />
+            <Empty icon={Luggage} title={t('noRequests')} text={t('noRequestsText')} to="/trip" cta={t('openPlanner')} />
           ) : (
             requests.map((r) => {
               const s = REQUEST_STATUS[r.status] || REQUEST_STATUS.new;
@@ -164,16 +173,16 @@ export default function MyTrips() {
                 <article key={r.reference} className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-6 shadow-soft">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="font-mono text-lg font-semibold text-ocean-900">{r.reference}</p>
-                    <Badge tone={s.tone}>{s.label}</Badge>
+                    <Badge tone={s.tone}>{t(s.label)}</Badge>
                   </div>
                   <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ocean-900/60">
                     <span className="inline-flex items-center gap-1.5">
-                      <CalendarDays className="size-4" /> {r.arrival ? `${fmt(r.arrival)} – ${fmt(r.departure)}` : `${r.days?.length || 0} days, flexible`}
+                      <CalendarDays className="size-4" /> {r.arrival ? `${fmt(r.arrival)} – ${fmt(r.departure)}` : t('flexibleDays', { count: r.days?.length || 0 })}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <Users className="size-4" /> {r.adults + (r.children || 0)} travellers
+                      <Users className="size-4" /> {t('travellers', { count: r.adults + (r.children || 0) })}
                     </span>
-                    <span>{r.itemCount} items · sent {fmtSent(r.createdAt)}</span>
+                    <span>{t('itemsSent', { count: r.itemCount || 0, date: fmtSent(r.createdAt) })}</span>
                   </p>
                   {r.quote && <QuoteDetails request={r} />}
                 </article>
@@ -184,21 +193,24 @@ export default function MyTrips() {
       </section>
 
       <section className="mt-16">
-        <SectionHeading title="Group trips" lede="Scheduled adventures you’ve asked to join." />
+        <SectionHeading title={t('groupTitle')} lede={t('groupLede')} />
         <div className="mt-6 space-y-4">
           {bookings.length === 0 ? (
-            <Empty icon={Users} title="No group trips yet" text="Join a scheduled adventure and meet other travellers." to="/group-trips" cta="Browse group trips" />
+            <Empty icon={Users} title={t('noGroup')} text={t('noGroupText')} to="/group-trips" cta={t('browseGroup')} />
           ) : (
             bookings.map((b) => {
               const trip = b.trip;
               const s = BOOKING_STATUS[b.status] || BOOKING_STATUS.pending;
+              const tripTitle = trip ? pickText(trip, 'title', locale) : null;
               return (
                 <article key={b._id} className="flex gap-4 rounded-[var(--radius-card)] border border-sand-200 bg-white p-5 shadow-soft">
                   {trip?.heroImage && <Photo src={trip.heroImage} sizes="80px" max={320} className="size-20 shrink-0 rounded-2xl object-cover" />}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <h3 className="font-display text-xl text-ocean-900">{trip?.title || 'Group trip'}</h3>
-                      <Badge tone={s.tone}>{s.label}</Badge>
+                      <h3 lang={langOf(tripTitle?.lang)} className="font-display text-xl text-ocean-900">
+                        {tripTitle?.text || t('groupTrip')}
+                      </h3>
+                      <Badge tone={s.tone}>{t(s.label)}</Badge>
                     </div>
                     {trip && (
                       <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-ocean-900/60">
@@ -206,7 +218,7 @@ export default function MyTrips() {
                           <CalendarDays className="size-4" /> {fmt(trip.startDate)} – {fmt(trip.endDate)}
                         </span>
                         {trip.meetingPoint && (
-                          <span className="inline-flex items-center gap-1.5">
+                          <span lang={langOf('en')} className="inline-flex items-center gap-1.5">
                             <MapPin className="size-4" /> {trip.meetingPoint}
                           </span>
                         )}
@@ -214,25 +226,25 @@ export default function MyTrips() {
                     )}
                     <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                       <div>
-                        <dt className="text-xs text-ocean-900/60">{b.status === 'confirmed' ? 'Amount paid' : 'Due on confirmation'}</dt>
+                        <dt className="text-xs text-ocean-900/60">{b.status === 'confirmed' ? t('amountPaid') : t('dueOnConfirmation')}</dt>
                         <dd className="font-semibold">{formatKES(b.amountPaid)}</dd>
                       </div>
                       {b.amountDue > 0 && (
                         <div>
-                          <dt className="text-xs text-ocean-900/60">Balance</dt>
+                          <dt className="text-xs text-ocean-900/60">{t('balance')}</dt>
                           <dd className="font-semibold text-coral-600">{formatKES(b.amountDue)}</dd>
                         </div>
                       )}
                       {trip?.balanceDueDate && b.paymentType === 'deposit' && (
                         <div>
-                          <dt className="text-xs text-ocean-900/60">Balance due</dt>
+                          <dt className="text-xs text-ocean-900/60">{t('balanceDue')}</dt>
                           <dd className="font-semibold">{fmt(trip.balanceDueDate)}</dd>
                         </div>
                       )}
                     </dl>
                     {trip?.slug && (
                       <Link to={`/group-trips/${trip.slug}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-lagoon-700 hover:underline">
-                        <FileText className="size-4" /> Trip details
+                        <FileText className="size-4" /> {t('tripDetails')}
                       </Link>
                     )}
                   </div>

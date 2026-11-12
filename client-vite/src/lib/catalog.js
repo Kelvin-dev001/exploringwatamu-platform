@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '@/api.js';
 import { safeStorage } from '@/lib/utils';
+import { formatKES as kesIn, getLocale, translate, translator } from '@/i18n';
+import { pickText } from '@/i18n/listingContent';
+import messages from '@/locales/catalog';
+
+const t = translator(messages);
 
 /*
  * The store's catalogue: tours and published group trips normalised into one
@@ -14,6 +19,13 @@ import { safeStorage } from '@/lib/utils';
  *   lengthLabel, price: { resident, nonResident, unit }, href, raw,
  *   startDate?, seatsLeft?, createdAt
  * }
+ *
+ * title, summary and lengthLabel follow the website's language (getters, so
+ * the shared cache stays right after a switch): the Italian text the team
+ * wrote (titleIt, descriptionIt, shortDescriptionIt) when there is one, the
+ * English otherwise — titleLang / summaryLang say which. titleEn is always
+ * the English title (what trip items store for the team). price.unit stays
+ * English data; show it with unitLabel().
  */
 
 const HOURS_FROM_TEXT = [
@@ -41,18 +53,56 @@ export function lengthBucket(hours) {
   return 'multi';
 }
 
-export const LENGTHS = [
-  { id: 'half', label: 'Half day', blurb: 'Up to 5 hours' },
-  { id: 'full', label: 'Full day', blurb: '6–12 hours' },
-  { id: 'multi', label: 'Multi-day', blurb: 'Overnight or longer' },
+const lengthOption = (id, key) => ({
+  id,
+  get label() {
+    return t(key);
+  },
+  get blurb() {
+    return t(`${key}Blurb`);
+  },
+});
+export const LENGTHS = [lengthOption('half', 'lengthHalf'), lengthOption('full', 'lengthFull'), lengthOption('multi', 'lengthMulti')];
+
+const tIn = (locale, key, vars) => translate(messages, locale, key, vars);
+const fromHours = (hours, locale) => (hours < 24 ? tIn(locale, 'hours', { count: hours }) : tIn(locale, 'days', { count: Math.round(hours / 24) }));
+const KNOWN_LENGTHS = [
+  [/^\s*half[\s-]*day\s*$/i, 'lengthHalf'],
+  [/^\s*(full|whole)[\s-]*day\s*$/i, 'lengthFull'],
 ];
 
-function lengthLabel(hours, text) {
-  if (text) return text;
+/**
+ * How long something takes, in the current language. The admin's free text
+ * ("Half day", "3 hours") shows as written in English; in Italian the common
+ * ones are translated, others are rebuilt from the hours, and anything we
+ * can't read stays as written.
+ */
+export function lengthLabel(hours, text, locale = getLocale()) {
+  if (text) {
+    if (locale === 'en') return text;
+    const known = KNOWN_LENGTHS.find(([re]) => re.test(text));
+    if (known) return tIn(locale, known[1]);
+    return hours ? fromHours(hours, locale) : text;
+  }
   if (!hours) return null;
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'}`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'}`;
+  return fromHours(hours, locale);
+}
+
+const UNITS = { 'per adult': 'unitPerAdult', 'per person': 'unitPerPerson', 'per night': 'unitPerNight', 'per vehicle': 'unitPerVehicle', 'per day': 'unitPerDay', 'per trip': 'unitPerTrip', hourly: 'unitHourly', daily: 'unitDaily' };
+/** A price unit ("per adult", "hourly" — stored in English) in the current language. */
+export const unitLabel = (unit) => (unit && UNITS[unit] ? t(UNITS[unit]) : unit || '');
+
+// Text getters for a normalised listing (see the shape comment above).
+function withText(item, doc, { title, summary, summaryField }) {
+  const titleText = () => pickText(doc, 'title', getLocale(), doc[title]);
+  const summaryText = () => pickText(doc, summaryField, getLocale(), doc[summary]);
+  Object.defineProperties(item, {
+    title: { enumerable: true, get: () => titleText().text },
+    titleLang: { get: () => titleText().lang },
+    summary: { enumerable: true, get: () => summaryText().text },
+    summaryLang: { get: () => summaryText().lang },
+  });
+  return item;
 }
 
 const num = (v) => (v === null || v === undefined || v === '' || Number.isNaN(Number(v)) ? null : Number(v));
@@ -61,11 +111,10 @@ const ratingFrom = (s) => (num(s?.count) > 0 ? { average: num(s.average), count:
 
 export function normaliseTour(t) {
   const hours = hoursFor(t.durationHours, t.duration);
-  return {
+  const item = {
     id: t._id,
     kind: 'tour',
-    title: t.name,
-    summary: t.description,
+    titleEn: t.name,
     image: t.gallery?.[0] || null,
     gallery: t.gallery || [],
     vibes: t.vibes || [],
@@ -73,13 +122,17 @@ export function normaliseTour(t) {
     energy: t.energy || null,
     hours,
     lengthBucket: lengthBucket(hours),
-    lengthLabel: lengthLabel(hours, t.duration),
+    get lengthLabel() {
+      return lengthLabel(hours, t.duration);
+    },
+    lengthEn: lengthLabel(hours, t.duration, 'en'),
     price: { resident: num(t.priceResidentAdult), nonResident: num(t.priceForeignerAdult), unit: 'per adult' },
     href: `/experiences/${t._id}`,
     rating: ratingFrom(t.reviewStats),
     createdAt: t.createdAt,
     raw: t,
   };
+  return withText(item, t, { title: 'name', summary: 'description', summaryField: 'description' });
 }
 
 export function normaliseGroupTrip(g) {
@@ -88,11 +141,10 @@ export function normaliseGroupTrip(g) {
   const days = start && end ? Math.max(1, Math.round((end - start) / 86400000) + 1) : null;
   const hours = hoursFor(g.durationHours, null) ?? (days ? days * 24 : null);
   const seatsLeft = num(g.slotsRemaining) ?? (num(g.maxParticipants) ?? 0) - (num(g.confirmedParticipants) ?? 0);
-  return {
+  const item = {
     id: g._id,
     kind: 'group',
-    title: g.title,
-    summary: g.shortDescription,
+    titleEn: g.title,
     image: g.heroImage || g.gallery?.[0] || null,
     gallery: [g.heroImage, ...(g.gallery || [])].filter(Boolean),
     vibes: g.vibes?.length ? g.vibes : ['social'],
@@ -100,7 +152,10 @@ export function normaliseGroupTrip(g) {
     energy: g.energy || null,
     hours,
     lengthBucket: lengthBucket(hours),
-    lengthLabel: days ? `${days} day${days === 1 ? '' : 's'}` : null,
+    get lengthLabel() {
+      return days ? t('days', { count: days }) : null;
+    },
+    lengthEn: days ? tIn('en', 'days', { count: days }) : null,
     price: { resident: num(g.fullPrice), nonResident: num(g.fullPrice), unit: 'per person' },
     href: `/group-trips/${g.slug}`,
     startDate: g.startDate,
@@ -110,6 +165,7 @@ export function normaliseGroupTrip(g) {
     createdAt: g.createdAt,
     raw: g,
   };
+  return withText(item, g, { title: 'title', summary: 'shortDescription', summaryField: 'shortDescription' });
 }
 
 // One in-flight request shared by every component on the page.
@@ -182,7 +238,8 @@ export function priceFor(item, residency = 'nonResident') {
   return residency === 'resident' ? p.resident ?? p.nonResident : p.nonResident ?? p.resident;
 }
 
+/** "KES 12,000" (Italian: "12.000 KES"), or null for no price. */
 export function formatKES(n) {
   if (n === null || n === undefined) return null;
-  return `KES ${Math.round(n).toLocaleString('en-KE')}`;
+  return kesIn(n);
 }

@@ -2,6 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { safeStorage } from '@/lib/utils';
 import { useVibeProfile } from '@/context/VibeProfileContext';
 import * as T from '@/lib/trip';
+import { translator } from '@/i18n';
+import messages from '@/locales/trip';
+
+const t = translator(messages);
 
 /*
  * The visitor's trip, kept in the browser so it survives reloads and return
@@ -40,8 +44,8 @@ export function TripProvider({ children, initialTrip }) {
 
   const add = useCallback(
     (snapshot, to) => {
-      setTrip((t) => T.addItem(t, snapshot, to ?? T.defaultLane(snapshot)));
-      notify(`Added “${snapshot.title}” to your trip`);
+      setTrip((current) => T.addItem(current, snapshot, to ?? T.defaultLane(snapshot)));
+      notify(t('toastAdded', { title: T.snapTitle(snapshot) }));
     },
     [notify]
   );

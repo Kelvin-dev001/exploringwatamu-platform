@@ -8,21 +8,26 @@ const whatsapp = require('./whatsapp');
 const escapeHtml = require('./escapeHtml');
 const logger = require('./logger');
 const config = require('../config/env');
+const i18n = require('../i18n');
 
 function money(n) {
-  return 'KES ' + Number(n || 0).toLocaleString('en-KE');
+  return i18n.money(n, 'en');
 }
+
+// The traveller's emails and texts are in the language they booked in
+// (booking.locale, English when missing); the team's stay English.
+const tripTitle = (trip, locale) => (trip ? (locale === 'it' && trip.titleIt?.trim()) || trip.title : '');
 
 // Names, contact details and vibe answers are typed by travellers: escape them
 // before they go into email HTML (SMS text is plain and needs no escaping).
-const html = (booking, trip) => ({
+const html = (booking, trip, locale = 'en') => ({
   name: escapeHtml(booking.fullName),
   email: escapeHtml(booking.email),
   phone: escapeHtml(booking.phone),
   paymentType: escapeHtml(booking.paymentType),
   vibe: escapeHtml((booking.travelPersonalities || []).join(', ')),
   group: escapeHtml(booking.travelGroup || ''),
-  trip: escapeHtml(trip ? trip.title : ''),
+  trip: escapeHtml(tripTitle(trip, locale)),
 });
 
 // SMS is best-effort: a failure must not break the email or the booking.
@@ -36,58 +41,63 @@ async function trySms(args) {
 
 // New booking request: quotation to the traveller, notification to admin, SMS ack.
 async function notifyBookingRequested(booking, trip) {
-  const pdf = await buildQuotationPdf(booking, trip);
-  const attachment = { filename: `quotation-${booking._id}.pdf`, content: pdf };
-  const h = html(booking, trip);
+  const L = i18n.forLocale(booking.locale);
+  const travellerPdf = await buildQuotationPdf(booking, trip);
+  const teamPdf = L.locale === 'en' ? travellerPdf : await buildQuotationPdf({ ...(booking.toObject ? booking.toObject() : booking), locale: 'en' }, trip);
+  const h = html(booking, trip, L.locale);
+  const title = tripTitle(trip, L.locale);
 
   await sendMail({
     to: booking.email,
     event: 'booking_requested',
     user: booking.user,
-    subject: `We received your booking request - ${trip.title}`,
-    html: wrap('Request received', `<p>Hi ${h.name},</p>
-      <p>Thanks for requesting a spot on <strong>${h.trip}</strong>. Your request is
-      <strong>pending confirmation</strong> — our team will be in touch shortly to finalise it.</p>
-      <p>Your quotation is attached.</p>
-      ${whatsapp.emailBlock({ lead: 'Questions about the trip or your quotation? Chat with us on WhatsApp.', text: whatsapp.text.groupBooking(booking, trip) })}`),
-    attachments: [attachment],
+    subject: L.t('bookingSubject', { trip: title }),
+    html: wrap(L.t('bookingTitle'), `<p>${L.t('hi', { name: h.name })}</p>
+      <p>${L.t('bookingBody', { trip: h.trip })}</p>
+      <p>${escapeHtml(L.t('bookingAttached'))}</p>
+      ${whatsapp.emailBlock({ lead: L.t('bookingWhatsApp'), text: whatsapp.text.groupBooking(booking, { title }, L.locale), locale: L.locale })}`, L.locale),
+    attachments: [{ filename: `quotation-${booking._id}.pdf`, content: travellerPdf }],
   });
 
+  const team = html(booking, trip);
   await sendMail({
     to: config.adminNotifyEmail,
     event: 'booking_requested_admin',
     subject: `New booking request - ${trip.title} (${booking.fullName})`,
     html: wrap('New booking request', `<ul>
-        <li>Trip: ${h.trip}</li>
-        <li>Traveller: ${h.name} (${h.email}, ${h.phone})</li>
-        <li>Payment type: ${h.paymentType}</li>
+        <li>Trip: ${team.trip}</li>
+        <li>Traveller: ${team.name} (${team.email}, ${team.phone})</li>
+        ${L.locale !== 'en' ? '<li>Language: Italian — their emails and quotation are in Italian</li>' : ''}
+        <li>Payment type: ${team.paymentType}</li>
         <li>Amount due now: ${money(booking.amountPaid)}</li>
-        <li>Vibe: ${h.vibe} &middot; ${h.group}</li>
+        <li>Vibe: ${team.vibe} &middot; ${team.group}</li>
       </ul>
       <p>Confirm or cancel it in the admin portal.</p>`),
-    attachments: [attachment],
+    attachments: [{ filename: `quotation-${booking._id}.pdf`, content: teamPdf }],
   });
 
   await trySms({
     to: booking.phone,
     user: booking.user,
     event: 'booking_requested',
-    message: `Hi ${booking.fullName}, we received your request for ${trip.title}. It's pending confirmation — we'll be in touch. - ${config.brand.name}`,
+    message: L.t('bookingSms', { name: booking.fullName, trip: title, brand: config.brand.name }),
   });
 }
 
 // Booking confirmed by admin: receipt email + SMS.
 async function notifyBookingConfirmed(booking, trip) {
+  const L = i18n.forLocale(booking.locale);
   const pdf = await buildReceiptPdf(booking, trip);
-  const h = html(booking, trip);
+  const h = html(booking, trip, L.locale);
+  const title = tripTitle(trip, L.locale);
   await sendMail({
     to: booking.email,
     event: 'booking_confirmed',
     user: booking.user,
-    subject: `Booking confirmed - ${trip.title}`,
-    html: wrap('Booking confirmed', `<p>Hi ${h.name},</p>
-      <p>Your booking for <strong>${h.trip}</strong> is <strong>confirmed</strong>. Your receipt is attached.</p>
-      <p>See you in Watamu!</p>`),
+    subject: L.t('confirmedSubject', { trip: title }),
+    html: wrap(L.t('confirmedTitle'), `<p>${L.t('hi', { name: h.name })}</p>
+      <p>${L.t('confirmedBody', { trip: h.trip })}</p>
+      <p>${escapeHtml(L.t('confirmedSee'))}</p>`, L.locale),
     attachments: [{ filename: `receipt-${booking._id}.pdf`, content: pdf }],
   });
 
@@ -95,28 +105,29 @@ async function notifyBookingConfirmed(booking, trip) {
     to: booking.phone,
     user: booking.user,
     event: 'booking_confirmed',
-    message: `Great news ${booking.fullName}! Your ${trip.title} booking is CONFIRMED. See you in Watamu. - ${config.brand.name}`,
+    message: L.t('confirmedSms', { name: booking.fullName, trip: title, brand: config.brand.name }),
   });
 }
 
 // Booking cancelled by admin.
 async function notifyBookingCancelled(booking, trip) {
-  const h = html(booking, trip);
+  const L = i18n.forLocale(booking.locale);
+  const h = html(booking, trip, L.locale);
+  const title = tripTitle(trip, L.locale);
   await sendMail({
     to: booking.email,
     event: 'booking_cancelled',
     user: booking.user,
-    subject: `Booking cancelled - ${trip ? trip.title : 'your trip'}`,
-    html: wrap('Booking cancelled', `<p>Hi ${h.name},</p>
-      <p>Your booking${trip ? ` for <strong>${h.trip}</strong>` : ''} has been cancelled.
-      If this was a mistake or you'd like to rebook, just reply to this email.</p>`),
+    subject: L.t('cancelSubject', { trip: trip ? title : L.t('cancelYourTrip') }),
+    html: wrap(L.t('cancelTitle'), `<p>${L.t('hi', { name: h.name })}</p>
+      <p>${L.t('cancelBody', { forTrip: trip ? L.t('cancelForTrip', { trip: h.trip }) : '' })}</p>`, L.locale),
   });
 
   await trySms({
     to: booking.phone,
     user: booking.user,
     event: 'booking_cancelled',
-    message: `Hi ${booking.fullName}, your ${trip ? trip.title : 'trip'} booking was cancelled. Reply to rebook. - ${config.brand.name}`,
+    message: L.t('cancelSms', { name: booking.fullName, trip: trip ? title : L.t('cancelTripWord'), brand: config.brand.name }),
   });
 }
 

@@ -219,7 +219,7 @@ The job lives in `scripts/sendReviewInvites.js` and `services/reviewInvites.js`.
 - **With SMTP unset,** it sends nothing and records nothing, so the invitations go out once email is configured, if the trip is still within the 60 days.
 - **By default it is a dry run.** It only sends with `--send`, and refuses `--send` unless `NODE_ENV=production`.
 
-**Language.** The email is in English: the platform has no traveller language setting yet (Phase 6).
+**Language.** The email, and the review page its link opens, are in the language the traveller booked in (`locale` on the trip request or booking; English for older records). See [LOCALISATION.md](LOCALISATION.md).
 
 ```bash
 npm run reviews:invite                         # dry run: who would be invited

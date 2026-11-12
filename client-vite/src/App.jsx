@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
 import Home from './pages/Home.jsx';
+import { useI18n } from './i18n';
 
 // Everything except the homepage loads on demand, so first visits stay fast.
 const Hotels = lazy(() => import('./pages/Hotels.jsx'));
@@ -25,8 +26,9 @@ const WriteReview = lazy(() => import('./pages/WriteReview.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
 function PageFallback() {
+  const { t } = useI18n();
   return (
-    <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+    <div className="grid min-h-[50vh] place-items-center" role="status" aria-label={t('pageLoading')}>
       <span className="size-8 animate-spin rounded-full border-2 border-sand-300 border-t-coral-500" />
     </div>
   );

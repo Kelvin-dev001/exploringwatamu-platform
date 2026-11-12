@@ -4,7 +4,9 @@ import { Clock, Sparkles, Users, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/primitives';
 import { WaveField, Rosette, ArchBand, Weave, ChainBand } from '@/components/brand/Patterns';
 import { VIBES, byId } from '@/lib/vibes';
-import { priceFor, formatKES } from '@/lib/catalog';
+import { priceFor, formatKES, unitLabel } from '@/lib/catalog';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/cards';
 import { cn, formatDay } from '@/lib/utils';
 import Photo from '@/components/ui/Photo';
 import { RatingBadge } from '@/components/reviews/Rating';
@@ -23,10 +25,11 @@ const ART = {
 };
 
 export function VibeArt({ vibe, className, label }) {
+  const { t } = useI18n(messages);
   const a = ART[vibe] || ART.ocean;
   const Icon = byId(VIBES, vibe)?.icon;
   return (
-    <div className={cn('relative overflow-hidden', a.bg, className)} role="img" aria-label={label || 'Illustration'}>
+    <div className={cn('relative overflow-hidden', a.bg, className)} role="img" aria-label={label || t('illustration')}>
       {a.motif === 'waves' && <WaveField className={cn('absolute inset-x-0 bottom-0 h-1/2', a.fg)} rows={6} gap={14} />}
       {a.motif === 'weave' && <Weave className={cn('absolute inset-0', a.fg)} />}
       {a.motif === 'rosette' && <Rosette className={cn('absolute -bottom-10 -right-8', a.fg)} size={200} />}
@@ -59,6 +62,7 @@ const formatStart = (date) => formatDay(date, { day: 'numeric', month: 'short' }
  * Phase 3 adds "Add to my trip" next to the price.
  */
 export default function ExperienceCard({ item, match, residency = 'nonResident', className }) {
+  const { t, langOf } = useI18n(messages);
   const vibe = byId(VIBES, item.vibes[0]);
   const price = priceFor(item, residency);
 
@@ -81,12 +85,12 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {match?.great && (
             <Badge tone="coral" className="shadow-soft">
-              <Sparkles /> Great match
+              <Sparkles /> {t('greatMatch')}
             </Badge>
           )}
           {item.kind === 'group' && (
             <Badge tone="glass">
-              <Users /> Group trip
+              <Users /> {t('groupTrip')}
             </Badge>
           )}
         </div>
@@ -113,37 +117,41 @@ export default function ExperienceCard({ item, match, residency = 'nonResident',
           )}
         </div>
 
-        <h3 className="mt-2 font-display text-[1.4rem] leading-tight text-ocean-900">
+        <h3 lang={langOf(item.titleLang)} className="mt-2 font-display text-[1.4rem] leading-tight text-ocean-900">
           {/* Stretched link: the whole card opens the experience, the button stays a real button */}
           <Link to={item.href} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-[var(--radius-card)] focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-coral-500">
             {item.title}
           </Link>
         </h3>
         {item.rating && <RatingBadge stats={item.rating} className="mt-1.5" />}
-        {item.summary && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ocean-900/60">{item.summary}</p>}
+        {item.summary && (
+          <p lang={langOf(item.summaryLang)} className="mt-2 line-clamp-2 text-sm leading-relaxed text-ocean-900/60">
+            {item.summary}
+          </p>
+        )}
 
         {match?.great && match.reasons.length > 0 && (
-          <p className="mt-3 text-xs font-semibold text-lagoon-700">Matches: {match.reasons.join(' · ')}</p>
+          <p className="mt-3 text-xs font-semibold text-lagoon-700">{t('matches', { reasons: match.reasons.join(' · ') })}</p>
         )}
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
           <div className="text-sm text-ocean-900/60">
             {price !== null && price !== undefined ? (
               <>
-                from
+                {t('from')}
                 <span className="block whitespace-nowrap font-display text-2xl leading-tight text-ocean-900">{formatKES(price)}</span>
-                <span className="text-xs">{item.price.unit}</span>
+                <span className="text-xs">{unitLabel(item.price.unit)}</span>
               </>
             ) : (
-              <span className="font-semibold text-ocean-900">Price on request</span>
+              <span className="font-semibold text-ocean-900">{t('priceOnRequest')}</span>
             )}
           </div>
           <div className="flex flex-col items-end gap-2">
             {item.kind === 'group' && item.full ? (
-              <Badge tone="sand">Fully booked</Badge>
+              <Badge tone="sand">{t('fullyBooked')}</Badge>
             ) : (
               <>
-                {item.kind === 'group' && item.seatsLeft > 0 && item.seatsLeft <= 5 && <Badge tone="ochre">{item.seatsLeft} seats left</Badge>}
+                {item.kind === 'group' && item.seatsLeft > 0 && item.seatsLeft <= 5 && <Badge tone="ochre">{t('seatsLeft', { count: item.seatsLeft })}</Badge>}
                 <AddToTripButton item={item} />
               </>
             )}

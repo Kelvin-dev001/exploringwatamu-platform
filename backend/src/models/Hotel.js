@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ITALIAN_FIELDS } = require('../constants/italianContent');
 
 const RoomTypeSchema = new mongoose.Schema({
   name: String,
@@ -59,5 +60,9 @@ HotelSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', d
 
 // Public rating from approved reviews (written only by services/reviewStats).
 HotelSchema.plugin(require('./plugins/reviewStats'));
+
+
+// Optional Italian text, written by the team (constants/italianContent.js).
+HotelSchema.plugin(require('./plugins/italianContent'), { fields: ITALIAN_FIELDS.stay });
 
 module.exports = mongoose.model('Hotel', HotelSchema);

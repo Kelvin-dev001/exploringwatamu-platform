@@ -10,6 +10,8 @@ const { sendMail } = require('./mailer');
 const logger = require('./logger');
 const { signReviewInvite } = require('./tokens');
 const { inviteEmail } = require('./reviewNotifications');
+const { sitePath } = require('../i18n');
+const { normaliseLocale } = require('../constants/locales');
 const { tripRequestItems, groupBookingItems } = require('./reviewEligibility');
 const { INVITE_DELAY_DAYS, INVITE_WINDOW_DAYS, INVITE_MAX_ATTEMPTS } = require('../constants/reviews');
 
@@ -47,8 +49,8 @@ async function dueBookings(now) {
   const groupBookings = trips.length ? await GroupBooking.find({ status: 'confirmed', trip: { $in: trips.map((t) => t._id) } }).lean() : [];
 
   return [
-    ...requests.map((r) => ({ bookingType: 'tripRequest', booking: r, bookingId: r._id, email: r.contact?.email, name: r.contact?.name, user: r.user, label: r.reference })),
-    ...groupBookings.map((b) => ({ bookingType: 'groupBooking', booking: b, bookingId: b._id, email: b.email, name: b.fullName, user: b.user, label: `group booking ${b._id}` })),
+    ...requests.map((r) => ({ bookingType: 'tripRequest', booking: r, bookingId: r._id, email: r.contact?.email, name: r.contact?.name, user: r.user, label: r.reference, locale: normaliseLocale(r.locale) })),
+    ...groupBookings.map((b) => ({ bookingType: 'groupBooking', booking: b, bookingId: b._id, email: b.email, name: b.fullName, user: b.user, label: `group booking ${b._id}`, locale: normaliseLocale(b.locale) })),
   ];
 }
 
@@ -96,7 +98,8 @@ async function claim(c, now) {
 
 function linkFor(c) {
   const token = signReviewInvite({ bookingType: c.bookingType, bookingId: c.bookingId, email: c.email });
-  return `${config.frontendUrl.replace(/\/$/, '')}/review/${c.bookingType}/${c.bookingId}?t=${encodeURIComponent(token)}`;
+  // The review page opens in the traveller's language.
+  return `${config.frontendUrl.replace(/\/$/, '')}${sitePath(`/review/${c.bookingType}/${c.bookingId}`, c.locale)}?t=${encodeURIComponent(token)}`;
 }
 
 /**
@@ -128,7 +131,7 @@ async function runReviewInvites({ send = false, now = new Date(), log = () => {}
       continue;
     }
     try {
-      const { subject, html } = inviteEmail({ name: c.name, items: c.items, link: linkFor(c) });
+      const { subject, html } = inviteEmail({ name: c.name, items: c.items, link: linkFor(c), locale: c.locale });
       await sendMail({ to: c.email, user: c.user || null, event: 'review_invite', subject, html });
       await ReviewInvite.updateOne({ _id: claimed._id }, { $set: { status: 'sent', sentAt: new Date() }, $unset: { lastError: 1 } });
       summary.sent += 1;

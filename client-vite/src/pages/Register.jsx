@@ -6,8 +6,12 @@ import { useAuth } from '@/context/AuthContext.jsx';
 import AuthShell, { AuthField, AuthError, authInput } from '@/components/auth/AuthShell';
 import GoogleButton, { OrDivider } from '@/components/auth/GoogleButton';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/account';
+import { apiError } from '@/lib/apiErrors';
 
 export default function Register() {
+  const { t, rich } = useI18n(messages);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +33,7 @@ export default function Register() {
     try {
       finish(await axios.post(`${API_URL}/auth/google`, { credential }));
     } catch (err) {
-      setError(err.response?.data?.error || 'Google sign-up failed. Please try again.');
+      setError(apiError(err, t('googleSignupFailed')));
     }
     setLoading(false);
   };
@@ -41,36 +45,35 @@ export default function Register() {
     try {
       finish(await axios.post(`${API_URL}/auth/register`, form));
     } catch (err) {
-      const d = err.response?.data;
-      setError(d?.error === 'Validation failed' && d.issues?.length ? d.issues.map((i) => i.message).join(' · ') : d?.error || 'We couldn’t create your account. Please try again.');
+      setError(apiError(err, t('registerFailed')));
     }
     setLoading(false);
   };
 
   return (
     <AuthShell
-      title="Create your account"
-      seoTitle="Create an account"
-      lede="Track your quotes, join group trips and share your referral link with friends."
-      footer={<>Already have an account? <Link to="/login" state={location.state} className="font-semibold text-ocean-900 underline decoration-coral-400 underline-offset-4">Sign in</Link></>}
+      title={t('registerTitle')}
+      seoTitle={t('registerSeo')}
+      lede={t('registerLede')}
+      footer={rich('haveAccount', { link: (text) => <Link to="/login" state={location.state} className="font-semibold text-ocean-900 underline decoration-coral-400 underline-offset-4">{text}</Link> })}
     >
       <GoogleButton onCredential={onGoogle} text="signup_with" />
       <OrDivider />
       <form onSubmit={submit} className="space-y-4">
         <AuthError>{error}</AuthError>
-        <AuthField label="Full name">
+        <AuthField label={t('fullName')}>
           <input value={form.name} onChange={set('name')} required autoComplete="name" className={authInput} />
         </AuthField>
-        <AuthField label="Email">
+        <AuthField label={t('email')}>
           <input type="email" value={form.email} onChange={set('email')} required autoComplete="email" className={authInput} />
         </AuthField>
-        <AuthField label="Phone / WhatsApp (optional)" hint="With country code, e.g. +44 7…">
+        <AuthField label={t('phoneOptional')} hint={t('phoneHint')}>
           <input type="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" className={authInput} />
         </AuthField>
-        <AuthField label="Password" hint="At least 8 characters">
+        <AuthField label={t('password')} hint={t('passwordHint')}>
           <input type="password" value={form.password} onChange={set('password')} required minLength={8} autoComplete="new-password" className={authInput} />
         </AuthField>
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>{loading ? 'Creating account…' : 'Create account'}</Button>
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>{loading ? t('creating') : t('createAccount')}</Button>
       </form>
     </AuthShell>
   );

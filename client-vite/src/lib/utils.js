@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { localeTag } from '@/i18n';
 
 /** Merge class names, letting later Tailwind classes win (shadcn convention). */
 export function cn(...inputs) {
@@ -10,8 +11,9 @@ export function cn(...inputs) {
  * Format a calendar date — an arrival, a group trip's start — that the API
  * stores as UTC midnight. Formatting in UTC keeps the same day for every
  * visitor; in local time someone in the Americas would see the day before.
+ * In the website's language unless a BCP 47 tag is given.
  */
-export function formatDay(value, options = { day: 'numeric', month: 'short', year: 'numeric' }, locale = 'en-GB') {
+export function formatDay(value, options = { day: 'numeric', month: 'short', year: 'numeric' }, locale = localeTag()) {
   if (!value) return '';
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });

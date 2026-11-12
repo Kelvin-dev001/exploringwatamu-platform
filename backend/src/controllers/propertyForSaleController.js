@@ -1,4 +1,5 @@
 const PropertyForSale = require('../models/PropertyForSale');
+const { ITALIAN_FIELDS, parseItalian } = require('../constants/italianContent');
 const { activeFilter, canSee } = require('../services/listingVisibility');
 const { contains, pageParams, pageOf } = require('../services/listQuery');
 const { nextGallery } = require('../services/gallery');
@@ -55,6 +56,7 @@ exports.createProperty = async (req, res, next) => {
       pictures: pictureUrls,
       documents: documentUrls,
       active: req.body.active === 'true' || req.body.active === true,
+      ...parseItalian(req.body, ITALIAN_FIELDS.property),
     };
     const property = new PropertyForSale(propertyData);
     await property.save();
@@ -87,6 +89,7 @@ exports.updateProperty = async (req, res, next) => {
       ...(pictures ? { pictures } : {}),
       ...(documents ? { documents } : {}),
       active: req.body.active === 'true' || req.body.active === true,
+      ...parseItalian(req.body, ITALIAN_FIELDS.property),
     };
     const property = await PropertyForSale.findByIdAndUpdate(
       req.params.id,

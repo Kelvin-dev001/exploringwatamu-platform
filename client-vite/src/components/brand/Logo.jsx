@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 /**
  * The ExploringWatamu badge (dhow, palms, sun, dolphins, turtle).
@@ -35,10 +36,11 @@ export function BrandBadge({ className, alt = '', priority = false }) {
  */
 export function Logo({ tone = 'dark', className, to = '/', badgeOnly = false }) {
   const light = tone === 'light';
+  const { t } = useI18n();
   return (
     <Link
       to={to}
-      aria-label="Exploring Watamu — home"
+      aria-label={t('brandHome')}
       className={cn('group inline-flex items-center gap-3', light ? 'text-sand-50' : 'text-ocean-900', className)}
     >
       <BrandBadge priority className="transition-transform duration-500 ease-[var(--ease-tide)] group-hover:rotate-[-8deg]" />

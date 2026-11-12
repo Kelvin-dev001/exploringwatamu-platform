@@ -5,9 +5,12 @@ import { Sheet } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { WhatsAppIcon } from '@/components/contact/WhatsApp';
 import { businessLink, fitsInLink, tripMessage } from '@/lib/whatsapp';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/planner';
 
 /** The message itself. Mounted each time the sheet opens, so it starts from the current plan. */
 function Message({ trip }) {
+  const { t } = useI18n(messages);
   const original = tripMessage(trip);
   const [text, setText] = useState(original);
   const tooLong = !fitsInLink(text);
@@ -20,11 +23,11 @@ function Message({ trip }) {
         {/* The reset button sits beside the label, not inside it: a button inside a <label> takes the label away from the textarea. */}
         <div className="mb-1.5 flex items-center justify-between">
           <label htmlFor="wa-plan-message" className="text-sm font-semibold text-ocean-900">
-            Your message
+            {t('waMessage')}
           </label>
           {text !== original && (
             <button type="button" onClick={() => setText(original)} className="inline-flex items-center gap-1 text-xs font-semibold text-ocean-900/60 hover:text-ocean-900">
-              <RotateCcw className="size-3.5" /> Start again
+              <RotateCcw className="size-3.5" /> {t('waStartAgain')}
             </button>
           )}
         </div>
@@ -39,19 +42,19 @@ function Message({ trip }) {
       </div>
       {tooLong && (
         <p role="alert" className="rounded-xl bg-coral-50 p-3 text-sm font-semibold text-coral-700">
-          That’s too long for one WhatsApp message link — shorten it a little, or send the rest once the chat is open.
+          {t('waTooLong')}
         </p>
       )}
       <p id="wa-plan-help" className="text-sm text-ocean-900/65">
-        WhatsApp opens with this message ready to go. Nothing is sent until you press Send there — you can still change it.
+        {t('waHelp')}
       </p>
       {href ? (
         <Button href={href} target="_blank" rel="noopener noreferrer" variant="whatsapp" size="lg" className="w-full">
-          <WhatsAppIcon /> Open WhatsApp
+          <WhatsAppIcon /> {t('waOpen')}
         </Button>
       ) : (
         <Button variant="whatsapp" size="lg" className="w-full" disabled>
-          <WhatsAppIcon /> Open WhatsApp
+          <WhatsAppIcon /> {t('waOpen')}
         </Button>
       )}
     </div>
@@ -60,9 +63,10 @@ function Message({ trip }) {
 
 /** Review the plan as a WhatsApp message, then open WhatsApp with it. */
 export default function WhatsAppPlanSheet({ open, onOpenChange }) {
+  const { t } = useI18n(messages);
   const { trip } = useTrip();
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Send your plan on WhatsApp" description="Check the message and change anything you like.">
+    <Sheet open={open} onOpenChange={onOpenChange} title={t('waTitle')} description={t('waDescription')}>
       {open && <Message trip={trip} />}
     </Sheet>
   );

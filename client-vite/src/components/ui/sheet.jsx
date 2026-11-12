@@ -1,12 +1,14 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 /**
  * Slide-in panel (mobile menu, filters, trip cart). Built on Radix Dialog
  * so focus trapping, Escape and scroll-locking are handled for us.
  */
 export function Sheet({ open, onOpenChange, side = 'right', title, description, className, children }) {
+  const { t } = useI18n();
   const sides = {
     right: 'inset-y-0 right-0 h-full w-[88vw] max-w-sm data-[state=open]:animate-[sheet-in-right_.35s_var(--ease-tide)]',
     bottom: 'inset-x-0 bottom-0 max-h-[88vh] rounded-t-[1.75rem] data-[state=open]:animate-[sheet-in-bottom_.35s_var(--ease-tide)]',
@@ -29,7 +31,7 @@ export function Sheet({ open, onOpenChange, side = 'right', title, description, 
             </div>
             <Dialog.Close
               className="-mr-2 rounded-full p-2 text-ocean-900/70 transition hover:bg-ocean-900/5 hover:text-ocean-900"
-              aria-label="Close"
+              aria-label={t('close')}
             >
               <X className="size-5" />
             </Dialog.Close>

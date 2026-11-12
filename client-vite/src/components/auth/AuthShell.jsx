@@ -1,9 +1,12 @@
 import { BrandBadge } from '@/components/brand/Logo';
 import { WaveField } from '@/components/brand/Patterns';
 import Seo from '@/components/seo/Seo';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/account';
 
 /** Split layout for sign-in pages: form on sand, an ocean panel on large screens. */
 export default function AuthShell({ title, lede, seoTitle, children, footer }) {
+  const { t } = useI18n(messages);
   return (
     <div className="grid min-h-[calc(100vh-4.5rem)] lg:grid-cols-[1fr_1.05fr]">
       <Seo title={seoTitle || title} noindex />
@@ -23,7 +26,7 @@ export default function AuthShell({ title, lede, seoTitle, children, footer }) {
         </div>
         <div className="absolute bottom-12 left-12 right-12 flex items-end gap-5 text-sand-50">
           <BrandBadge className="size-20 ring-4 ring-ocean-900/40" />
-          <p className="font-display text-2xl italic leading-snug">Your Watamu, tuned to you.</p>
+          <p className="font-display text-2xl italic leading-snug">{t('shellLine')}</p>
         </div>
       </div>
     </div>

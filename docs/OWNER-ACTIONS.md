@@ -58,6 +58,23 @@ rough order of importance; tick them off as you go.
   Render and `VITE_SENTRY_DSN` on both Vercel projects; add an alert rule.
 - [ ] **Atlas alerts:** host down, connections, storage.
 
+## English and Italian
+
+Nothing to configure: no new environment variables. Details in [`LOCALISATION.md`](LOCALISATION.md).
+
+- [ ] **After the merge, check the Italian site on Vercel:** `/it`, `/it/experiences`, an
+  experience page under `/it/experiences/…` and a page refresh there all load in Italian,
+  and sharing an `/it/…` experience link in WhatsApp shows its preview.
+- [ ] **Have a native Italian speaker review the translations** before promoting the
+  Italian site: `client-vite/src/locales/*.js` (website), `client-vite/seo/routes.js`
+  (search titles and descriptions), `backend/src/i18n/it.js` (emails, SMS, PDFs) and the
+  Italian replies in `admin-vite/src/lib/tripReplies.js`.
+- [ ] **Write Italian text for the main listings** in Admin → the listing → **Italian
+  (optional)**. Start with experiences and group trips: an Italian description gives them
+  their own page in Italian search results. Without it they show their English text.
+- [ ] If Google Search Console is set up, **resubmit `sitemap.xml`** (it now lists the
+  Italian pages).
+
 ## Data
 
 - [ ] **Backups.** The free Atlas tier has no automatic backups. Either run the

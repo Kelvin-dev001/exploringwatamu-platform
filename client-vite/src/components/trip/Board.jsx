@@ -14,14 +14,21 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from '@dnd-kit/utilities';
 import { AlertTriangle, GripVertical, Lightbulb, Plane, Trash2, Clock, BedDouble, CarFront, Sparkles } from 'lucide-react';
 import { useTrip } from '@/context/TripContext';
-import { BUSY_HOURS, dayHours, dayLabel, laneId, laneItems, laneOf } from '@/lib/trip';
+import { BUSY_HOURS, dayHours, dayLabel, laneId, laneItems, laneOf, snapLength, snapRate, snapTitle, snapTitleLang } from '@/lib/trip';
 import { VIBES, byId } from '@/lib/vibes';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/planner';
 
 /* ---------- Item ---------- */
 
 function ItemBody({ snap, dragging, handleProps, onRemove, moveSelect }) {
+  const { t, langOf } = useI18n(messages);
   const vibe = byId(VIBES, snap.vibe);
+  const title = snapTitle(snap);
+  const titleLang = langOf(snapTitleLang(snap));
+  const length = snapLength(snap);
+  const rate = snapRate(snap);
   const Icon = { transfer: Plane, stay: BedDouble, carhire: CarFront, service: Sparkles }[snap.kind] || vibe?.icon;
   return (
     <div
@@ -34,7 +41,7 @@ function ItemBody({ snap, dragging, handleProps, onRemove, moveSelect }) {
       <button
         type="button"
         {...handleProps}
-        aria-label={`Drag ${snap.title}`}
+        aria-label={t('drag', { title })}
         className="mt-0.5 cursor-grab touch-none rounded-lg p-1 text-ocean-900/50 hover:bg-sand-100 hover:text-ocean-900 active:cursor-grabbing"
       >
         <GripVertical className="size-4" />
@@ -46,22 +53,24 @@ function ItemBody({ snap, dragging, handleProps, onRemove, moveSelect }) {
       )}
       <div className="min-w-0 flex-1">
         {snap.href ? (
-          <Link to={snap.href} className="block font-semibold leading-snug text-ocean-900 hover:underline">
-            {snap.title}
+          <Link to={snap.href} lang={titleLang} className="block font-semibold leading-snug text-ocean-900 hover:underline">
+            {title}
           </Link>
         ) : (
-          <p className="font-semibold leading-snug text-ocean-900">{snap.title}</p>
-        )}
-        {snap.lengthLabel && (
-          <p className="mt-0.5 flex items-center gap-1 text-xs text-ocean-900/60">
-            <Clock className="size-3" /> {snap.lengthLabel}
+          <p lang={titleLang} className="font-semibold leading-snug text-ocean-900">
+            {title}
           </p>
         )}
-        {snap.rateLabel && <p className="mt-0.5 text-xs font-semibold text-ocean-900/60">Listed {snap.rateLabel}</p>}
+        {length && (
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-ocean-900/60">
+            <Clock className="size-3" /> {length}
+          </p>
+        )}
+        {rate && <p className="mt-0.5 text-xs font-semibold text-ocean-900/60">{t('listed', { rate })}</p>}
         {moveSelect}
       </div>
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label={`Remove ${snap.title}`} className="rounded-full p-1.5 text-ocean-900/50 hover:bg-coral-50 hover:text-coral-600">
+        <button type="button" onClick={onRemove} aria-label={t('removeItem', { title })} className="rounded-full p-1.5 text-ocean-900/50 hover:bg-coral-50 hover:text-coral-600">
           <Trash2 className="size-4" />
         </button>
       )}
@@ -71,17 +80,18 @@ function ItemBody({ snap, dragging, handleProps, onRemove, moveSelect }) {
 
 /** "Move to…" select: the keyboard/touch-friendly alternative to dragging. */
 function MoveSelect({ itemKey }) {
+  const { t } = useI18n(messages);
   const { trip, move } = useTrip();
   const current = laneOf(trip, itemKey);
   return (
     <label className="mt-2 inline-flex items-center gap-1.5 text-xs text-ocean-900/60">
-      <span className="sr-only">Move to</span>
+      <span className="sr-only">{t('moveTo')}</span>
       <select
         value={current || ''}
         onChange={(e) => move(itemKey, e.target.value)}
         className="rounded-full border border-sand-300 bg-white px-2 py-1 text-xs font-semibold text-ocean-900"
       >
-        <option value="ideas">Stays &amp; extras</option>
+        <option value="ideas">{t('staysExtras')}</option>
         {trip.days.map((_, i) => (
           <option key={i} value={laneId(i)}>
             {dayLabel(trip, i)}
@@ -139,6 +149,7 @@ function Lane({ id, className, empty }) {
 }
 
 function DayCard({ index }) {
+  const { t, formatNumber } = useI18n(messages);
   const { trip } = useTrip();
   const hours = dayHours(trip, index);
   const busy = hours > BUSY_HOURS;
@@ -148,7 +159,7 @@ function DayCard({ index }) {
       <header className="flex items-center justify-between gap-3 px-2 pb-2 pt-1">
         <h3 className="font-display text-lg text-ocean-900">{dayLabel(trip, index)}</h3>
         <span className={cn('text-xs font-semibold', busy ? 'text-coral-600' : 'text-ocean-900/60')}>
-          {hours ? `${Math.round(hours * 10) / 10} h planned` : 'Free day'}
+          {hours ? t('hoursPlanned', { hours: formatNumber(Math.round(hours * 10) / 10) }) : t('freeDay')}
         </span>
       </header>
       <div className="mx-2 mb-2 h-1 overflow-hidden rounded-full bg-sand-200" aria-hidden="true">
@@ -156,10 +167,10 @@ function DayCard({ index }) {
       </div>
       {busy && (
         <p className="mx-2 mb-2 flex items-center gap-1.5 rounded-xl bg-coral-50 px-3 py-2 text-xs font-semibold text-coral-700">
-          <AlertTriangle className="size-3.5" /> A full day — consider moving something
+          <AlertTriangle className="size-3.5" /> {t('busy')}
         </p>
       )}
-      <Lane id={laneId(index)} empty="Drop experiences here — or keep it free for the beach" />
+      <Lane id={laneId(index)} empty={t('dropHere')} />
     </section>
   );
 }
@@ -167,6 +178,7 @@ function DayCard({ index }) {
 /* ---------- Board ---------- */
 
 export default function Board() {
+  const { t } = useI18n(messages);
   const { trip, move } = useTrip();
   const [activeKey, setActiveKey] = useState(null);
   const sensors = useSensors(
@@ -175,6 +187,23 @@ export default function Board() {
   );
 
   const laneFor = (id) => (id === 'ideas' || String(id).startsWith('day-') ? id : laneOf(trip, id));
+
+  // Screen-reader announcements in the page's language, naming items and days (not internal ids).
+  const nameOf = (id) => snapTitle(trip.items[id]) || String(id);
+  const laneName = (id) => {
+    const lane = laneFor(id);
+    if (!lane) return null;
+    return lane === 'ideas' ? t('staysExtras') : dayLabel(trip, Number(String(lane).replace('day-', '')));
+  };
+  const accessibility = {
+    screenReaderInstructions: { draggable: t('dragInstructions') },
+    announcements: {
+      onDragStart: ({ active }) => t('dragStart', { title: nameOf(active.id) }),
+      onDragOver: ({ active, over }) => (over && laneName(over.id) ? t('dragOver', { title: nameOf(active.id), lane: laneName(over.id) }) : t('dragOverNone', { title: nameOf(active.id) })),
+      onDragEnd: ({ active, over }) => (over && laneName(over.id) ? t('dragEnd', { title: nameOf(active.id), lane: laneName(over.id) }) : t('dragEndNone', { title: nameOf(active.id) })),
+      onDragCancel: ({ active }) => t('dragCancel', { title: nameOf(active.id) }),
+    },
+  };
 
   const onDragOver = ({ active, over }) => {
     if (!over) return;
@@ -199,6 +228,7 @@ export default function Board() {
   return (
     <DndContext
       sensors={sensors}
+      accessibility={accessibility}
       collisionDetection={closestCorners}
       onDragStart={({ active }) => setActiveKey(active.id)}
       onDragOver={onDragOver}
@@ -207,12 +237,12 @@ export default function Board() {
     >
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
         <aside className="lg:sticky lg:top-28 lg:self-start">
-          <section aria-label="Stays, extras and unscheduled ideas" className="rounded-[var(--radius-card)] border border-dashed border-sand-300 bg-white/60 p-3">
+          <section aria-label={t('ideasLabel')} className="rounded-[var(--radius-card)] border border-dashed border-sand-300 bg-white/60 p-3">
             <header className="flex items-center gap-2 px-2 pb-2 pt-1">
               <Lightbulb className="size-4 text-ochre-500" />
-              <h3 className="font-display text-lg text-ocean-900">Stays &amp; extras</h3>
+              <h3 className="font-display text-lg text-ocean-900">{t('staysExtras')}</h3>
             </header>
-            <Lane id="ideas" empty="Stays, car hire and services land here. Unscheduled experiences wait here too." />
+            <Lane id="ideas" empty={t('ideasEmpty')} />
           </section>
         </aside>
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">

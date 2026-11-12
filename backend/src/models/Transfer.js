@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ITALIAN_FIELDS } = require('../constants/italianContent');
 
 const TransferSchema = new mongoose.Schema({
   route: {
@@ -23,5 +24,9 @@ TransferSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin'
 
 // Public rating from approved reviews (written only by services/reviewStats).
 TransferSchema.plugin(require('./plugins/reviewStats'));
+
+
+// Optional Italian text, written by the team (constants/italianContent.js).
+TransferSchema.plugin(require('./plugins/italianContent'), { fields: ITALIAN_FIELDS.transfer });
 
 module.exports = mongoose.model('Transfer', TransferSchema);

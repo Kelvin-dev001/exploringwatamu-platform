@@ -10,45 +10,58 @@ import { Button } from '@/components/ui/button';
 import { snapshotFor } from '@/lib/trip';
 import { listingEnquiry, generalMessage } from '@/lib/whatsapp';
 import { WhatsAppButton } from '@/components/contact/WhatsApp';
+import { translate } from '@/i18n';
+import catalogText from '@/locales/catalog';
+import { useI18n } from '@/i18n';
+import { pickText } from '@/i18n/listingContent';
+import messages from '@/locales/listings';
+import whatsappText from '@/locales/whatsapp';
 
 const ART_CYCLE = ['slow', 'ocean', 'romance', 'culture', 'adventure'];
 
 export default function CarHire() {
+  const { t, locale } = useI18n(messages);
+  const tw = (key, vars) => translate(whatsappText, locale, key, vars);
+  const tc = (key, vars) => translate(catalogText, locale, key, vars);
   const { items, loading, error, retry } = useListing('/carhire', LIST_PARAMS);
   return (
     <>
-      <Seo title="Car hire in Watamu" description="Hire a car to explore Watamu, Malindi and the Kenyan coast at your own pace. Add it to your trip for one combined quote." />
-      <PageHero eyebrow="Getting around" title="Car hire" lede="Explore Gede, Malindi and the forest at your own pace. Self-drive or with a driver." />
+      <Seo route="/carhire" />
+      <PageHero eyebrow={t('carsEyebrow')} title={t('carsTitle')} lede={t('carsLede')} />
       <Container size="wide" className="py-10 lg:py-14">
         {error ? (
-          <ErrorState what="cars" onRetry={retry} />
+          <ErrorState what={t('whatCars')} onRetry={retry} />
         ) : loading ? (
           <GridSkeleton count={3} />
         ) : items.length === 0 ? (
-          <EmptyState title="Cars are arranged on request" text="Tell us your dates and what you need — we’ll include a car in your quote.">
-            <Button href="mailto:hello@exploringwatamu.com?subject=Car%20hire%20request">Ask our team</Button>
-            <WhatsAppButton message={generalMessage('hiring a car')}>Ask on WhatsApp</WhatsAppButton>
+          <EmptyState title={t('carsEmptyTitle')} text={t('carsEmptyText')}>
+            <Button href={`mailto:hello@exploringwatamu.com?subject=${encodeURIComponent(t('carSubject'))}`}>{t('askTeam')}</Button>
+            <WhatsAppButton message={generalMessage('car')}>{tw('ask')}</WhatsAppButton>
           </EmptyState>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {items.map((c, i) => (
+            {items.map((c, i) => {
+              const description = pickText(c, 'description', locale);
+              return (
               <ListingCard
                 key={c._id}
                 images={c.vehicle?.image ? [c.vehicle.image] : []}
                 art={ART_CYCLE[i % ART_CYCLE.length]}
-                title={c.vehicle?.name || 'Vehicle'}
-                meta={[c.vehicle?.capacity && { icon: Users, text: `${c.vehicle.capacity} seats` }, c.vehicle?.type && { icon: CarFront, text: c.vehicle.type }]}
-                description={c.description}
+                title={c.vehicle?.name || tc('vehicle')}
+                meta={[c.vehicle?.capacity && { icon: Users, text: tc('seats', { count: Number(c.vehicle.capacity) }) }, c.vehicle?.type && { icon: CarFront, text: c.vehicle.type }]}
+                description={description.text}
+                descriptionLang={description.lang}
                 price={c.dailyRate != null ? { amount: c.dailyRate, unit: 'per day' } : null}
                 reviews={{ listingType: 'carhire', listingId: c._id, stats: c.reviewStats }}
                 actions={
                   <>
-                    <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('carhire', c)} label={`Ask about ${c.vehicle?.name || 'this car'} on WhatsApp`} />
-                    <AddToTripButton snapshot={snapshotFor('carhire', c)} label="Add car" />
+                    <WhatsAppButton iconOnly className="size-9" message={listingEnquiry('carhire', c)} label={tw('askAbout', { name: c.vehicle?.name || t('thisCar') })} />
+                    <AddToTripButton snapshot={snapshotFor('carhire', c)} label={t('addCar')} />
                   </>
                 }
               />
-            ))}
+              );
+            })}
           </div>
         )}
       </Container>

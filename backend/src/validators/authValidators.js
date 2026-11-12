@@ -1,6 +1,7 @@
 'use strict';
 
 const { z } = require('zod');
+const { LOCALES } = require('../constants/locales');
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100),
@@ -16,6 +17,8 @@ const loginSchema = z.object({
 
 const forgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'A valid email is required'),
+  // The website's language, for the email and the link in it.
+  locale: z.enum(LOCALES).optional(),
 });
 
 const resetPasswordSchema = z.object({

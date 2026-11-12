@@ -1,33 +1,23 @@
 import React, { useState, useRef } from 'react';
 import { formatDay } from '@/lib/utils';
 import { absoluteUrl } from '@/lib/site';
+import { localisePath, useI18n } from '@/i18n';
+import messages from '@/locales/groupTrips';
+import { personaEmoji, useVibeWords } from '@/lib/travelVibes';
 
 export default function ECardPreview({ booking, trip, user }) {
+  const { t, locale } = useI18n(messages);
+  const { personaLabel } = useVibeWords();
   const [downloading, setDownloading] = useState(false);
   const eCardRef = useRef(null);
 
-  const personalityEmojis = {
-    'Party Starter': '🎉',
-    'Social Butterfly': '🦋',
-    'Chill Connector': '😎',
-    'Reserved Explorer': '🌿',
-    'Music Lover': '🎧',
-    'Storyteller': '📖',
-    'Jokester': '😂',
-    'Deep Talker': '🎙️',
-    'Adrenaline Junkie': '⚡',
-    'Photography Lover': '📸',
-    'Nature Nerd': '🌴',
-    'Foodie Explorer': '🍲',
-    'Beach Bum': '🏖️',
-  };
-
   const personalityText = booking.travelPersonalities
-    ?.map(p => `${personalityEmojis[p] || '✨'} ${p}`)
-    .join('\n') || 'Travel Lover';
+    ?.map((p) => `${personaEmoji(p)} ${personaLabel(p)}`)
+    .join('\n') || t('travelLover');
 
-  const startDate = formatDay(trip.startDate, { month: 'short', day: 'numeric' }, 'en-KE');
-  const endDate = formatDay(trip.endDate, { month: 'short', day: 'numeric', year: 'numeric' }, 'en-KE');
+  const startDate = formatDay(trip.startDate, { month: 'short', day: 'numeric' });
+  const endDate = formatDay(trip.endDate, { month: 'short', day: 'numeric', year: 'numeric' });
+  const tripLink = absoluteUrl(localisePath(`/group-trips/${trip.slug}`, locale));
 
   const downloadECard = async () => {
     setDownloading(true);
@@ -44,13 +34,13 @@ export default function ECardPreview({ booking, trip, user }) {
       link.click();
     } catch (err) {
       console.error('Download failed:', err);
-      alert('Failed to download e-card');
+      alert(t('downloadFailed'));
     } finally {
       setDownloading(false);
     }
   };
 
-  const shareText = `🎉 IT'S OFFICIAL! I'm joining the ${trip.title} on ${startDate}-${endDate} with @ExploringWatamu\n\nMy travel personality: ${personalityText.replace(/\n/g, ' + ')}\n\nWho's joining me? ${absoluteUrl(`/group-trips/${trip.slug}`)}`;
+  const shareText = t('shareText', { trip: trip.title, dates: `${startDate}–${endDate}`, vibe: personalityText.replace(/\n/g, ' + '), link: tripLink });
 
   const shareToWhatsApp = () => {
     const encodedText = encodeURIComponent(shareText);
@@ -60,13 +50,13 @@ export default function ECardPreview({ booking, trip, user }) {
   const shareToInstagram = () => {
     // Copy to clipboard for Instagram Stories/Post
     navigator.clipboard.writeText(shareText);
-    alert('Text copied! Paste it in your Instagram caption 📸');
+    alert(t('copiedInstagram'));
   };
 
   const copyShareLink = () => {
-    const link = `${window.location.origin}/group-trips/${trip.slug}?ref=${user.referralCode}`;
+    const link = `${tripLink}?ref=${user.referralCode}`;
     navigator.clipboard.writeText(link);
-    alert('Referral link copied!');
+    alert(t('referralCopied'));
   };
 
   return (
@@ -99,7 +89,7 @@ export default function ECardPreview({ booking, trip, user }) {
           </p>
 
           <div className="bg-white/20 rounded-xl p-4 backdrop-blur-sm mb-4">
-            <p className="text-white font-bold text-sm mb-2">My Travel Vibe:</p>
+            <p className="text-white font-bold text-sm mb-2">{t('myVibe')}</p>
             <p
               className="text-white text-sm font-semibold whitespace-pre-line"
               style={{ lineHeight: '1.6' }}
@@ -108,13 +98,13 @@ export default function ECardPreview({ booking, trip, user }) {
             </p>
           </div>
 
-          <p className="text-white text-sm font-semibold">🎉 IT'S OFFICIAL!</p>
+          <p className="text-white text-sm font-semibold">{t('official')}</p>
         </div>
 
         {/* Footer */}
         <div className="text-center">
           <p className="text-white text-xs font-bold">
-            {user.name.toUpperCase()} IS GOING
+            {t('isGoing', { name: user.name.toUpperCase() })}
           </p>
           <p className="text-white/70 text-xs mt-1">@ExploringWatamu</p>
         </div>
@@ -128,7 +118,7 @@ export default function ECardPreview({ booking, trip, user }) {
           className="w-full py-2.5 rounded-lg font-semibold text-white text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ backgroundColor: '#e06c31' }}
         >
-          {downloading ? '⏳ Downloading...' : '⬇️ Download for Instagram'}
+          {downloading ? t('downloading') : t('download')}
         </button>
 
         <div className="grid grid-cols-2 gap-2">
@@ -137,14 +127,14 @@ export default function ECardPreview({ booking, trip, user }) {
             className="py-2.5 rounded-lg font-semibold text-white text-sm transition-opacity hover:opacity-90"
             style={{ backgroundColor: '#25D366' }}
           >
-            💬 Share to WhatsApp
+            {t('shareWhatsApp')}
           </button>
           <button
             onClick={shareToInstagram}
             className="py-2.5 rounded-lg font-semibold text-white text-sm transition-opacity hover:opacity-90"
             style={{ backgroundColor: '#E4405F' }}
           >
-            📸 Share to Instagram
+            {t('shareInstagram')}
           </button>
         </div>
 
@@ -153,7 +143,7 @@ export default function ECardPreview({ booking, trip, user }) {
           className="w-full py-2.5 rounded-lg font-semibold border-2 text-sm transition-colors hover:bg-gray-50"
           style={{ borderColor: '#02a8ab', color: '#02a8ab' }}
         >
-          🔗 Copy Referral Link
+          {t('copyReferral')}
         </button>
       </div>
     </div>

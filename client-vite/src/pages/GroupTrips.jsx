@@ -8,29 +8,32 @@ import ExperienceCard from '@/components/experience/ExperienceCard';
 import Seo from '@/components/seo/Seo';
 import { Container } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/groupTrips';
 
 export default function GroupTrips() {
+  const { t } = useI18n(messages);
   const { profile } = useVibeProfile();
   const { items, loading, error, retry } = useCatalog();
   const trips = useMemo(() => rankExperiences(items.filter((x) => x.kind === 'group'), profile), [items, profile]);
 
   return (
     <>
-      <Seo title="Group trips in Watamu" description="Join scheduled group adventures in Watamu, Kenya — reef weekends, dhow parties and more with other travellers. Request your spot; pay after we confirm." />
+      <Seo route="/group-trips" />
       <PageHero
         tone="ocean"
-        eyebrow="Group trips"
-        title="Come for the coast, leave with a crew"
-        lede="Scheduled adventures with a small group of travellers. Request your spot — you only pay once we confirm it."
+        eyebrow={t('listEyebrow')}
+        title={t('listTitle')}
+        lede={t('listLede')}
       />
       <Container size="wide" className="py-10 lg:py-14">
         {error ? (
-          <ErrorState what="group trips" onRetry={retry} />
+          <ErrorState what={t('whatTrips')} onRetry={retry} />
         ) : loading ? (
           <GridSkeleton count={3} />
         ) : trips.length === 0 ? (
-          <EmptyState title="New group trips are on the way" text="In the meantime, build your own trip and we’ll price it for you.">
-            <Button to="/experiences">Browse experiences</Button>
+          <EmptyState title={t('emptyTitle')} text={t('emptyText')}>
+            <Button to="/experiences">{t('browse')}</Button>
           </EmptyState>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">

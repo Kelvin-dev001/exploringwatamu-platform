@@ -43,7 +43,8 @@ const PORT = process.env.SMOKE_API_PORT || '5055';
   const Hotel = req('./src/models/Hotel');
   const price = { priceResidentAdult: 3000, priceResidentChild: 1500, priceForeignerAdult: 6500, priceForeignerChild: 3500 };
   await Tour.create([
-    { name: 'Marine park snorkel', description: 'Reef, turtles and a sandbank lunch.', duration: 'Half day', durationHours: 4, vibes: ['ocean'], active: true, ...price },
+    // Italian text as the team would write it (localisation.spec.js); the stay below has none.
+    { name: 'Marine park snorkel', description: 'Reef, turtles and a sandbank lunch.', titleIt: 'Snorkeling nel parco marino', descriptionIt: 'Barriera corallina, tartarughe e pranzo sul banco di sabbia.', duration: 'Half day', durationHours: 4, vibes: ['ocean'], active: true, ...price },
     { name: 'Hidden draft tour', description: 'Must never show on the website.', active: false, ...price },
   ]);
   await Hotel.create({ name: 'Turtle Bay Beach Club', type: 'hotel', description: 'Beachfront.', pricePerNight: 18000 });

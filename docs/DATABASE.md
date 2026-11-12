@@ -61,6 +61,20 @@ Collections → `triprequests` → Indexes, drop `status_1` (never drop `_id_` o
 When adding a query on a growing collection (bookings, requests, notifications,
 users), add the index next to the model and a line to the test above.
 
+## Languages (Phase 6)
+
+New fields, all optional; no migration and no new indexes (nothing queries by them):
+
+| Collection | Field | Meaning |
+|---|---|---|
+| `triprequests`, `groupbookings` | `locale`: `en` \| `it` (default `en`) | The language the traveller used on the website; their emails, SMS and PDFs are in it. Records from before Phase 6 have none and read as English. |
+| `tours`, `services`, `propertyforsales` | `titleIt`, `descriptionIt` | Optional Italian text written by the team |
+| `grouptrips` | `titleIt`, `shortDescriptionIt`, `descriptionIt` | (Italian of `title`, `shortDescription`, `fullDescription`) |
+| `hotels`, `transfers`, `carhires` | `descriptionIt` | |
+
+An empty string means "no Italian text" (the admin clears a field that way); the website
+then shows the English. See [LOCALISATION.md](LOCALISATION.md).
+
 ## Backups
 
 **What Atlas does depends on the cluster tier** — check the tier in Atlas →

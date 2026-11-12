@@ -6,8 +6,8 @@ services: nothing is emailed, texted, uploaded or written to a real database.
 | Where | Tool | Command | What it covers |
 |---|---|---|---|
 | `backend/` | Jest + Supertest + in-memory MongoDB | `npm test` (`test:unit`, `test:e2e`) | The API: auth and sessions, authorisation, validation, rate limits, bookings and seats, quotes, listings, uploads, notifications, logging, monitoring, health checks, indexes, demo seed. Details in [`backend/TESTING.md`](backend/TESTING.md). |
-| `client-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | The website's logic (planner, matching, catalogue, storage, retries, dates, image sizes, error monitoring) and key components (sign-in session, quote form, add-to-trip, navigation, photos with fallbacks). |
-| `admin-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | Admin helpers, the form kit and unsaved-changes guard, list screens, quick edits, toasts, the error screen (stale builds after a deploy), session token refresh, error monitoring. |
+| `client-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | The website's logic (planner, matching, catalogue, storage, retries, dates, image sizes, error monitoring), English and Italian (language URLs and memory, message parity, built SEO pages, sitemap, bot previews) and key components (sign-in session, quote form, add-to-trip, navigation, language switcher, page metadata, photos with fallbacks). |
+| `admin-vite/` | Vitest + React Testing Library | `npm test`, `npm run lint` | Admin helpers, the form kit and unsaved-changes guard, list screens, quick edits, toasts, the error screen (stale builds after a deploy), session token refresh, error monitoring, Italian listing fields and WhatsApp replies. |
 | `e2e/` | Playwright (Chromium) | `npx playwright test` | The main journey in a real browser on a phone viewport, with all three apps running (below). |
 
 Use **Node 20**, as CI and Render do (the test tools are pinned to versions that support it).
@@ -36,7 +36,7 @@ fails a test instead of silently breaking matching or quote requests.
 `npx playwright test` starts, on your machine:
 
 - the API on a throwaway in-memory database, with test-only credentials, seeded with a
-  live and a hidden tour (`e2e/scripts/smoke-api.js`) — port 5055;
+  live tour (with Italian text) and a hidden one (`e2e/scripts/smoke-api.js`) — port 5055;
 - a production build of the website — port 4173;
 - a production build of the admin portal — port 4174;
 
@@ -48,7 +48,10 @@ an experience page, the planner's review step and the admin's "Reply on WhatsApp
 with a placeholder business number; the links are checked, never followed. A third
 (`reviews.spec.js`) follows a verified review: a traveller with a finished, accepted
 trip writes one, the admin approves it, and it appears with its rating on the
-experience page. It never touches production data. A failing run leaves a trace in `e2e/test-results/`
+experience page. A fourth (`localisation.spec.js`) checks English and Italian: the
+built pages and sitemap crawlers read, switching and remembering the language, links
+keeping it, and an Italian quote request reaching the team marked as Italian, with an
+Italian WhatsApp reply. It never touches production data. A failing run leaves a trace in `e2e/test-results/`
 (open with `npx playwright show-trace`).
 
 If you already have something on ports 5055, 4173 or 4174, stop it first (locally,

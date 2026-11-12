@@ -1,4 +1,5 @@
 const Service = require('../models/Service');
+const { ITALIAN_FIELDS, parseItalian } = require('../constants/italianContent');
 const { activeFilter, canSee } = require('../services/listingVisibility');
 const { contains, pageParams, pageOf } = require('../services/listQuery');
 const { nextGallery, uploadedPaths } = require('../services/gallery');
@@ -54,6 +55,7 @@ exports.createService = async (req, res, next) => {
       availableHours: parseJSON(req.body.availableHours, { start: '', end: '' }),
       gallery: galleryUrls,
       active: req.body.active === 'true' || req.body.active === true,
+      ...parseItalian(req.body, ITALIAN_FIELDS.service),
     };
     const service = new Service(serviceData);
     await service.save();
@@ -78,6 +80,7 @@ exports.updateService = async (req, res, next) => {
       availableHours: parseJSON(req.body.availableHours, { start: '', end: '' }),
       ...(gallery ? { gallery } : {}),
       active: req.body.active === 'true' || req.body.active === true,
+      ...parseItalian(req.body, ITALIAN_FIELDS.service),
     };
     const service = await Service.findByIdAndUpdate(
       req.params.id,

@@ -6,9 +6,12 @@ import { rankExperiences } from '@/lib/match';
 import { Container, SectionHeading } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import ExperienceCard from '@/components/experience/ExperienceCard';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/home';
 
 /** Homepage shelf: best-matched experiences for this visitor (or the latest, without a profile). */
 export default function PickedForYou() {
+  const { t } = useI18n(messages);
   const { profile } = useVibeProfile();
   const { items, loading, error } = useCatalog();
   const top = useMemo(() => rankExperiences(items, profile).slice(0, 6), [items, profile]);
@@ -20,12 +23,12 @@ export default function PickedForYou() {
       <Container size="wide">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
-            eyebrow={profile ? 'Picked for you' : 'Start here'}
-            title={profile ? 'Your best matches in Watamu' : 'Popular experiences'}
-            lede={profile ? 'Ranked by your vibes, who you’re with and how long you’re staying.' : 'A few favourites to get you started.'}
+            eyebrow={profile ? t('pickedEyebrow') : t('pickedEyebrowNew')}
+            title={profile ? t('pickedTitle') : t('pickedTitleNew')}
+            lede={profile ? t('pickedLede') : t('pickedLedeNew')}
           />
           <Button to="/experiences" variant="outline" className="self-start md:self-auto">
-            See all <ArrowRight />
+            {t('seeAll')} <ArrowRight />
           </Button>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

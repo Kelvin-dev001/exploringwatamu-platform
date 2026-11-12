@@ -14,31 +14,37 @@ import { useVibeProfile } from '@/context/VibeProfileContext';
 const VibeOnboarding = lazy(() => import('@/components/personalise/VibeOnboarding'));
 import TripDrawer, { TripToast, TripButton } from '@/components/trip/TripDrawer';
 import { WhatsAppButton, WhatsAppNumberLink } from '@/components/contact/WhatsApp';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { generalMessage, whatsappEnabled } from '@/lib/whatsapp';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/layout';
 import { cn } from '@/lib/utils';
 
+// Labels are message keys: the menus render in the current language.
 const PRIMARY = [
-  { to: '/experiences', label: 'Experiences' },
-  { to: '/group-trips', label: 'Group trips' },
-  { to: '/hotels', label: 'Stays' },
-  { to: '/transfers', label: 'Transfers' },
+  { to: '/experiences', label: 'navExperiences' },
+  { to: '/group-trips', label: 'navGroupTrips' },
+  { to: '/hotels', label: 'navStays' },
+  // Below 1280px the header has no room for it: it moves into "More" (wide: true).
+  { to: '/transfers', label: 'navTransfers', desc: 'navTransfersDesc', wide: true },
 ];
 const MORE = [
-  { to: '/carhire', label: 'Car hire', desc: 'Self-drive or with a driver' },
-  { to: '/services', label: 'Local services', desc: 'Chefs, guides, wellness and more' },
-  { to: '/properties-for-sale', label: 'Property for sale', desc: 'Own a piece of the coast' },
+  { to: '/carhire', label: 'navCarHire', desc: 'navCarHireDesc' },
+  { to: '/services', label: 'navServices', desc: 'navServicesDesc' },
+  { to: '/properties-for-sale', label: 'navProperty', desc: 'navPropertyDesc' },
 ];
 const SUPPORT_EMAIL = 'hello@exploringwatamu.com';
 
 const navLinkClass = ({ isActive }) =>
   cn(
-    'relative px-3 py-2 text-[0.95rem] font-semibold transition-colors',
-    'after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:rounded-full after:bg-coral-500 after:transition-transform after:duration-300',
+    'relative whitespace-nowrap px-2 py-2 text-[0.95rem] font-semibold transition-colors xl:px-3',
+    'after:absolute after:inset-x-2 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:rounded-full after:bg-coral-500 after:transition-transform after:duration-300',
     isActive ? 'text-ocean-900 after:scale-x-100' : 'text-ocean-900/65 hover:text-ocean-900 after:scale-x-0 hover:after:scale-x-100'
   );
 
 /** Small accessible "More" dropdown. */
 function MoreMenu() {
+  const { t } = useI18n(messages);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const location = useLocation();
@@ -62,16 +68,16 @@ function MoreMenu() {
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1 px-3 py-2 text-[0.95rem] font-semibold text-ocean-900/65 transition hover:text-ocean-900"
+        className="inline-flex items-center gap-1 whitespace-nowrap px-2 py-2 text-[0.95rem] font-semibold text-ocean-900/65 transition hover:text-ocean-900 xl:px-3"
       >
-        More <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+        {t('navMore')} <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
         <div className="absolute left-1/2 top-full z-50 mt-3 w-72 -translate-x-1/2 rounded-2xl border border-sand-200 bg-white p-2 shadow-lift animate-[fade-in_.15s_ease-out]">
-          {MORE.map((item) => (
-            <Link key={item.to} to={item.to} className="block rounded-xl px-4 py-3 transition hover:bg-sand-100">
-              <span className="block font-semibold text-ocean-900">{item.label}</span>
-              <span className="block text-sm text-ocean-900/60">{item.desc}</span>
+          {[...PRIMARY.filter((item) => item.wide), ...MORE].map((item) => (
+            <Link key={item.to} to={item.to} className={cn('block rounded-xl px-4 py-3 transition hover:bg-sand-100', item.wide && 'xl:hidden')}>
+              <span className="block font-semibold text-ocean-900">{t(item.label)}</span>
+              <span className="block text-sm text-ocean-900/60">{t(item.desc)}</span>
             </Link>
           ))}
         </div>
@@ -81,6 +87,7 @@ function MoreMenu() {
 }
 
 function Header() {
+  const { t } = useI18n(messages);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,43 +115,45 @@ function Header() {
       )}
     >
       <Container size="wide" className="flex h-[4.5rem] items-center gap-4">
-        <Logo />
+        <Logo className="shrink-0" />
 
-        <nav aria-label="Main" className="ml-6 hidden items-center lg:flex">
+        <nav aria-label={t('navMain')} className="ml-2 hidden items-center lg:flex xl:ml-6">
           {PRIMARY.map((item) => (
-            <NavLink key={item.to} to={item.to} className={navLinkClass}>
-              {item.label}
+            <NavLink key={item.to} to={item.to} className={(state) => cn(navLinkClass(state), item.wide && 'hidden xl:block')}>
+              {t(item.label)}
             </NavLink>
           ))}
           <MoreMenu />
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <ProfilePill className="hidden md:inline-flex" />
-          <WhatsAppButton iconOnly variant="ghost" message={generalMessage()} label="Chat with us on WhatsApp" className="hidden lg:inline-flex" />
+          <ProfilePill className="hidden max-w-[15rem] md:inline-flex 2xl:max-w-sm" />
+          <LanguageSwitcher className="hidden md:inline-flex" />
+          <WhatsAppButton iconOnly variant="ghost" message={generalMessage()} label={t('chatWhatsApp')} className="hidden xl:inline-flex" />
           <TripButton />
           {user ? (
-            <Button variant="ghost" size="icon" aria-label="Sign out" onClick={signOut} className="hidden lg:inline-flex">
+            <Button variant="ghost" size="icon" aria-label={t('signOut')} title={t('signOut')} onClick={signOut} className="hidden lg:inline-flex">
               <LogOut />
             </Button>
           ) : (
             <Button to="/login" variant="ocean" size="sm" className="hidden lg:inline-flex">
-              Sign in
+              {t('signIn')}
             </Button>
           )}
-          <Button variant="ghost" size="icon" aria-label="Open menu" className="lg:hidden" onClick={() => setMenuOpen(true)}>
+          <Button variant="ghost" size="icon" aria-label={t('openMenu')} className="lg:hidden" onClick={() => setMenuOpen(true)}>
             <Menu />
           </Button>
         </div>
       </Container>
 
-      {/* Personal pill gets its own row on small phones */}
-      <div className="border-t border-sand-200/70 px-5 py-2 md:hidden">
-        <ProfilePill compact className="w-full justify-center" />
+      {/* Phones: the personal pill and the language switcher get their own row */}
+      <div className="flex items-center gap-2 border-t border-sand-200/70 px-5 py-2 md:hidden">
+        <ProfilePill compact className="min-w-0 flex-1 justify-center" />
+        <LanguageSwitcher className="shrink-0" />
       </div>
 
-      <Sheet open={menuOpen} onOpenChange={setMenuOpen} title="Explore Watamu">
-        <nav aria-label="Mobile" className="flex flex-1 flex-col px-3 pb-6">
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen} title={t('menuTitle')}>
+        <nav aria-label={t('navMobile')} className="flex flex-1 flex-col px-3 pb-6">
           {[...PRIMARY, ...MORE].map((item) => (
             <NavLink
               key={item.to}
@@ -156,27 +165,28 @@ function Header() {
                 )
               }
             >
-              {item.label}
+              {t(item.label)}
               <ArrowUpRight className="size-4 text-coral-500" />
             </NavLink>
           ))}
           <div className="mt-auto space-y-3 border-t border-sand-200 px-3 pt-6">
+            <LanguageSwitcher full className="flex w-full [&>a]:flex-1" />
             <Button to="/trip" className="w-full">
-              <Luggage /> My trip planner
+              <Luggage /> {t('myTripPlanner')}
             </Button>
             <Button to="/my-trips" variant="outline" className="w-full">
-              My bookings
+              {t('myBookings')}
             </Button>
             <WhatsAppButton full message={generalMessage()}>
-              Chat with us on WhatsApp
+              {t('chatWhatsApp')}
             </WhatsAppButton>
             {user ? (
               <Button variant="ghost" className="w-full" onClick={signOut}>
-                <LogOut /> Sign out
+                <LogOut /> {t('signOut')}
               </Button>
             ) : (
               <Button to="/login" variant="ocean" className="w-full">
-                Sign in
+                {t('signIn')}
               </Button>
             )}
           </div>
@@ -187,9 +197,10 @@ function Header() {
 }
 
 function Footer() {
+  const { t } = useI18n(messages);
   const columns = [
-    { title: 'Explore', links: [...PRIMARY, MORE[0]] },
-    { title: 'Plan', links: [MORE[1], MORE[2], { to: '/trip', label: 'Trip planner' }, { to: '/my-trips', label: 'My bookings' }, { to: '/login', label: 'Sign in' }] },
+    { title: 'footerExplore', links: [...PRIMARY, MORE[0]] },
+    { title: 'footerPlan', links: [MORE[1], MORE[2], { to: '/trip', label: 'footerTripPlanner' }, { to: '/my-trips', label: 'myBookings' }, { to: '/login', label: 'signIn' }] },
   ];
   return (
     <footer className="relative mt-24 overflow-hidden bg-ocean-900 text-sand-50">
@@ -198,21 +209,19 @@ function Footer() {
       <Rosette className="pointer-events-none absolute -bottom-28 -right-20 text-ocean-800" size={380} strokeWidth={0.9} />
       <Container size="wide" className="relative grid gap-12 py-16 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
-          <Link to="/" aria-label="Exploring Watamu — home" className="inline-block">
+          <Link to="/" aria-label={t('brandHome')} className="inline-block">
             <BrandBadge className="size-28 ring-4 ring-ocean-800" />
           </Link>
-          <p className="mt-6 max-w-sm font-display text-2xl italic leading-snug text-sand-50/90">
-            Your Watamu, tuned to you — built by people who live here.
-          </p>
+          <p className="mt-6 max-w-sm font-display text-2xl italic leading-snug text-sand-50/90">{t('footerTagline')}</p>
         </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <p className="eyebrow !text-lagoon-300">{col.title}</p>
+            <p className="eyebrow !text-lagoon-300">{t(col.title)}</p>
             <ul className="mt-4 space-y-2.5">
               {col.links.map((l) => (
                 <li key={l.to + l.label}>
                   <Link to={l.to} className="text-sand-50/75 transition hover:text-sand-50">
-                    {l.label}
+                    {t(l.label)}
                   </Link>
                 </li>
               ))}
@@ -220,7 +229,7 @@ function Footer() {
           </div>
         ))}
         <div>
-          <p className="eyebrow !text-lagoon-300">Talk to us</p>
+          <p className="eyebrow !text-lagoon-300">{t('footerTalk')}</p>
           <ul className="mt-4 space-y-2.5 text-sand-50/75">
             {whatsappEnabled() && (
               <li>
@@ -233,20 +242,22 @@ function Footer() {
               </a>
             </li>
             <li className="inline-flex items-center gap-2">
-              <MapPin className="size-4" /> Watamu, Kilifi County, Kenya
+              <MapPin className="size-4" /> {t('footerPlace')}
             </li>
           </ul>
+          <LanguageSwitcher full tone="dark" className="mt-6" />
         </div>
       </Container>
       <Container size="wide" className="relative flex flex-col gap-2 border-t border-sand-50/10 py-6 text-sm text-sand-50/65 sm:flex-row sm:justify-between">
-        <p>© {new Date().getFullYear()} Exploring Watamu. All rights reserved.</p>
-        <p>Prices on request · No payment until you confirm</p>
+        <p>{t('footerRights', { year: new Date().getFullYear() })}</p>
+        <p>{t('footerNote')}</p>
       </Container>
     </footer>
   );
 }
 
 export default function Layout({ children }) {
+  const { t } = useI18n(messages);
   const location = useLocation();
   const { onboardingOpen } = useVibeProfile();
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
@@ -266,7 +277,7 @@ export default function Layout({ children }) {
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-ocean-900 focus:px-4 focus:py-2 focus:text-sand-50"
       >
-        Skip to content
+        {t('skipToContent')}
       </a>
       <Header />
       <main id="main" className="flex-1">

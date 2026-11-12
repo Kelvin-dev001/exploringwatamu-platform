@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ITALIAN_FIELDS } = require('../constants/italianContent');
 
 const itineraryDaySchema = new mongoose.Schema({
   day: { type: Number, required: true },
@@ -71,5 +72,9 @@ groupTripSchema.index({ status: 1, startDate: 1 });
 
 // Public rating from approved reviews (written only by services/reviewStats).
 groupTripSchema.plugin(require('./plugins/reviewStats'));
+
+
+// Optional Italian text, written by the team (constants/italianContent.js).
+groupTripSchema.plugin(require('./plugins/italianContent'), { fields: ITALIAN_FIELDS.group });
 
 module.exports = mongoose.model('GroupTrip', groupTripSchema);

@@ -8,18 +8,23 @@ import { ErrorState, SlowNotice } from '@/components/listing/States';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import { RatingStars } from '@/components/reviews/Rating';
 import Seo from '@/components/seo/Seo';
-import { fetchEligible, LISTING_LABEL, reviewError } from '@/lib/reviews';
+import { fetchEligible, LISTING_LABEL } from '@/lib/reviews';
+import { reviewError } from '@/lib/reviewErrors';
 import { formatDay } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/reviews';
 
+// [message key, badge tone]
 const STATUS_COPY = {
-  pending: ['Thanks — waiting for a quick check', 'ochre'],
-  approved: ['Published', 'mangrove'],
-  hidden: ['Not published', 'sand'],
+  pending: ['statusPendingThanks', 'ochre'],
+  approved: ['statusApproved', 'mangrove'],
+  hidden: ['statusHidden', 'sand'],
 };
 
 function Item({ item, token, inviteToken, onReviewed }) {
+  const { t } = useI18n(messages);
   const [open, setOpen] = useState(false);
-  const label = LISTING_LABEL[item.listingType] || 'listing';
+  const label = LISTING_LABEL[item.listingType] || t('kind.other');
   const status = item.review ? STATUS_COPY[item.review.status] || STATUS_COPY.pending : null;
 
   return (
@@ -29,20 +34,20 @@ function Item({ item, token, inviteToken, onReviewed }) {
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-ocean-900/60">{label}</p>
           <h2 className="mt-1 font-display text-2xl text-ocean-900">{item.listingTitle}</h2>
         </div>
-        {status && <Badge tone={status[1]}>{status[0]}</Badge>}
+        {status && <Badge tone={status[1]}>{t(status[0])}</Badge>}
       </div>
 
       {item.review ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-ocean-900/70">
-          <CheckCircle2 className="size-4 text-mangrove-700" /> You rated it <RatingStars value={item.review.rating} />
+          <CheckCircle2 className="size-4 text-mangrove-700" /> {t('youRated')} <RatingStars value={item.review.rating} />
         </p>
       ) : item.reason === 'not-ended' ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-ocean-900/70">
-          <CalendarClock className="size-4 text-lagoon-600" /> You can review this from {formatDay(item.availableFrom, { day: 'numeric', month: 'long', year: 'numeric' })}.
+          <CalendarClock className="size-4 text-lagoon-600" /> {t('openFrom', { date: formatDay(item.availableFrom, { day: 'numeric', month: 'long', year: 'numeric' }) })}
         </p>
       ) : item.reason === 'no-dates' ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-ocean-900/70">
-          <Clock className="size-4 text-lagoon-600" /> This trip has no dates on record, so reviews can’t open yet. Our team can help.
+          <Clock className="size-4 text-lagoon-600" /> {t('noDates')}
         </p>
       ) : open ? (
         <div className="mt-5">
@@ -50,7 +55,7 @@ function Item({ item, token, inviteToken, onReviewed }) {
         </div>
       ) : (
         <Button className="mt-5" onClick={() => setOpen(true)}>
-          <PenLine /> Write a review
+          <PenLine /> {t('write')}
         </Button>
       )}
     </article>
@@ -62,6 +67,7 @@ function Item({ item, token, inviteToken, onReviewed }) {
  * finished booking. Linked from the post-trip email and from My bookings.
  */
 export default function WriteReview() {
+  const { t, rich } = useI18n(messages);
   const { bookingType, bookingId } = useParams();
   const [params] = useSearchParams();
   const location = useLocation();
@@ -92,7 +98,7 @@ export default function WriteReview() {
 
   if (authLoading) {
     return (
-      <div className="grid min-h-[50vh] place-items-center" role="status" aria-label="Loading">
+      <div className="grid min-h-[50vh] place-items-center" role="status" aria-label={t('loading')}>
         <span className="size-8 animate-spin rounded-full border-2 border-sand-300 border-t-coral-500" />
       </div>
     );
@@ -100,47 +106,45 @@ export default function WriteReview() {
 
   return (
     <Container size="narrow" className="py-12 lg:py-16">
-      <Seo title="Review your trip" noindex />
-      <p className="eyebrow">Your trip</p>
-      <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">How was it?</h1>
-      <p className="mt-3 text-lg text-ocean-900/70">Tell other travellers what it was like. Reviews come only from people who travelled with us, and our team reads each one before it’s published.</p>
+      <Seo title={t('seo')} noindex />
+      <p className="eyebrow">{t('eyebrow')}</p>
+      <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">{t('title')}</h1>
+      <p className="mt-3 text-lg text-ocean-900/70">{t('lede')}</p>
 
       <div className="mt-10 space-y-5">
         {!user ? (
           unreachable ? (
-            <ErrorState what="your account" onRetry={retry} />
+            <ErrorState what={t('yourAccount')} onRetry={retry} />
           ) : (
             <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-8 text-center shadow-soft">
-              <p className="font-display text-2xl text-ocean-900">Sign in to write your review</p>
-              <p className="mt-2 text-ocean-900/65">Use the account you booked with{inviteToken ? ' — or any account: your invitation link proves it was your trip' : ''}.</p>
+              <p className="font-display text-2xl text-ocean-900">{t('signInTitle')}</p>
+              <p className="mt-2 text-ocean-900/65">{inviteToken ? t('signInTextInvite') : t('signInText')}</p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <Button to="/login" state={{ from: here }}>Sign in</Button>
-                <Button to="/register" state={{ from: here }} variant="outline">Create an account</Button>
+                <Button to="/login" state={{ from: here }}>{t('signIn')}</Button>
+                <Button to="/register" state={{ from: here }} variant="outline">{t('createAccount')}</Button>
               </div>
             </div>
           )
         ) : state.loading ? (
-          <div role="status" aria-label="Loading" className="space-y-3">
+          <div role="status" aria-label={t('loading')} className="space-y-3">
             <SlowNotice />
             <div className="h-40 animate-pulse rounded-[var(--radius-card)] bg-sand-100" />
           </div>
         ) : state.error === 'not-found' ? (
           <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-8 text-center">
-            <p className="font-display text-2xl text-ocean-900">We couldn’t find this booking on your account</p>
-            <p className="mx-auto mt-2 max-w-md text-ocean-900/65">
-              Sign in with the account you booked with. If you sent your trip request without an account, open the link in the review email we sent you.
-            </p>
-            <Button to="/my-trips" variant="outline" className="mt-6">My bookings</Button>
+            <p className="font-display text-2xl text-ocean-900">{t('notFoundTitle')}</p>
+            <p className="mx-auto mt-2 max-w-md text-ocean-900/65">{t('notFoundText')}</p>
+            <Button to="/my-trips" variant="outline" className="mt-6">{t('myBookings')}</Button>
           </div>
         ) : state.error ? (
           <div className="rounded-[var(--radius-card)] border border-sand-200 bg-white p-8 text-center">
             <p className="text-ocean-900/75">{state.error}</p>
-            <Button variant="outline" className="mt-5" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
+            <Button variant="outline" className="mt-5" onClick={() => setAttempt((n) => n + 1)}>{t('tryAgain')}</Button>
           </div>
         ) : state.items.length === 0 ? (
           <div className="rounded-[var(--radius-card)] border border-dashed border-sand-300 bg-sand-100/60 p-8 text-center">
-            <p className="font-display text-2xl text-ocean-900">Nothing to review on this booking</p>
-            <p className="mt-2 text-ocean-900/65">It has no listings from our website we can attach a review to.</p>
+            <p className="font-display text-2xl text-ocean-900">{t('nothingTitle')}</p>
+            <p className="mt-2 text-ocean-900/65">{t('nothingText')}</p>
           </div>
         ) : (
           state.items.map((item) => <Item key={`${item.listingType}:${item.listingId}`} item={item} token={token} inviteToken={inviteToken} onReviewed={onReviewed} />)
@@ -149,7 +153,7 @@ export default function WriteReview() {
 
       {user && (
         <p className="mt-10 text-center text-sm text-ocean-900/60">
-          See all your trips in <Link to="/my-trips" className="font-semibold underline">My bookings</Link>.
+          {rich('seeAll', { link: (text) => <Link to="/my-trips" className="font-semibold underline">{text}</Link> })}
         </p>
       )}
     </Container>

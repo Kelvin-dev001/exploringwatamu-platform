@@ -3,12 +3,16 @@ import { Field, Input, Select, Textarea } from '@/ui';
 import { FormPage, Grid, ListInput, MoneyInput, Problems, Repeater, Section, useForm, ChipGroup } from '@/forms/kit';
 import ImageUploader from '@/forms/ImageUploader';
 import useRecord, { required } from './useRecord';
+import ItalianFields from '@/forms/ItalianFields';
+import { appendItalian, emptyItalian, italianFrom, italianProblems } from '@/forms/italian';
+
+const IT = ['descriptionIt'];
 
 const EMPTY = {
   name: '', type: 'hotel', stars: '', description: '', pricePerNight: '',
   location: { address: '', mapUrl: '', coordinates: { lat: '', lng: '' } },
   facilities: [], popularFacilities: [], roomTypes: [], faqs: [], houseRules: [], contact: { whatsapp: '', email: '' },
-  images: [], files: [],
+  images: [], files: [], ...emptyItalian(IT),
 };
 const FACILITIES = ['Wi-Fi', 'Pool', 'Beachfront', 'Air conditioning', 'Restaurant', 'Bar', 'Parking', 'Airport shuttle', 'Spa', 'Kitchen', 'Garden', 'Family rooms'];
 
@@ -26,7 +30,7 @@ export default function StayForm() {
         roomTypes: (h.roomTypes || []).map((r) => ({ name: r.name || '', price: r.price ?? '', description: r.description || '' })),
         faqs: (h.faqs || []).map((q) => ({ question: q.question || '', answer: q.answer || '' })),
         houseRules: h.houseRules || [], contact: { whatsapp: h.contact?.whatsapp || '', email: h.contact?.email || '' },
-        images: h.images || [], files: [],
+        images: h.images || [], files: [], ...italianFrom(h, IT),
       };
     },
     save: (v, id) => {
@@ -44,6 +48,7 @@ export default function StayForm() {
       fd.append('faqs', JSON.stringify(v.faqs.filter((q) => q.question.trim())));
       fd.append('houseRules', JSON.stringify(v.houseRules));
       fd.append('contact', JSON.stringify(v.contact));
+      appendItalian(fd, v, IT);
       // Kept photos as a JSON list (an empty list removes them all), then new uploads as files.
       if (id) fd.append('existingImages', JSON.stringify(v.images));
       v.files.forEach((file) => fd.append('images', file));
@@ -55,7 +60,7 @@ export default function StayForm() {
     const p = {};
     required(p, v, 'name', 'Name');
     if (v.contact.email && !/^\S+@\S+\.\S+$/.test(v.contact.email)) p.email = 'Enter a valid email address';
-    return p;
+    return { ...p, ...italianProblems(v, IT) };
   };
   const err = rec.fieldErrors;
 
@@ -85,6 +90,8 @@ export default function StayForm() {
         </Grid>
         <Field label="Description"><Textarea rows={5} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
       </Section>
+
+      <ItalianFields form={form} set={set} fields={IT} errors={err} english={{ descriptionIt: form.description }} />
 
       <Section title="Photos" description="The first photo is the cover.">
         <ImageUploader existing={form.images} onExistingChange={(v) => set('images', v)} files={form.files} onFilesChange={(v) => set('files', v)} max={10} />

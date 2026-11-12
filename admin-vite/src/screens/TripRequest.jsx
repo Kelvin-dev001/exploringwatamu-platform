@@ -46,7 +46,13 @@ export default function TripRequest() {
       if (data.quote.validUntil) setValidUntil(String(data.quote.validUntil).slice(0, 10));
     } else {
       setLines(suggestLines(data));
-      setMessage(`Hi ${data.contact?.name?.split(' ')[0] || ''},\n\nThank you for planning your Watamu trip with us. Here’s the price for everything in your itinerary.`);
+      // In the traveller's language: for an Italian request the email around it is Italian too.
+      const first = data.contact?.name?.split(' ')[0] || '';
+      setMessage(
+        data.locale === 'it'
+          ? `Ciao ${first},\n\ngrazie per aver organizzato con noi il tuo viaggio a Watamu. Ecco il prezzo di tutto il tuo itinerario.`
+          : `Hi ${first},\n\nThank you for planning your Watamu trip with us. Here’s the price for everything in your itinerary.`
+      );
     }
   }, []);
 
@@ -133,6 +139,7 @@ export default function TripRequest() {
               <div><dt className="text-xs text-faint">Email</dt><dd className="truncate font-medium text-ink">{r.contact.email}</dd></div>
               <div><dt className="text-xs text-faint">Phone</dt><dd className="font-medium text-ink">{r.contact.phone || '—'}</dd></div>
               {r.contact.country && <div><dt className="flex items-center gap-1 text-xs text-faint"><Globe2 className="size-3" />From</dt><dd className="font-medium text-ink">{r.contact.country}</dd></div>}
+              <div><dt className="text-xs text-faint">Language</dt><dd className="font-medium text-ink">{r.locale === 'it' ? 'Italiano — emails and quote PDF in Italian' : 'English'}</dd></div>
               <div><dt className="text-xs text-faint">Prices seen</dt><dd className="font-medium text-ink">{r.residency === 'resident' ? 'Kenya resident' : 'Visitor'}{r.estimate?.total ? ` · est. ${kes(r.estimate.total)}` : ''}</dd></div>
             </dl>
             {r.profile?.vibes?.length > 0 && (

@@ -1,13 +1,16 @@
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import messages from '@/locales/cards';
 
 /** Visitor (non-resident) vs Kenya-resident pricing. International-first default. */
 export default function ResidencyToggle({ value, onChange, className }) {
+  const { t } = useI18n(messages);
   const opts = [
-    { id: 'nonResident', label: 'Visitor prices' },
-    { id: 'resident', label: 'Kenya resident' },
+    { id: 'nonResident', label: t('visitorPrices') },
+    { id: 'resident', label: t('residentPrices') },
   ];
   return (
-    <div role="radiogroup" aria-label="Price type" className={cn('inline-flex rounded-full border border-sand-300 bg-white p-1', className)}>
+    <div role="radiogroup" aria-label={t('priceType')} className={cn('inline-flex rounded-full border border-sand-300 bg-white p-1', className)}>
       {opts.map((o) => (
         <button
           key={o.id}

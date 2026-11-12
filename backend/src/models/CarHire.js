@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ITALIAN_FIELDS } = require('../constants/italianContent');
 
 const CarHireSchema = new mongoose.Schema({
   vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle', required: true },
@@ -12,5 +13,9 @@ CarHireSchema.add({ owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin',
 
 // Public rating from approved reviews (written only by services/reviewStats).
 CarHireSchema.plugin(require('./plugins/reviewStats'));
+
+
+// Optional Italian text, written by the team (constants/italianContent.js).
+CarHireSchema.plugin(require('./plugins/italianContent'), { fields: ITALIAN_FIELDS.carhire });
 
 module.exports = mongoose.model('CarHire', CarHireSchema);

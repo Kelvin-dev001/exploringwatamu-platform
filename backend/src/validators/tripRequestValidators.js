@@ -3,6 +3,7 @@
 const { z } = require('zod');
 const { VIBES, SUITS } = require('../constants/discovery');
 const { TRIP_ITEM_KINDS } = require('../constants/tripItems');
+const { LOCALES } = require('../constants/locales');
 
 // JSON bodies from the website's trip planner and the admin quote builder.
 
@@ -45,6 +46,8 @@ const createTripRequestSchema = z
     adults: z.number().int().min(1, 'At least one adult').max(50),
     children: z.number().int().min(0).max(50).default(0),
     residency: z.enum(['resident', 'nonResident']).default('nonResident'),
+    // The website's language: the traveller's emails and quote come back in it.
+    locale: z.enum(LOCALES).optional(),
     days: z.array(day).max(30).default([]),
     ideas: z.array(item).max(40).default([]),
     notes: text(2000).optional(),

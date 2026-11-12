@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { LOCALES, DEFAULT_LOCALE } = require('../constants/locales');
 
 const groupBookingSchema = new mongoose.Schema({
   trip: { type: mongoose.Schema.Types.ObjectId, ref: 'GroupTrip', required: true },
@@ -10,6 +11,8 @@ const groupBookingSchema = new mongoose.Schema({
   amountPaid: { type: Number, required: true },
   amountDue: { type: Number, default: 0 },
   status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
+  // The language the traveller booked in: their emails, SMS and PDFs are in it.
+  locale: { type: String, enum: LOCALES, default: DEFAULT_LOCALE },
   mpesaReceiptNumber: { type: String },
   
   // NEW: Travel vibe data (collected BEFORE payment)

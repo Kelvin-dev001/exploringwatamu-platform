@@ -1,4 +1,11 @@
 import { STAYS, byId, normalizeProfile } from '@/lib/vibes';
+import { lengthLabel } from '@/lib/catalog';
+import { DEFAULT_LOCALE, formatKES, getLocale, localeTag, translate } from '@/i18n';
+import catalogText from '@/locales/catalog';
+import tripText from '@/locales/trip';
+
+const tc = (locale, key, vars) => translate(catalogText, locale, key, vars);
+const tt = (locale, key, vars) => translate(tripText, locale, key, vars);
 
 /*
  * The visitor's trip ("cart"), as pure functions so it is easy to test and to
@@ -15,8 +22,14 @@ import { STAYS, byId, normalizeProfile } from '@/lib/vibes';
  * }
  *
  * Snapshot = what we need to show and price an item even if the listing
- * changes later: { key, kind, id, title, hours, vibe, href, image,
- *   lengthLabel, startDate, price: { resident, nonResident, childResident, childNonResident, unit } }
+ * changes later: { key, kind, id, title, titleIt?, hours, vibe, href, image,
+ *   lengthLabel, rateLabel?, rate?, startDate,
+ *   price: { resident, nonResident, childResident, childNonResident, unit } }
+ *
+ * Snapshots are data: title, lengthLabel and rateLabel are English (they are
+ * saved on the device and sent to our team, who work in English). Show them
+ * with snapTitle / snapLength / snapRate, which put them in the website's
+ * language; titleIt is the team's Italian title, when the listing has one.
  */
 
 export const BUSY_HOURS = 10; // more than this in one day gets a gentle warning
@@ -105,16 +118,18 @@ export function toSnapshot(exp) {
   const raw = exp.raw || {};
   const childRes = raw.priceResidentChild ?? null;
   const childNon = raw.priceForeignerChild ?? null;
+  const titleIt = typeof raw.titleIt === 'string' && raw.titleIt.trim() ? raw.titleIt.trim() : undefined;
   return {
     key: keyFor(exp.kind, exp.id),
     kind: exp.kind,
     id: exp.id,
-    title: exp.title,
+    title: exp.titleEn ?? exp.title,
+    ...(titleIt ? { titleIt } : {}),
     hours: exp.hours ?? null,
     vibe: exp.vibes?.[0] ?? null,
     href: exp.href,
     image: exp.image ?? null,
-    lengthLabel: exp.lengthLabel ?? null,
+    lengthLabel: (exp.lengthEn !== undefined ? exp.lengthEn : exp.lengthLabel) ?? null,
     startDate: exp.startDate ?? null,
     price: {
       resident: exp.price?.resident ?? null,
@@ -136,22 +151,64 @@ export const TRANSFERS = {
  * quote covers everything. They're priced by our team (not in the estimate);
  * `rateLabel` shows the listed rate in the planner and to the admin.
  */
-const kes = (n) => (n === null || n === undefined || n === '' ? null : `KES ${Math.round(Number(n)).toLocaleString('en-KE')}`);
+// English on purpose: rateLabel goes to the team with the request.
+const kes = (n) => (n === null || n === undefined || n === '' ? null : formatKES(n, DEFAULT_LOCALE));
+const rateOf = (amount, per) => (amount != null && amount !== '' ? { rate: { amount: Number(amount), per: per || null } } : {});
 
 export function snapshotFor(kind, doc) {
   const id = doc._id || doc.id;
   switch (kind) {
     case 'stay':
-      return { key: keyFor('stay', id), kind: 'stay', id, title: `Stay · ${doc.name}`, hours: null, vibe: 'slow', href: '/hotels', image: doc.images?.[0] || null, rateLabel: doc.pricePerNight != null ? `${kes(doc.pricePerNight)} / night` : null, price: {} };
+      return { key: keyFor('stay', id), kind: 'stay', id, title: `Stay · ${doc.name}`, hours: null, vibe: 'slow', href: '/hotels', image: doc.images?.[0] || null, rateLabel: doc.pricePerNight != null ? `${kes(doc.pricePerNight)} / night` : null, ...rateOf(doc.pricePerNight, 'night'), price: {} };
     case 'transfer':
-      return { key: keyFor('transfer', id), kind: 'transfer', id, title: doc.route || 'Transfer', hours: 1.5, href: '/transfers', image: doc.vehicle?.image || null, rateLabel: doc.price != null ? `${kes(doc.price)} per trip` : null, lengthLabel: doc.vehicle?.name || null, price: {} };
+      return { key: keyFor('transfer', id), kind: 'transfer', id, title: doc.route || 'Transfer', hours: 1.5, href: '/transfers', image: doc.vehicle?.image || null, rateLabel: doc.price != null ? `${kes(doc.price)} per trip` : null, ...rateOf(doc.price, 'trip'), lengthLabel: doc.vehicle?.name || null, price: {} };
     case 'carhire':
-      return { key: keyFor('carhire', id), kind: 'carhire', id, title: `Car hire · ${doc.vehicle?.name || 'Vehicle'}`, hours: null, href: '/carhire', image: doc.vehicle?.image || null, rateLabel: doc.dailyRate != null ? `${kes(doc.dailyRate)} / day` : null, price: {} };
-    case 'service':
-      return { key: keyFor('service', id), kind: 'service', id, title: doc.name, hours: null, vibe: 'slow', href: '/services', image: doc.gallery?.[0] || null, rateLabel: doc.price != null ? `${kes(doc.price)}${doc.pricingType ? ` ${doc.pricingType}` : ''}` : null, price: {} };
+      return { key: keyFor('carhire', id), kind: 'carhire', id, title: `Car hire · ${doc.vehicle?.name || 'Vehicle'}`, hours: null, href: '/carhire', image: doc.vehicle?.image || null, rateLabel: doc.dailyRate != null ? `${kes(doc.dailyRate)} / day` : null, ...rateOf(doc.dailyRate, 'day'), price: {} };
+    case 'service': {
+      const titleIt = typeof doc.titleIt === 'string' && doc.titleIt.trim() ? doc.titleIt.trim() : undefined;
+      return { key: keyFor('service', id), kind: 'service', id, title: doc.name, ...(titleIt ? { titleIt } : {}), hours: null, vibe: 'slow', href: '/services', image: doc.gallery?.[0] || null, rateLabel: doc.price != null ? `${kes(doc.price)}${doc.pricingType ? ` ${doc.pricingType}` : ''}` : null, ...rateOf(doc.price, doc.pricingType), price: {} };
+    }
     default:
       throw new Error(`Unknown trip item kind: ${kind}`);
   }
+}
+
+/* ---------- Showing a snapshot in the website's language ---------- */
+
+const AIRPORT = { 'airport-in': 'airportIn', 'airport-out': 'airportOut' };
+const PREFIXED = { stay: ['Stay · ', 'prefixStay'], carhire: ['Car hire · ', 'prefixCarHire'] };
+const RATE = { night: 'rateNight', day: 'rateDay', trip: 'rateTrip', hourly: 'rateHourly', daily: 'rateDaily' };
+
+/** An item's title in a language: the team's Italian title, our own words translated, or the listing's English name. */
+export function snapTitle(snap, locale = getLocale()) {
+  if (locale === DEFAULT_LOCALE || !snap) return snap?.title ?? '';
+  if (snap.titleIt) return snap.titleIt;
+  if (snap.kind === 'transfer' && AIRPORT[snap.id]) return tc(locale, AIRPORT[snap.id]);
+  const prefixed = PREFIXED[snap.kind];
+  if (prefixed && snap.title.startsWith(prefixed[0])) return tc(locale, prefixed[1], { name: snap.title.slice(prefixed[0].length) });
+  return snap.title;
+}
+
+/** The language snapTitle is in: 'en' for an experience or service shown under its English name. */
+export function snapTitleLang(snap, locale = getLocale()) {
+  if (locale === DEFAULT_LOCALE || snap?.titleIt) return locale;
+  return ['tour', 'group', 'service'].includes(snap?.kind) ? DEFAULT_LOCALE : locale;
+}
+
+/** How long it takes ("Half day" → "Mezza giornata"); transfers show their vehicle. */
+export function snapLength(snap, locale = getLocale()) {
+  if (!snap) return null;
+  if (snap.kind === 'transfer' && AIRPORT[snap.id]) return locale === DEFAULT_LOCALE ? snap.lengthLabel : tc(locale, 'aboutHourHalf');
+  if (snap.kind === 'tour' || snap.kind === 'group') return lengthLabel(snap.hours, snap.lengthLabel, locale);
+  return snap.lengthLabel ?? null;
+}
+
+/** The listed rate ("KES 18,000 / night" → "18.000 KES / notte"). Older saved items keep their English label. */
+export function snapRate(snap, locale = getLocale()) {
+  if (!snap) return null;
+  if (locale === DEFAULT_LOCALE || !snap.rate) return snap.rateLabel ?? null;
+  const price = formatKES(snap.rate.amount, locale);
+  return RATE[snap.rate.per] ? tc(locale, RATE[snap.rate.per], { price }) : price;
 }
 
 /** Where a newly added item should go: dated activities onto days, everything else waits. */
@@ -174,10 +231,11 @@ export function dateOfDay(trip, index) {
   return a ? new Date(a.getTime() + index * DAY_MS) : null;
 }
 
-export function dayLabel(trip, index) {
+/** "Day 2 · Sat 16 Jan" ("Giorno 2 · sab 16 gen"). */
+export function dayLabel(trip, index, locale = getLocale()) {
   const d = dateOfDay(trip, index);
-  const base = `Day ${index + 1}`;
-  return d ? `${base} · ${d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}` : base;
+  const base = tc(locale, 'dayN', { n: index + 1 });
+  return d ? `${base} · ${d.toLocaleDateString(localeTag(locale), { weekday: 'short', day: 'numeric', month: 'short' })}` : base;
 }
 
 /** Resize the stay; items on removed days go back to Ideas (never lost). */
@@ -375,24 +433,31 @@ export function decodeTrip(code) {
 
 /* ---------- Plain-text summary (email / quote notes) ---------- */
 
-export function tripSummary(trip, { headline } = {}) {
+/** "2 adults, 1 child" in a language. */
+export const travellersText = (trip, locale = getLocale()) =>
+  [tc(locale, 'adults', { count: trip.adults }), trip.children ? tc(locale, 'children', { count: trip.children }) : null].filter(Boolean).join(', ');
+
+/** The plan as text, in the visitor's language (they send it themselves). */
+export function tripSummary(trip, { headline, locale = getLocale() } = {}) {
   const lines = [];
   if (headline) lines.push(headline, '');
   lines.push(
-    `Dates: ${trip.arrival && trip.departure ? `${trip.arrival} to ${trip.departure}` : `${trip.days.length} days, dates flexible`}`,
-    `Travellers: ${trip.adults} adult${trip.adults === 1 ? '' : 's'}${trip.children ? `, ${trip.children} child${trip.children === 1 ? '' : 'ren'}` : ''}`,
+    trip.arrival && trip.departure
+      ? tt(locale, 'summaryDates', { from: trip.arrival, to: trip.departure })
+      : tt(locale, 'summaryFlexible', { days: tc(locale, 'days', { count: trip.days.length }) }),
+    tt(locale, 'summaryTravellers', { who: travellersText(trip, locale) }),
     ''
   );
   trip.days.forEach((d, i) => {
-    lines.push(`${dayLabel(trip, i)}:`);
-    if (!d.items.length) lines.push('  (free day)');
-    d.items.forEach((k) => lines.push(`  - ${trip.items[k]?.title}`));
+    lines.push(`${dayLabel(trip, i, locale)}:`);
+    if (!d.items.length) lines.push(tt(locale, 'summaryFreeDay'));
+    d.items.forEach((k) => lines.push(`  - ${snapTitle(trip.items[k], locale)}`));
   });
   if (trip.ideas.length) {
-    lines.push('', 'Stays, extras & unscheduled:');
-    trip.ideas.forEach((k) => lines.push(`  - ${trip.items[k]?.title}`));
+    lines.push('', tt(locale, 'summaryIdeas'));
+    trip.ideas.forEach((k) => lines.push(`  - ${snapTitle(trip.items[k], locale)}`));
   }
-  if (trip.notes) lines.push('', `Notes: ${trip.notes}`);
+  if (trip.notes) lines.push('', tt(locale, 'summaryNotes', { notes: trip.notes }));
   return lines.join('\n');
 }
 
@@ -413,8 +478,12 @@ function requestItem(snap, residency) {
   };
 }
 
-/** Shape the trip for the API. Dates are sent as YYYY-MM-DD strings. */
-export function toRequestPayload(trip, { contact, profile, residency = 'nonResident', website = '' }) {
+/**
+ * Shape the trip for the API. Dates are sent as YYYY-MM-DD strings. Titles
+ * and day labels are English for the team; `locale` is the language the
+ * traveller used, so their emails and quote come back in it.
+ */
+export function toRequestPayload(trip, { contact, profile, residency = 'nonResident', website = '', locale = getLocale() }) {
   const iso = (d) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : undefined);
   return {
     contact,
@@ -424,8 +493,9 @@ export function toRequestPayload(trip, { contact, profile, residency = 'nonResid
     adults: trip.adults,
     children: trip.children,
     residency,
+    locale,
     days: trip.days.map((d, i) => ({
-      label: dayLabel(trip, i),
+      label: dayLabel(trip, i, DEFAULT_LOCALE),
       date: iso(dateOfDay(trip, i)),
       items: d.items.map((k) => trip.items[k]).filter(Boolean).map((s) => requestItem(s, residency)),
     })),

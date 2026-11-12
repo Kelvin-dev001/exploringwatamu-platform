@@ -49,6 +49,7 @@ exports.joinTrip = async (req, res, next) => {
       travelGroup,
       selectedAvatar,
       referredByCode,
+      locale,
     } = req.body;
 
     const trip = await GroupTrip.findById(tripId);
@@ -76,6 +77,7 @@ exports.joinTrip = async (req, res, next) => {
       travelPersonalities,
       travelGroup,
       selectedAvatar: selectedAvatar || 'avatar_1.png',
+      locale: locale || undefined,
     });
 
     if (referredByCode) {

@@ -1,27 +1,7 @@
 import React, { useState } from 'react';
-
-const PERSONALITIES = [
-  { label: 'Party Starter', emoji: '🎉' },
-  { label: 'Social Butterfly', emoji: '🦋' },
-  { label: 'Chill Connector', emoji: '😎' },
-  { label: 'Reserved Explorer', emoji: '🌿' },
-  { label: 'Music Lover', emoji: '🎧' },
-  { label: 'Storyteller', emoji: '📖' },
-  { label: 'Jokester', emoji: '😂' },
-  { label: 'Deep Talker', emoji: '🎙️' },
-  { label: 'Adrenaline Junkie', emoji: '⚡' },
-  { label: 'Photography Lover', emoji: '📸' },
-  { label: 'Nature Nerd', emoji: '🌴' },
-  { label: 'Foodie Explorer', emoji: '🍲' },
-  { label: 'Beach Bum', emoji: '🏖️' },
-];
-
-const TRAVEL_GROUPS = [
-  { label: 'Solo But Social', emoji: '👤' },
-  { label: 'Couple Traveler', emoji: '💑' },
-  { label: 'In a Friends Crew', emoji: '👥' },
-  { label: 'Digital Nomad', emoji: '💻' },
-];
+import { useI18n } from '@/i18n';
+import messages from '@/locales/groupTrips';
+import { PERSONALITIES, TRAVEL_GROUPS, useVibeWords } from '@/lib/travelVibes';
 
 const AVATARS = [
   'avatar_1.png',
@@ -35,6 +15,8 @@ const AVATARS = [
 ];
 
 export default function TravelVibeSelector({ onComplete }) {
+  const { t } = useI18n(messages);
+  const { personaLabel, groupLabel } = useVibeWords();
   const [selectedPersonalities, setSelectedPersonalities] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('avatar_1.png');
@@ -70,16 +52,16 @@ export default function TravelVibeSelector({ onComplete }) {
   return (
     <div className="space-y-5">
       <h3 className="text-lg font-bold" style={{ color: '#215a75' }}>
-        Tell Us About Your Vibe
+        {t('vibeTitle')}
       </h3>
       <p className="text-sm text-gray-600 mb-4">
-        Choose so we can customize your experience better! ✨
+        {t('vibeIntro')}
       </p>
 
       {step === 'personality' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            What energy you bring? (Select 1-3)
+            {t('vibeEnergy')}
           </label>
           <div className="grid grid-cols-2 gap-2">
             {PERSONALITIES.map((p) => (
@@ -95,7 +77,7 @@ export default function TravelVibeSelector({ onComplete }) {
                   backgroundColor: selectedPersonalities.includes(p.label) ? '#e0f7f6' : undefined,
                 }}
               >
-                <span className="mr-1">{p.emoji}</span> {p.label}
+                <span className="mr-1">{p.emoji}</span> {personaLabel(p.label)}
               </button>
             ))}
           </div>
@@ -105,7 +87,7 @@ export default function TravelVibeSelector({ onComplete }) {
       {step === 'group' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Who you with? (Pick one)
+            {t('vibeWho')}
           </label>
           <div className="space-y-2">
             {TRAVEL_GROUPS.map((g) => (
@@ -126,7 +108,7 @@ export default function TravelVibeSelector({ onComplete }) {
                   className="radio radio-sm"
                 />
                 <span className="text-xl">{g.emoji}</span>
-                <span className="font-medium text-sm">{g.label}</span>
+                <span className="font-medium text-sm">{groupLabel(g.label)}</span>
               </label>
             ))}
           </div>
@@ -136,7 +118,7 @@ export default function TravelVibeSelector({ onComplete }) {
       {step === 'avatar' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Pick your avatar
+            {t('vibeAvatar')}
           </label>
           <div className="grid grid-cols-4 gap-3">
             {AVATARS.map((avatar) => (
@@ -163,7 +145,7 @@ export default function TravelVibeSelector({ onComplete }) {
             onClick={handleBack}
             className="px-4 py-2.5 rounded-lg font-semibold border border-gray-300 text-gray-700 text-sm"
           >
-            Back
+            {t('back')}
           </button>
         )}
         <button
@@ -175,7 +157,7 @@ export default function TravelVibeSelector({ onComplete }) {
           className="ml-auto px-6 py-2.5 rounded-lg font-semibold text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#e06c31' }}
         >
-          {step === 'avatar' ? 'Complete Profile →' : 'Next →'}
+          {step === 'avatar' ? t('vibeComplete') : t('vibeNext')}
         </button>
       </div>
     </div>
