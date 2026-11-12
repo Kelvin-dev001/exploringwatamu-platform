@@ -15,7 +15,7 @@ against production data.
 | S3 | Medium | Input | The original public booking forms (`/api/propertyviewings`, `/api/servicebookings`, `/api/carhire/book`) had no validation: `{"time": {"$ne": "x"}}` reached the availability query; hidden or unknown car hires could be booked; Mongoose error text was echoed. | **Fixed** — zod schemas, visibility check |
 | S4 | Medium | Points | Safari Points redemption was read-check-save: 3 simultaneous redemptions of the same 10 points all succeeded. | **Fixed** — one atomic conditional `$inc` |
 | S5 | Medium | CORS | `https://exploringwatamu.vercel.app` was an allowed origin (with credentials) but has no deployment — anyone could create a Vercel project with that name and become a trusted origin. | **Fixed** — removed (the website is `exploringwatamu-platform.vercel.app`) |
-| S6 | Medium | Privacy | "My trips" shows guest quote requests to any account with the same email, and sign-up does not verify the email: registering with someone's address *before they do* reveals their guest requests. | **Open — needs your decision** (below) |
+| S6 | Medium | Privacy | "My trips" showed guest quote requests to any account with the same email, and sign-up did not verify the email: registering with someone's address *before they do* revealed their guest requests. | **Fixed** — email confirmation at sign-up; guest requests only for confirmed (or Google) accounts (below) |
 | S7 | Low | JWT | Tokens were verified without pinning the algorithm: an HS512 token made with the right secret was accepted. | **Fixed** — HS256 only, in one place (`services/tokens.js`) |
 | S8 | Low | Reset | `/forgot-password` awaited the email only when the account existed, so the response time revealed which emails are registered. Limit was 20/15 min shared with sign-in. | **Fixed** — sent after answering; 5/hour per IP and 3/hour per address |
 | S9 | Low | Search | List search boxes were used as raw regular expressions (`?name=(` → 500; patterns like `(a+)+$` run on the database); `?page=0` → 500; `?limit` unbounded. | **Fixed** — escaped literal match, bounded paging |
@@ -27,15 +27,39 @@ against production data.
 | S15 | High (advisory) | Dependencies | `cloudinary` 1.x / `multer-storage-cloudinary`: argument injection through `&` in upload parameters (GHSA-g4mf-96x5-5m2c). | **Accepted for now** — not reachable (below); upgrade planned |
 | S16 | Moderate (advisory) | Dependencies | `glob` / `minimatch` via `@sentry/node` 11.9.0. | **Accepted for now** — not reachable; upgrade from 19 Nov 2026 |
 
-## S6 — the decision needed
+## S6 — email confirmation (fixed)
 
-**What happens.** A guest's quote request is stored with their email. When anyone
-signs in, "My trips" also lists guest requests whose email matches the account's
-email (`tripRequestController.listMine`). Sign-up with a password does not prove the
+**What happened.** A guest's quote request is stored with their email. When anyone
+signed in, "My trips" also listed guest requests whose email matched the account's
+email (`tripRequestController.listMine`). Sign-up with a password did not prove the
 person owns the address. So someone who knows a traveller's email, and registers it
-before the traveller does, can read that traveller's guest requests (name, phone,
-country, trip plan, the quote). Requests made while signed in are not affected (they
-are linked by account id), nor are Google accounts (Google verifies the email).
+before the traveller does, could read that traveller's guest requests (name, phone,
+country, trip plan, the quote). Requests made while signed in were not affected (they
+are linked by account id), nor were Google accounts (Google verifies the email).
+
+**The fix (option 1 below).**
+
+- Sign-up emails a confirmation link (`/verify-email?token=…`, `/it/verify-email` in
+  Italian). The token is 32 random bytes; only its SHA-256 hash is stored
+  (`User.verifyTokenHash`), it works once and for 72 hours. Opening it sets
+  `User.emailVerifiedAt`; it works signed in or not.
+- An account **owns its email** when it has confirmed it, completed a password reset
+  (that link was emailed to the address too) or signed in with Google (Google verified
+  it). One rule, `ownsEmail()` in `services/emailVerification.js`, decides both "My
+  trips" and who may review a guest request.
+- Until then, an account sees only what it sent while signed in. My bookings says why
+  and offers "Send a new link" (`POST /api/auth/resend-verification`: signed in, 3 an
+  hour per account; a new link replaces the old one).
+- The API tells the website `emailVerified` on sign-up, sign-in and `/auth/me` (never
+  the token or its hash).
+- **Existing password accounts** start unconfirmed: their guest requests stay hidden
+  until they click a new link from My bookings (or reset their password). Nothing is
+  migrated — marking them confirmed would keep the hole open.
+- Tested in `backend/tests/e2e/emailVerification.e2e.test.js` (single use, wrong and
+  expired links, hash only, resend limit, reset and Google count, Italian link) and
+  `client-vite/src/components/auth/ConfirmEmail.test.jsx`.
+
+The analysis that led to it, kept for reference:
 
 **Why it isn't simply switched off.** While SMTP is not configured, "sign in with
 the email you used and read the quote under My bookings" is how a guest sees their
@@ -52,7 +76,7 @@ travellers who sent a request as a guest and created a password account afterwar
    their quote from the team directly (WhatsApp/phone — Phase 4 adds click-to-chat).
 3. Keep the current behaviour and accept the risk until 1 is possible.
 
-Tell me which you prefer; 2 is a small change I can make in a follow-up.
+Option 1 was chosen (production email is configured).
 
 ## Area by area
 
@@ -83,7 +107,7 @@ exists for when a "staff" role is used). The last admin cannot be removed, even 
 two simultaneous removals (S13).
 
 **Ownership.** Travellers only ever query by their own id: group bookings
-(`user: req.user._id`), trip requests (`user` or guest email — see S6), referral stats,
+(`user: req.user._id`), trip requests (`user`, or guest email once the account owns it — see S6), referral stats,
 points, and reviews (edit/delete check the author). Changing an id in a URL cannot
 reach another traveller's data: there is no traveller endpoint that takes a booking or
 request id. Covered by the authorisation tests.
@@ -103,10 +127,11 @@ referrer and permissions policies, and frame protection (admin: `DENY`; website:
 | Limiter | Limit | Used by |
 |---|---|---|
 | global | 300 | everything |
-| auth | 20 | sign-in, sign-up, Google sign-in, set new password, admin sign-in |
+| auth | 20 | sign-in, sign-up, Google sign-in, set new password, confirmation link, admin sign-in |
 | session | 200 | `/auth/me`, "My trips" lists |
 | reset request | 5 / hour | forgot password, per IP |
 | reset address | 3 / hour | forgot password, per email address |
+| confirmation resend | 3 / hour | "send a new link", per account |
 | booking | 30 | quote requests, group trip join, viewing/service/car-hire bookings |
 | public read | 200 | availability checks, trip participants |
 | admin | 600 | admin reads |
@@ -196,10 +221,10 @@ What changed, and how each risk is handled (details in [REVIEWS.md](REVIEWS.md))
 
   Someone else's booking answers 404, as if it didn't exist.
 - **Guest requests (S6).** A trip request sent without an account can be reviewed by:
-  - a Google account with that email;
+  - an account that owns that email (confirmed it, reset its password, or Google);
   - whoever opens the invitation emailed to that address.
 
-  A password account with the same email can't review it: the S6 weakness does not extend to reviews.
+  A password account that hasn't confirmed the same email can't review it.
 - **Invitation tokens.**
   - Signed with the JWT secret, with the audience `review-invite`, valid 120 days.
   - They carry no account id, and session verification now refuses any token that has an audience. So an invitation can never sign anyone in, and a session token can't pass as an invitation (both tested).

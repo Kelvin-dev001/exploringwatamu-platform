@@ -125,6 +125,12 @@ module.exports = {
   resetButton: 'Reset password',
   resetIgnore: 'If you didn\'t request this, you can safely ignore this email.',
   resetPaste: 'Or paste this link: {link}',
+  // Email confirmation
+  verifySubject: 'Confirm your email for {brand}',
+  verifyTitle: 'Confirm your email address',
+  verifyBody: 'Please confirm this is your email address. It lets your account show trip requests you sent without signing in. The link works for {hours} hours.',
+  verifyButton: 'Confirm my email',
+  verifyIgnore: 'If you didn\'t create an account with us, you can ignore this email.',
   // Review invitation
   inviteSubject: 'How was your Watamu trip?',
   inviteBody: 'We hope you had a wonderful time. Would you tell other travellers what it was like? It takes a minute, and it helps us a lot.',

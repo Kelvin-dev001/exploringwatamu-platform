@@ -160,7 +160,10 @@ Change it at the provider, then in Render/Vercel (which redeploys), then check
    appear there as `failed` with the reason, and in the logs as `email failed`.
 
 Until email is on, nothing is emailed (logged as `skipped`), the admin is told so
-after sending a quote, and travellers read quotes under **My bookings**.
+after sending a quote, and travellers read quotes they sent while signed in under
+**My bookings**. Quotes for requests sent as a guest only appear there once the
+account has confirmed its email (the link emailed at sign-up) or signs in with
+Google — so without email, guest travellers need their quote from the team directly.
 
 ## Error monitoring (Sentry)
 
@@ -293,8 +296,9 @@ demo listings must not look like partner inventory.
 | No WhatsApp buttons on the website | `VITE_WHATSAPP_NUMBER` unset or not a usable number, or the site wasn't redeployed after setting it ([WHATSAPP.md](WHATSAPP.md)) |
 | No WhatsApp link in quote emails | `/api/health/ready` → `whatsappLinks`; a bad `WHATSAPP_NUMBER` is logged at startup |
 | A review isn't on the website | It is still **Waiting** (Admin → Reviews) or **Hidden**; only approved reviews show |
-| A traveller can't review a trip | The trip request must be **accepted** with dates in the past (or the group booking confirmed and the trip over); guest requests need the invitation link or a Google sign-in ([REVIEWS.md](REVIEWS.md)) |
+| A traveller can't review a trip | The trip request must be **accepted** with dates in the past (or the group booking confirmed and the trip over); guest requests need the invitation link or an account that confirmed that email (or Google sign-in ([REVIEWS.md](REVIEWS.md)) |
 | A rating looks wrong | `npm run reviews:recompute -- --confirm-db=<db>` (ratings count approved reviews only) |
+| A traveller can't see a request in My bookings | Sent as a guest: the account must confirm its email first (My bookings → "Send a new link"; 3 an hour) or sign in with Google. Sent signed in to another account: it's under that account |
 | Travellers say they got no email | `/api/health/ready` → `email`; Admin → Notifications (`skipped` = SMTP not set, `failed` = provider error) |
 | 429 "Too many requests" | Rate limits (see `SECURITY-REVIEW.md`); they reset after 15 min, or on deploy |
 | Admin signed out unexpectedly | Their password was changed, they were removed, or `JWT_SECRET` changed |

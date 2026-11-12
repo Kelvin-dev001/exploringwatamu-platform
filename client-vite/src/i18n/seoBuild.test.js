@@ -77,7 +77,7 @@ describe('sitemap and robots.txt', () => {
 
   it('keeps private pages out in both languages', () => {
     const robots = robotsTxt(SITE);
-    for (const p of ['/my-trips', '/it/my-trips', '/review/', '/it/review/', '/reset-password', '/it/reset-password']) expect(robots).toContain(`Disallow: ${p}\n`);
+    for (const p of ['/my-trips', '/it/my-trips', '/review/', '/it/review/', '/reset-password', '/it/reset-password', '/verify-email', '/it/verify-email']) expect(robots).toContain(`Disallow: ${p}\n`);
     expect(robots).toContain(`Sitemap: ${SITE}/sitemap.xml`);
   });
 });

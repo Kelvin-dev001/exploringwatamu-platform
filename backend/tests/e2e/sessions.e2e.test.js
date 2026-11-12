@@ -5,7 +5,7 @@
 // rate limits protect sign-in and reset emails without locking out a
 // traveller who just reloads the site.
 
-jest.mock('../../src/services/notifications/authNotifications', () => ({ sendPasswordResetEmail: jest.fn(async () => {}) }));
+jest.mock('../../src/services/notifications/authNotifications', () => ({ sendPasswordResetEmail: jest.fn(async () => {}), sendVerificationEmail: jest.fn(async () => {}) }));
 
 const request = require('supertest');
 const jwt = require('jsonwebtoken');

@@ -25,6 +25,13 @@ const userSchema = new mongoose.Schema(
     resetTokenHash: { type: String, index: { sparse: true } }, // looked up on every reset attempt
     resetTokenExpires: { type: Date },
 
+    // Email ownership (services/emailVerification.js). Null for password accounts
+    // that haven't clicked their confirmation link yet; Google accounts count as
+    // confirmed. Only confirmed accounts see guest requests sent with their address.
+    emailVerifiedAt: { type: Date, default: null },
+    verifyTokenHash: { type: String, index: { sparse: true } }, // looked up on every confirmation attempt
+    verifyTokenExpires: { type: Date },
+
     // Bumped by setPassword: ends every session signed before the change (services/tokens).
     tokenVersion: { type: Number, default: 0 },
   },

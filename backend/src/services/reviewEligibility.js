@@ -8,6 +8,7 @@ const User = require('../models/User');
 const { LISTINGS, LISTING_TYPES } = require('../constants/reviews');
 const { listingModel } = require('./reviewStats');
 const { verifyReviewInvite } = require('./tokens');
+const { ownsEmail } = require('./emailVerification');
 
 /*
  * Who may review what. Checked on the server for every review, whatever the
@@ -112,13 +113,14 @@ async function groupBookingItems(booking) {
 /* ---------- Ownership ---------- */
 
 async function accountOf(user) {
-  return User.findById(user._id).select('email googleId').lean();
+  return User.findById(user._id).select('email googleId emailVerifiedAt').lean();
 }
 
 function ownsTripRequest(account, request, invite) {
   if (request.user) return String(request.user) === String(account._id);
   const email = String(request.contact?.email || '').toLowerCase();
-  if (account.googleId && String(account.email).toLowerCase() === email) return true;
+  // A guest request is theirs when the account has shown it owns the address (S6).
+  if (ownsEmail(account) && String(account.email).toLowerCase() === email) return true;
   return Boolean(invite && invite.bookingType === 'tripRequest' && invite.bookingId === String(request._id) && invite.email === email);
 }
 
@@ -177,9 +179,9 @@ async function listEligible(user, { bookingType, bookingId, inviteToken } = {}, 
 
   const account = await accountOf(user);
   if (!account) throw NOT_FOUND();
-  const guestByGoogle = account.googleId ? [{ user: null, 'contact.email': String(account.email).toLowerCase() }] : [];
+  const guestByEmail = ownsEmail(account) ? [{ user: null, 'contact.email': String(account.email).toLowerCase() }] : [];
   const [requests, groupBookings] = await Promise.all([
-    TripRequest.find({ status: 'accepted', $or: [{ user: account._id }, ...guestByGoogle] }).sort({ createdAt: -1 }).limit(50).lean(),
+    TripRequest.find({ status: 'accepted', $or: [{ user: account._id }, ...guestByEmail] }).sort({ createdAt: -1 }).limit(50).lean(),
     GroupBooking.find({ user: account._id, status: 'confirmed' }).sort({ createdAt: -1 }).limit(50).lean(),
   ]);
   const bookings = [

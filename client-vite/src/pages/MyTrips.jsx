@@ -12,6 +12,7 @@ import { formatKES } from '@/lib/catalog';
 import { formatDay } from '@/lib/utils';
 import Seo from '@/components/seo/Seo';
 import MyReviews from '@/components/reviews/MyReviews';
+import ConfirmEmailNotice from '@/components/auth/ConfirmEmailNotice';
 import { WhatsAppNumberLink } from '@/components/contact/WhatsApp';
 import { referenceMessage, whatsappEnabled } from '@/lib/whatsapp';
 import { localeTag, useI18n } from '@/i18n';
@@ -154,6 +155,7 @@ export default function MyTrips() {
       <Seo title={t('seo')} noindex />
       <p className="eyebrow">{user?.name?.split(' ')[0] ? t('hi', { name: user.name.split(' ')[0] }) : t('hiNoName')}</p>
       <h1 className="mt-3 font-display text-4xl text-ocean-900 sm:text-5xl">{t('title')}</h1>
+      <ConfirmEmailNotice />
       {error && (
         <p className="mt-6 flex flex-wrap items-center gap-3 rounded-xl bg-coral-50 p-4 text-coral-700">
           {t(error)}

@@ -36,7 +36,7 @@ uploads answer 503. Upload routes use `uploadFields`/`uploadArray`/`uploadSingle
 - `src/services/logger.js` — structured logs (JSON in production). `src/services/monitoring.js` — optional Sentry. `src/services/tokens.js` — every JWT is signed and verified here. `src/services/listQuery.js` — safe search (`contains`) and bounded paging (`pageParams`).
 - `src/validators/*` — zod schemas.
 - `src/services/*` — `mailer` (nodemailer; a safe no-op until SMTP is set), `documents` (pdfkit quotation/receipt PDFs), `bookingNotifications`. Mail/PDF libs are lazy-loaded so the app boots without them.
-- `src/services/notifications/*` — `emailLayout` (branded email shell), `sms` (Africa's Talking via axios; no-op until configured), `authNotifications` (password reset), `log` (records every send to the `Notification` model). Email/SMS/reset all fill in here.
+- `src/services/notifications/*` — `emailLayout` (branded email shell), `sms` (Africa's Talking via axios; no-op until configured), `authNotifications` (password reset, email confirmation), `log` (records every send to the `Notification` model). Email/SMS/reset all fill in here.
 - `src/services/bookingRegistry.js` + `bookingService.js` — the unified booking engine. Every booking type (tour, carhire, service, propertyviewing, grouptour) has one registry entry; controllers share `paginate`/`cancelById`; `GET /api/bookings` gives admins one view across all types. Add a new booking type by adding a registry entry.
 
 ## Conventions

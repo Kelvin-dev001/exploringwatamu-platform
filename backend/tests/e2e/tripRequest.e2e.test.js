@@ -4,6 +4,7 @@ const request = require('supertest');
 const { connect, disconnect } = require('./dbSetup');
 const buildApp = require('../../src/app');
 const Admin = require('../../src/models/Admin');
+const User = require('../../src/models/User');
 
 let app;
 let adminToken;
@@ -118,9 +119,11 @@ describe('Trip request (quote) flow E2E', () => {
 
     // Sent while signed in as "other", but typed the owner's address as contact.
     await request(app).post('/api/trip-requests').set('Authorization', `Bearer ${other}`).send(trip({ contact: { name: 'Other', email: 'owner@test.com' } }));
-    // Sent as a guest with the owner's address: this one is theirs to see.
+    // Sent as a guest with the owner's address: theirs to see once they've confirmed the address (S6).
     const guest = await request(app).post('/api/trip-requests').send(trip({ contact: { name: 'Email Owner', email: 'owner@test.com' } }));
 
+    expect((await request(app).get('/api/trip-requests/mine').set('Authorization', `Bearer ${owner}`)).body).toEqual([]);
+    await User.updateOne({ email: 'owner@test.com' }, { emailVerifiedAt: new Date() });
     const mine = await request(app).get('/api/trip-requests/mine').set('Authorization', `Bearer ${owner}`);
     expect(mine.body.map((r) => r.reference)).toEqual([guest.body.reference]);
     expect((await request(app).get('/api/trip-requests/mine').set('Authorization', `Bearer ${other}`)).body).toHaveLength(1);

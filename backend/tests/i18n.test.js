@@ -15,7 +15,7 @@ const { parseItalian, ITALIAN_FIELDS } = require('../src/constants/italianConten
 const { notifyTripRequested, notifyQuoteSent, notifyStatus } = require('../src/services/tripRequestNotifications');
 const { notifyBookingRequested, notifyBookingConfirmed, notifyBookingCancelled } = require('../src/services/bookingNotifications');
 const { buildQuotationPdf, buildReceiptPdf, buildTripQuotePdf } = require('../src/services/documents');
-const { sendPasswordResetEmail } = require('../src/services/notifications/authNotifications');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../src/services/notifications/authNotifications');
 const { inviteEmail } = require('../src/services/reviewNotifications');
 const whatsapp = require('../src/services/whatsapp');
 
@@ -202,6 +202,15 @@ describe('other traveller emails', () => {
     expect(mail.subject).toMatch(/^Reimposta la password di /);
     expect(mail.html).toContain('Reimposta la password');
     expect(mail.html).toContain('https://site.test/it/reset-password?token=abc');
+  });
+
+  it('sends the email confirmation in Italian with the Italian link it was given', async () => {
+    await sendVerificationEmail({ _id: 'u1', email: 'giulia@example.com', name: 'Giulia' }, 'https://site.test/it/verify-email?token=abc', 'it');
+    const [mail] = mails();
+    expect(mail.subject).toMatch(/^Conferma la tua email per /);
+    expect(mail.html).toContain('Conferma la mia email');
+    expect(mail.html).toContain('72 ore');
+    expect(mail.html).toContain('https://site.test/it/verify-email?token=abc');
   });
 
   it('writes the review invitation in Italian', () => {

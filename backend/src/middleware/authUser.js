@@ -18,7 +18,8 @@ module.exports = async function authUser(req, res, next) {
   if (decoded.admin) return res.status(403).json({ error: 'Admin token not allowed for this route' });
 
   try {
-    const user = await User.findById(decoded.id).select('_id name email tokenVersion');
+    // emailVerifiedAt/googleId: whether guest requests with this address are theirs (S6).
+    const user = await User.findById(decoded.id).select('_id name email tokenVersion emailVerifiedAt googleId');
     if (!user) return res.status(401).json({ error: 'Invalid token' });
     if (!isCurrent(decoded, user)) return res.status(401).json({ error: 'Your password was changed. Please sign in again.' });
     req.user = user;

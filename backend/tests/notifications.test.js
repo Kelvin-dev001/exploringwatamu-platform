@@ -11,7 +11,7 @@ const { sendMail } = require('../src/services/mailer');
 const { sendSms } = require('../src/services/notifications/sms');
 const { notifyTripRequested, notifyQuoteSent, notifyStatus } = require('../src/services/tripRequestNotifications');
 const { notifyBookingRequested, notifyBookingConfirmed, notifyBookingCancelled } = require('../src/services/bookingNotifications');
-const { sendPasswordResetEmail } = require('../src/services/notifications/authNotifications');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../src/services/notifications/authNotifications');
 
 const NASTY = '<img src=x onerror=alert(1)>';
 const isPdf = (buf) => Buffer.isBuffer(buf) && buf.subarray(0, 5).toString() === '%PDF-';
@@ -125,6 +125,18 @@ describe('password reset email', () => {
     const [mail] = mails();
     expect(mail).toMatchObject({ to: 'ada@example.com', event: 'password_reset' });
     expect(mail.html).toContain('href="https://site.test/reset-password?token=abc123"');
+    expect(mail.html).not.toContain(NASTY);
+  });
+});
+
+describe('email confirmation', () => {
+  it('links to the confirmation page and escapes the account name', async () => {
+    await sendVerificationEmail({ _id: 'u1', email: 'ada@example.com', name: NASTY }, 'https://site.test/verify-email?token=abc123');
+    const [mail] = mails();
+    expect(mail).toMatchObject({ to: 'ada@example.com', event: 'email_verification' });
+    expect(mail.subject).toMatch(/^Confirm your email for /);
+    expect(mail.html).toContain('href="https://site.test/verify-email?token=abc123"');
+    expect(mail.html).toContain('72 hours');
     expect(mail.html).not.toContain(NASTY);
   });
 });
