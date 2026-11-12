@@ -290,6 +290,7 @@ demo listings must not look like partner inventory.
 
 | Symptom | Look at |
 |---|---|
+| A website link from an email or a share opens Vercel's "404: NOT_FOUND" | The rewrites in `client-vite/vercel.json`: with `cleanUrls` on, destinations must be written without `.html` (`/`, `/it`); checked by `src/lib/vercelConfig.test.js` |
 | Website/admin: "Can't reach the server" | Cold start (wait a minute); `/api/health`; Render logs |
 | Image upload answers 503 | `CLOUDINARY_*` not set (`/api/health` → `imageUploads: false`) |
 | Image upload 400 "not a supported image" | Only JPG, PNG, WebP, HEIC/AVIF are accepted, up to 8 MB |
