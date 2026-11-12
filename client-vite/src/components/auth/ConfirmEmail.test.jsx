@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('axios', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
@@ -46,7 +46,8 @@ describe('the confirmation link', () => {
     expect(await screen.findByRole('heading', { name: 'Email confirmed' })).toBeTruthy();
     expect(axios.post).toHaveBeenCalledTimes(1);
     expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/verify-email$/), { token: 'abc123' });
-    expect(auth.setUser).toHaveBeenCalledWith({ ...unconfirmed, emailVerified: true });
+    // Updated by an effect right after the confirmed screen renders.
+    await waitFor(() => expect(auth.setUser).toHaveBeenCalledWith({ ...unconfirmed, emailVerified: true }));
     expect(screen.getByRole('link', { name: 'See my bookings' }).getAttribute('href')).toBe('/my-trips');
   });
 
