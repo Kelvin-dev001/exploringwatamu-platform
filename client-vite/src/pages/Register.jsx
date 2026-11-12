@@ -11,7 +11,7 @@ import messages from '@/locales/account';
 import { apiError } from '@/lib/apiErrors';
 
 export default function Register() {
-  const { t, rich } = useI18n(messages);
+  const { t, rich, locale } = useI18n(messages);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,7 +43,8 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      finish(await axios.post(`${API_URL}/auth/register`, form));
+      // The language picks the confirmation email's language and link.
+      finish(await axios.post(`${API_URL}/auth/register`, { ...form, locale }));
     } catch (err) {
       setError(apiError(err, t('registerFailed')));
     }

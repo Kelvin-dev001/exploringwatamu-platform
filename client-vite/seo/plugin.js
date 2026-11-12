@@ -125,7 +125,7 @@ export function sitemapEntries(site, listings = []) {
   return entries;
 }
 
-const PRIVATE = ['/my-trips', '/trip/sent/', '/reset-password', '/review/', '/style-guide'];
+const PRIVATE = ['/my-trips', '/trip/sent/', '/reset-password', '/verify-email', '/review/', '/style-guide'];
 export const robotsTxt = (site) =>
   `User-agent: *\nAllow: /\n${PRIVATE.flatMap((p) => LOCALES.map((l) => `Disallow: ${localisePath(p, l)}`)).join('\n')}\n\nSitemap: ${site}/sitemap.xml\n`;
 
