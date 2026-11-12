@@ -197,10 +197,20 @@ describe('eligibility (checked on the server)', () => {
     expect(res.body.data.some((i) => i.booking.id === String(B.adaQuoted._id))).toBe(false); // not accepted: not listed
   });
 
-  it('lets a guest request be reviewed by a Google account with that email, not by a password account', async () => {
+  it('lets a guest request be reviewed by a Google account with that email, not by an unconfirmed password account', async () => {
     expect((await review('gail', forTrip('guest', 'stay', L.stay))).status).toBe(201);
     // Pat registered gail.guest@test.com with a password: that doesn't prove the address.
     expect((await review('pat', forTrip('guestPat', 'stay', L.stay))).status).toBe(404);
+  });
+
+  it('lets a password account claim a guest request once it has confirmed the address', async () => {
+    const cora = await User.create({ name: 'Cora Confirmed', email: 'cora.guest@test.com', emailVerifiedAt: new Date() });
+    const uma = await User.create({ name: 'Uma Unconfirmed', email: 'uma.guest@test.com' });
+    const coraTrip = await tripRequest({ user: null, contact: { name: 'Cora', email: 'cora.guest@test.com' } });
+    const umaTrip = await tripRequest({ user: null, contact: { name: 'Uma', email: 'uma.guest@test.com' } });
+    const eligible = (u, t) => request(app).get('/api/reviews/eligible').query({ bookingType: 'tripRequest', bookingId: String(t._id) }).set({ Authorization: `Bearer ${signUserToken(u)}` });
+    expect((await eligible(cora, coraTrip)).status).toBe(200);
+    expect((await eligible(uma, umaTrip)).status).toBe(404);
   });
 
   it('lets a guest request be reviewed with the invitation sent to its email', async () => {

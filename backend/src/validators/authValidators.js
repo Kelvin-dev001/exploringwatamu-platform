@@ -8,6 +8,8 @@ const registerSchema = z.object({
   email: z.string().trim().toLowerCase().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'A valid email is required'),
   phone: z.string().trim().max(30).optional().or(z.literal('')),
   password: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  // The website's language, for the confirmation email and its link.
+  locale: z.enum(LOCALES).optional(),
 });
 
 const loginSchema = z.object({
@@ -26,4 +28,12 @@ const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters').max(128),
 });
 
-module.exports = { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema };
+const verifyEmailSchema = z.object({
+  token: z.string().trim().min(10, 'Invalid or expired confirmation link.').max(200),
+});
+
+const resendVerificationSchema = z.object({
+  locale: z.enum(LOCALES).optional(),
+});
+
+module.exports = { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, verifyEmailSchema, resendVerificationSchema };

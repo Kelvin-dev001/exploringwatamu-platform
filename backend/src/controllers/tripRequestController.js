@@ -4,6 +4,7 @@ const TripRequest = require('../models/TripRequest');
 const { paginate } = require('../services/bookingService');
 const { notifyTripRequested, notifyQuoteSent, notifyStatus } = require('../services/tripRequestNotifications');
 const { deliveryFor } = require('../services/notifications/delivery');
+const { ownsEmail } = require('../services/emailVerification');
 const logger = require('../services/logger');
 const { contains } = require('../services/listQuery');
 
@@ -48,9 +49,14 @@ exports.create = async (req, res, next) => {
 // GET /api/trip-requests/mine — signed-in traveller's requests, plus requests
 // they sent as a guest with the same email (so creating an account afterwards
 // shows them). A request made while signed in to another account stays there.
+//
+// Guest requests only for an account that has shown it owns the address
+// (confirmed email or Google): anyone can type someone else's address at
+// sign-up (security review S6).
 exports.listMine = async (req, res, next) => {
   try {
-    const list = await TripRequest.find({ $or: [{ user: req.user._id }, { user: null, 'contact.email': req.user.email }] })
+    const guest = ownsEmail(req.user) ? [{ user: null, 'contact.email': req.user.email }] : [];
+    const list = await TripRequest.find({ $or: [{ user: req.user._id }, ...guest] })
       .sort({ createdAt: -1 })
       .limit(50);
     res.json(list.map(publicView));

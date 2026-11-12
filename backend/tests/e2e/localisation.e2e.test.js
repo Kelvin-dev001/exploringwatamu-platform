@@ -5,7 +5,7 @@
 // opens in it, and listings take optional Italian text that the public sees,
 // that can be cleared, and that never becomes required.
 
-jest.mock('../../src/services/notifications/authNotifications', () => ({ sendPasswordResetEmail: jest.fn(async () => {}) }));
+jest.mock('../../src/services/notifications/authNotifications', () => ({ sendPasswordResetEmail: jest.fn(async () => {}), sendVerificationEmail: jest.fn(async () => {}) }));
 
 const request = require('supertest');
 const { connect, disconnect } = require('./dbSetup');

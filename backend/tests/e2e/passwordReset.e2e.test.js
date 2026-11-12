@@ -3,7 +3,7 @@
 // The whole reset journey: request a link, use it once, sign in with the new
 // password. The email is mocked so the test can read the link it would carry.
 
-jest.mock('../../src/services/notifications/authNotifications', () => ({ sendPasswordResetEmail: jest.fn(async () => {}) }));
+jest.mock('../../src/services/notifications/authNotifications', () => ({ sendPasswordResetEmail: jest.fn(async () => {}), sendVerificationEmail: jest.fn(async () => {}) }));
 
 const request = require('supertest');
 const { connect, disconnect } = require('./dbSetup');

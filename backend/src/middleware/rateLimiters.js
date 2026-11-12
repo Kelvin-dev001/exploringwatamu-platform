@@ -35,6 +35,14 @@ module.exports = {
       return email ? `email:${email}` : ipKeyGenerator(req.ip);
     },
   }),
+  // "Send me a new confirmation link", per account (after authUser): a few a
+  // day is plenty, and it stops one account flooding its inbox.
+  verifyResendLimiter: rateLimit({
+    ...base,
+    windowMs: 60 * MINUTE,
+    max: 3,
+    keyGenerator: (req) => (req.user ? `verify:${req.user._id}` : ipKeyGenerator(req.ip)),
+  }),
   // Writing reviews and adding their photos (Cloudinary uploads), per account
   // (it runs after authUser): a traveller writes a handful after a trip, so this
   // is generous for people and tight for scripts; people sharing a network

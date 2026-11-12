@@ -93,6 +93,7 @@ describe('admin-only endpoints', () => {
 describe('traveller endpoints', () => {
   it.each([
     ['get', '/api/auth/me'],
+    ['post', '/api/auth/resend-verification'],
     ['get', '/api/trip-requests/mine'],
     ['get', '/api/group-bookings/my-bookings'],
     ['post', '/api/group-bookings/join'],

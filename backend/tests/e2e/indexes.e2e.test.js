@@ -64,7 +64,7 @@ beforeAll(async () => {
   await Notification.insertMany(Array.from({ length: N }, (_, i) => ({
     channel: 'email', to: 'x@example.com', event: 'trip_quote', status: i % 40 === 0 ? 'failed' : 'sent', createdAt: day(i),
   })));
-  await User.insertMany(Array.from({ length: N }, (_, i) => ({ name: `U${i}`, email: `u${i}@example.com`, ...(i === 7 ? { resetTokenHash: 'abc', resetTokenExpires: day(59) } : {}) })));
+  await User.insertMany(Array.from({ length: N }, (_, i) => ({ name: `U${i}`, email: `u${i}@example.com`, ...(i === 7 ? { resetTokenHash: 'abc', resetTokenExpires: day(59) } : {}), ...(i === 9 ? { verifyTokenHash: 'def', verifyTokenExpires: day(59) } : {}) })));
   await PropertyViewingBooking.insertMany(Array.from({ length: N }, (_, i) => ({ property: pick(ids, i), date: day(i), time: pick(['10:00', '14:00'], i), status: 'booked' })));
   await ServiceBooking.insertMany(Array.from({ length: N }, (_, i) => ({ service: pick(ids, i), date: day(i), time: '18:00', status: 'booked' })));
   await CarHireBooking.insertMany(Array.from({ length: N }, (_, i) => ({ carHire: pick(ids, i), startDate: day(i), endDate: day(i + 2), status: 'booked' })));
@@ -92,6 +92,7 @@ const QUERIES = [
   ['recent failed notifications (dashboard)', () => Notification.find({ status: 'failed', createdAt: { $gte: day(30) } }).sort({ createdAt: -1 }).limit(5)],
   ['delivery log, newest first', () => Notification.find({}).sort({ createdAt: -1 }).limit(20)],
   ['password reset token lookup', () => User.findOne({ resetTokenHash: 'abc', resetTokenExpires: { $gt: day(0) } })],
+  ['email confirmation token lookup', () => User.findOne({ verifyTokenHash: 'def', verifyTokenExpires: { $gt: day(0) } })],
   ['viewing slot check', () => PropertyViewingBooking.find({ property: ids[2], date: day(2), time: '10:00', status: 'booked' })],
   ['service slot check', () => ServiceBooking.find({ service: ids[2], date: day(2), status: 'booked', time: '18:00' })],
   // The car is free on these dates: the check finds nothing, so without an

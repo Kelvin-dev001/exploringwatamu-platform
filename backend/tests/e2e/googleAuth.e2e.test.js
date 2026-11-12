@@ -44,6 +44,7 @@ describe('Google sign-in', () => {
     expect(res.body.token).toBeUndefined();
     const victim = await User.findOne({ email: 'victim@example.com' });
     expect(victim.googleId).toBeUndefined();
+    expect(victim.emailVerifiedAt).toBeNull();
   });
 
   it('links a verified Google email to the existing account', async () => {
@@ -53,7 +54,11 @@ describe('Google sign-in', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe('victim@example.com');
-    expect((await User.findOne({ email: 'victim@example.com' })).googleId).toBe('google-sub-1');
+    // Google checked the address, so it now counts as confirmed (S6).
+    expect(res.body.user.emailVerified).toBe(true);
+    const linked = await User.findOne({ email: 'victim@example.com' });
+    expect(linked.googleId).toBe('google-sub-1');
+    expect(linked.emailVerifiedAt).toBeInstanceOf(Date);
     expect(axios.get).toHaveBeenCalledWith('https://oauth2.googleapis.com/tokeninfo', expect.objectContaining({ params: { id_token: 'id-token' } }));
   });
 
