@@ -24,7 +24,7 @@ What the E2E suites cover:
 - **Indexes** — every query on a growing collection uses an index and reads close to what it returns (`indexes`, uses `explain()`).
 - **Health** — readiness with a database (`health`); admin single-trip endpoint and opt-in pagination of group bookings (`adminLists`); demo seed safeguards and idempotency (`demoSeed`).
 
-- **Auth** — register, login, wrong password; the full **password-reset** journey (link works once, old password stops working, expired links refused, no email for unknown or Google-only accounts) (`passwordReset`); Google sign-in only links or creates accounts for a Google-verified email (`googleAuth`).
+- **Auth** — register, login, wrong password; the full **password-reset** journey (link works once, old password stops working, expired links refused, no email for unknown or Google-only accounts) (`passwordReset`); Google sign-in only links or creates accounts for a Google-verified email, and counts as confirmed (`googleAuth`); **email confirmation** — sign-up sends a single-use link in the sign-up language, only its hash is stored, wrong/used/expired links refused, "send a new link" replaces the old one (3 an hour), a password reset counts, guest requests appear only once confirmed (`emailVerification`).
 - **Authorisation** — every admin-only endpoint answers 401 to the public and 403 to travellers; traveller endpoints refuse admin tokens; travellers only see their own bookings and quote requests (`authorization`).
 - **Admin sessions** — a removed admin's token stops working at once; user tokens are refused on admin routes (`adminSession`).
 - **Listing CRUD** — create, read, update and delete for every listing type, as the admin forms send them (`listingCrud`).

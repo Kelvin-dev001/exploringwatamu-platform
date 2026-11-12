@@ -98,8 +98,8 @@ team's Italian title and description when there are some, `og:locale` and the sa
 
 ### Emails, texts and PDFs
 
-The website sends its language with trip requests, group-trip bookings and password-reset
-requests. It is stored on the trip request and the booking (`locale`: `en` or `it`; older
+The website sends its language with trip requests, group-trip bookings, sign-ups,
+confirmation-link and password-reset requests. It is stored on the trip request and the booking (`locale`: `en` or `it`; older
 records are English) and used for:
 
 | Sent to the traveller | Italian |
@@ -110,6 +110,7 @@ records are English) and used for:
 | Group trip: request received + quotation PDF + SMS | Yes (the trip's Italian title when it has one) |
 | Group trip: confirmed + receipt PDF + SMS, cancelled + SMS | Yes |
 | Password reset (email and its link, `/it/reset-password`) | Yes |
+| Email confirmation at sign-up (email and its link, `/it/verify-email`) | Yes |
 | Post-trip review invitation (email and its link, `/it/review/…`) | Yes |
 | WhatsApp messages prefilled from emails and PDFs | Yes |
 
@@ -153,9 +154,9 @@ The admin portal stays English (it's the team's tool). What changed:
 | Group trips: list, page, countdown, join request, who's going, e-card, Safari Points | Italian |
 | Trip planner, board (incl. screen-reader drag announcements), drawer, toast | Italian |
 | Quote request form, validation and confirmation page | Italian |
-| My bookings: quotes, statuses, group bookings, reviews | Italian |
+| My bookings: quotes, statuses, group bookings, reviews, "confirm your email" notice | Italian |
 | Reviews: ratings, reading, writing, photos, refusals | Italian |
-| Sign in, register (incl. Google's button), forgot and reset password | Italian |
+| Sign in, register (incl. Google's button), forgot and reset password, email confirmation | Italian |
 | Loading, empty, error, 404 and crash pages | Italian |
 | API errors shown to visitors | Known ones in Italian; anything else shows a general Italian message |
 | Page titles, descriptions, social previews, sitemap, `lang` | Italian |

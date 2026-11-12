@@ -30,7 +30,8 @@ cd admin-vite && npm install && npm run dev
 
 Email, SMS, image uploads, Google sign-in, error monitoring and WhatsApp click-to-chat
 are optional and switch themselves off when unconfigured. While email isn't configured, the admin warns that travellers were
-**not** emailed, and travellers can read their quote under **My bookings**.
+**not** emailed, and travellers can read their quote under **My bookings** (requests
+sent as a guest appear there once the account has confirmed its email, or with Google sign-in).
 
 ## Tests and checks
 

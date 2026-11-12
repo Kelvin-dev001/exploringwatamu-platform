@@ -19,9 +19,6 @@ rough order of importance; tick them off as you go.
   settings → Personal access tokens: delete every token you don't recognise or no
   longer use (including any created for earlier automated work). Use fine-grained
   tokens with an expiry for anything new.
-- [ ] **Decide on guest quote requests and unverified sign-ups** (finding S6 in
-  [`SECURITY-REVIEW.md`](SECURITY-REVIEW.md#s6--the-decision-needed)) and tell the
-  team which option to implement.
 - [ ] **Check Render's build command** if the service was created by hand: Settings →
   Build Command `npm ci --omit=dev`. (`render.yaml` only applies to Blueprint
   services; the live service name `exploringwatamu-platform` differs from the

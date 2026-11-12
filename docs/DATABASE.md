@@ -15,7 +15,7 @@ the background and never block requests.
 | `triprequests` | `{reference}` unique | Look-up by `EW-` reference |
 | | `{status, createdAt -1}` | Admin inbox filtered by status; dashboard's oldest "new" requests |
 | | `{createdAt -1}` | Admin inbox, all statuses |
-| | `{user, createdAt -1}`, `{contact.email}` | "My trips" (signed-in requests, plus guest requests with the same email) |
+| | `{user, createdAt -1}`, `{contact.email}` | "My trips" (signed-in requests, plus guest requests with the same email once the account has confirmed it) |
 | `groupbookings` | `{user, createdAt -1}` | A traveller's bookings |
 | | `{trip, status, createdAt -1}` | A trip's confirmed participants; the trip's bookings (admin) |
 | | `{status, createdAt}` | Pending bookings to approve (dashboard) |
@@ -25,7 +25,7 @@ the background and never block requests.
 | `propertyviewingbookings` | `{property, date, time}`, `{status, date}` | Slot check; upcoming viewings |
 | `servicebookings` | `{service, date, time}` | Slot check |
 | `carhirebookings` | `{carHire, status, startDate}` | Date-overlap check |
-| `users` | `{email}` unique, `{googleId}` / `{referralCode}` unique sparse, `{resetTokenHash}` sparse | Sign-in; Google; referrals; every reset attempt |
+| `users` | `{email}` unique, `{googleId}` / `{referralCode}` unique sparse, `{resetTokenHash}` / `{verifyTokenHash}` sparse | Sign-in; Google; referrals; every reset and email-confirmation link |
 | `admins` | `{email}` unique | Admin sign-in |
 | `payments` | `{checkoutRequestId}` | M-Pesa callbacks (payments are off) |
 | `listingreviews` | `{listingType, listingId, status, createdAt -1}` | A listing's approved reviews (website) and its rating |

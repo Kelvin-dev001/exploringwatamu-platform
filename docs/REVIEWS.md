@@ -27,9 +27,9 @@ A review needs a booking that proves the trip happened:
 
 - **The account that made the booking.** That is `TripRequest.user` or `GroupBooking.user`.
 - **For a trip request sent as a guest (no account), either of these:**
-  - a **Google** account with the same email, because Google has verified the address;
+  - an account that **owns** the same email: it confirmed it with the link emailed at sign-up, reset its password by email, or is a **Google** account (Google verified it) — `ownsEmail()` in `services/emailVerification.js`;
   - **whoever opens the review invitation emailed to that address**, signed in with any account. The link carries a signed token (audience `review-invite`, valid 120 days) that proves they can read that inbox.
-- **A password account with the same email is not enough.** Sign-up doesn't prove the address; see [SECURITY-REVIEW.md S6](SECURITY-REVIEW.md#s6--the-decision-needed). When email verification exists (S6 option 1), verified accounts can be added here.
+- **A password account that hasn't confirmed the same email is not enough.** Sign-up alone doesn't prove the address; see [SECURITY-REVIEW.md S6](SECURITY-REVIEW.md#s6--email-confirmation-fixed).
 
 **Duplicates.** One review per listing per booking. This is enforced by a unique index in the database, so two submissions sent at the same moment can't both get in. A traveller who books the same experience again on a later trip can review it again from that booking.
 
@@ -256,7 +256,7 @@ A commented Blueprint version is at the end of `render.yaml`.
 - **API unit tests** (`tests/reviews.test.js`): validation, display names, invitation tokens (forgery, expiry, never a sign-in token), legacy mapping, the query-validation fix.
 - **API end to end** (`tests/e2e/reviews.e2e.test.js`):
   - eligibility for all six types, ownership, status and dates;
-  - Google accounts and invitations for guest requests;
+  - Google accounts, confirmed and unconfirmed password accounts, and invitations for guest requests;
   - id tampering, duplicates (including two at once), validation, rate limit;
   - photos (own pending review only, limits, non-images, Cloudinary failure);
   - public visibility, moderation, replies, ratings (approve, hide, re-approve without double counting), protected `reviewStats`;
